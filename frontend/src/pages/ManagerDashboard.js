@@ -40,6 +40,7 @@ const ManagerDashboard = () => {
         if (token) {
             fetchData();
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token]);
 
     const handleStatusUpdate = async (id, status) => {

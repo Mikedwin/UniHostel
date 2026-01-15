@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { MapPin, DollarSign, CheckCircle, MessageSquare } from 'lucide-react';
+import { MapPin, CheckCircle, MessageSquare } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import API_URL from '../config';
 

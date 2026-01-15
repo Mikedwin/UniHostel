@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { MapPin, DollarSign, Filter } from 'lucide-react';
+import { MapPin, Filter } from 'lucide-react';
 import API_URL from '../config';
 
 const HostelList = () => {
@@ -108,6 +108,7 @@ const HostelList = () => {
 
   useEffect(() => {
     fetchHostels('', '');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSearch = (e) => {

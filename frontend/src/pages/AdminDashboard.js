@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Users, Building2, FileText, AlertCircle, TrendingUp, Activity } from 'lucide-react';
+import { Users, Building2, FileText, Activity } from 'lucide-react';
 import API_URL from '../config';
 
 const AdminDashboard = () => {
@@ -18,6 +18,7 @@ const AdminDashboard = () => {
         if (token) {
             fetchDashboardData();
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token]);
 
     const fetchDashboardData = async () => {
@@ -77,6 +78,7 @@ const AdminDashboard = () => {
             alert('Failed to reset capacity');
         }
     };
+    // Note: resetRoomCapacity will be used in future room management features
 
     if (loading) {
         return <div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;
