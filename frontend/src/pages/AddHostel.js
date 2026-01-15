@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Plus, X, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import API_URL from '../config';
+import imageCompression from 'browser-image-compression';
 
 const AddHostel = () => {
     const { token } = useAuth();
@@ -35,6 +36,20 @@ const AddHostel = () => {
         'Security': ['Security', 'CCTV', 'Secure Entry'],
         'Shared Spaces': ['Kitchen', 'Study Room', 'Common Area', 'Gym'],
         'Services': ['Laundry', 'Cleaning Service', 'Parking']
+    };
+
+    const compressImage = async (file) => {
+        const options = {
+            maxSizeMB: 0.5,
+            maxWidthOrHeight: 1920,
+            useWebWorker: true
+        };
+        try {
+            return await imageCompression(file, options);
+        } catch (error) {
+            console.error('Compression error:', error);
+            return file;
+        }
     };
 
     const addFacility = (facility) => {
@@ -197,12 +212,13 @@ const AddHostel = () => {
                                 <input
                                     type="file"
                                     accept="image/*"
-                                    onChange={(e) => {
+                                    onChange={async (e) => {
                                         const file = e.target.files[0];
                                         if (file) {
+                                            const compressed = await compressImage(file);
                                             const reader = new FileReader();
                                             reader.onload = (event) => setHostelViewImage(event.target.result);
-                                            reader.readAsDataURL(file);
+                                            reader.readAsDataURL(compressed);
                                         }
                                     }}
                                     className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 mb-3"
@@ -312,12 +328,13 @@ const AddHostel = () => {
                                         <input
                                             type="file"
                                             accept="image/*"
-                                            onChange={(e) => {
+                                            onChange={async (e) => {
                                                 const file = e.target.files[0];
                                                 if (file) {
+                                                    const compressed = await compressImage(file);
                                                     const reader = new FileReader();
                                                     reader.onload = (event) => setCurrentRoom({...currentRoom, roomImage: event.target.result});
-                                                    reader.readAsDataURL(file);
+                                                    reader.readAsDataURL(compressed);
                                                 }
                                             }}
                                             className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 mb-2 bg-white"
