@@ -97,28 +97,30 @@ const HostelList = () => {
 
         <div className="mb-8 bg-white p-6 rounded-lg shadow-sm">
           <form onSubmit={handleSearch} className="space-y-4">
-            <div className="max-w-2xl mx-auto space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 text-center">Search by Hostel Name or Room Type</label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-lg"
-                  placeholder="e.g., Sunrise Hostel or 2 in a Room..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 text-center">Filter by Maximum Price (per semester)</label>
-                <div className="relative">
-                  <span className="absolute left-3 top-3 text-gray-400 font-medium">GH₵</span>
+            <div className="max-w-4xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Search by Hostel Name or Room Type</label>
                   <input
-                    type="number"
-                    className="w-full pl-12 pr-3 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-lg"
-                    placeholder="Enter your maximum budget..."
-                    value={maxPrice}
-                    onChange={(e) => setMaxPrice(e.target.value)}
+                    type="text"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="e.g., Sunrise Hostel or 2 in a Room..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Maximum Price (per semester)</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-3 text-gray-400 font-medium">GH₵</span>
+                    <input
+                      type="number"
+                      className="w-full pl-12 pr-3 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      placeholder="Enter budget..."
+                      value={maxPrice}
+                      onChange={(e) => setMaxPrice(e.target.value)}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
