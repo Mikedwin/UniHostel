@@ -10,24 +10,36 @@ const ManagerDashboard = () => {
     const [hostels, setHostels] = useState([]);
     const { token } = useAuth();
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     const fetchData = async () => {
+        setLoading(true);
+        setError(null);
         try {
             const [appRes, hostRes] = await Promise.all([
-                axios.get(`${API_URL}/api/applications/manager`, { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get(`${API_URL}/api/hostels/my-listings`, { headers: { Authorization: `Bearer ${token}` } })
+                axios.get(`${API_URL}/api/applications/manager`, { 
+                    headers: { Authorization: `Bearer ${token}` },
+                    timeout: 10000
+                }),
+                axios.get(`${API_URL}/api/hostels/my-listings`, { 
+                    headers: { Authorization: `Bearer ${token}` },
+                    timeout: 10000
+                })
             ]);
-            setApplications(appRes.data);
-            setHostels(hostRes.data);
+            setApplications(appRes.data || []);
+            setHostels(hostRes.data || []);
         } catch (err) {
-            console.error(err);
+            console.error('Dashboard fetch error:', err);
+            setError(err.response?.data?.error || err.message || 'Failed to load dashboard data');
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchData();
+        if (token) {
+            fetchData();
+        }
     }, [token]);
 
     const handleStatusUpdate = async (id, status) => {
@@ -65,7 +77,29 @@ const ManagerDashboard = () => {
                 </Link>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-10 gap-8">
+            {loading && (
+                <div className="flex justify-center items-center py-12">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+                        <p className="text-gray-600">Loading your dashboard...</p>
+                    </div>
+                </div>
+            )}
+
+            {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+                    <p className="font-semibold">Error loading dashboard</p>
+                    <p className="text-sm">{error}</p>
+                    <button 
+                        onClick={fetchData}
+                        className="mt-2 text-sm underline hover:no-underline"
+                    >
+                        Try again
+                    </button>
+                </div>
+            )}
+
+            {!loading && !error && (
                 <div className="lg:col-span-7">
                     <h2 className="text-lg font-bold mb-4">Incoming Applications</h2>
                     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
@@ -199,7 +233,7 @@ const ManagerDashboard = () => {
                         ))}
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };

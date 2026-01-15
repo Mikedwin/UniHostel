@@ -16,7 +16,7 @@ const roomTypeSchema = new mongoose.Schema({
 });
 
 const hostelSchema = new mongoose.Schema({
-  managerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  managerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   name: { type: String, required: true },
   location: { type: String, required: true },
   hostelViewImage: { type: String, required: false },
@@ -25,6 +25,8 @@ const hostelSchema = new mongoose.Schema({
   isAvailable: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now }
 });
+
+hostelSchema.index({ managerId: 1, createdAt: -1 });
 
 // Middleware to auto-update availability based on capacity
 roomTypeSchema.pre('save', function(next) {

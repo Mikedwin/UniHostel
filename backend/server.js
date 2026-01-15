@@ -133,9 +133,12 @@ app.post('/api/hostels', auth, checkRole('manager'), async (req, res) => {
 
 app.get('/api/hostels/my-listings', auth, checkRole('manager'), async (req, res) => {
   try {
-    const hostels = await Hostel.find({ managerId: req.user.id });
+    console.log('Fetching hostels for manager:', req.user.id);
+    const hostels = await Hostel.find({ managerId: req.user.id }).sort({ createdAt: -1 }).lean();
+    console.log(`Found ${hostels.length} hostels for manager ${req.user.id}`);
     res.json(hostels);
   } catch (err) {
+    console.error('Error fetching manager hostels:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -252,15 +255,20 @@ app.get('/api/applications/student', auth, checkRole('student'), async (req, res
 
 app.get('/api/applications/manager', auth, checkRole('manager'), async (req, res) => {
   try {
-    // Find hostels managed by this user
-    const managedHostels = await Hostel.find({ managerId: req.user.id }).select('_id');
+    console.log('Fetching applications for manager:', req.user.id);
+    const managedHostels = await Hostel.find({ managerId: req.user.id }).select('_id').lean();
     const hostelIds = managedHostels.map(h => h._id);
+    console.log(`Manager has ${hostelIds.length} hostels`);
 
     const apps = await Application.find({ hostelId: { $in: hostelIds } })
-        .populate('hostelId')
-        .populate('studentId', 'name email');
+        .populate('hostelId', 'name location')
+        .populate('studentId', 'name email')
+        .sort({ createdAt: -1 })
+        .lean();
+    console.log(`Found ${apps.length} applications`);
     res.json(apps);
   } catch (err) {
+    console.error('Error fetching manager applications:', err);
     res.status(500).json({ error: err.message });
   }
 });
