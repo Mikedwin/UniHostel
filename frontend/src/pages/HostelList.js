@@ -10,6 +10,7 @@ const HostelList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [showRooms, setShowRooms] = useState(false);
 
   const fetchHostels = async () => {
@@ -18,15 +19,29 @@ const HostelList = () => {
       setError('');
       const res = await axios.get(`${API_URL}/api/hostels`);
       
-      // If no price filter, show all hostels
+      let filteredData = res.data;
+      
+      // Apply search filter
+      if (searchQuery && searchQuery.trim()) {
+        const query = searchQuery.toLowerCase().trim();
+        filteredData = filteredData.filter(hostel => {
+          const nameMatch = hostel.name.toLowerCase().includes(query);
+          const roomTypeMatch = hostel.roomTypes?.some(room => 
+            room.type.toLowerCase().includes(query)
+          );
+          return nameMatch || roomTypeMatch;
+        });
+      }
+      
+      // If no price filter, show hostels
       if (!maxPrice || maxPrice <= 0) {
-        setHostels(res.data);
+        setHostels(filteredData);
         setRooms([]);
         setShowRooms(false);
       } else {
         // If price filter is active, show filtered rooms
         let allRooms = [];
-        res.data.forEach(hostel => {
+        filteredData.forEach(hostel => {
           if (hostel.roomTypes && hostel.roomTypes.length > 0) {
             hostel.roomTypes.forEach(room => {
               if (room.price <= Number(maxPrice)) {
@@ -42,7 +57,6 @@ const HostelList = () => {
           }
         });
         
-        // Sort rooms by highest price first (descending)
         allRooms.sort((a, b) => b.price - a.price);
         
         setRooms(allRooms);
@@ -68,6 +82,7 @@ const HostelList = () => {
 
   const clearFilter = () => {
     setMaxPrice('');
+    setSearchQuery('');
     setShowRooms(false);
     setTimeout(fetchHostels, 100);
   };
@@ -82,17 +97,29 @@ const HostelList = () => {
 
         <div className="mb-8 bg-white p-6 rounded-lg shadow-sm">
           <form onSubmit={handleSearch} className="space-y-4">
-            <div className="max-w-md mx-auto">
-              <label className="block text-sm font-medium text-gray-700 mb-2 text-center">Filter by Maximum Price (per semester)</label>
-              <div className="relative">
-                <span className="absolute left-3 top-3 text-gray-400 font-medium">GH₵</span>
+            <div className="max-w-2xl mx-auto space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 text-center">Search by Hostel Name or Room Type</label>
                 <input
-                  type="number"
-                  className="w-full pl-12 pr-3 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-lg"
-                  placeholder="Enter your maximum budget..."
-                  value={maxPrice}
-                  onChange={(e) => setMaxPrice(e.target.value)}
+                  type="text"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-lg"
+                  placeholder="e.g., Sunrise Hostel or 2 in a Room..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 text-center">Filter by Maximum Price (per semester)</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-3 text-gray-400 font-medium">GH₵</span>
+                  <input
+                    type="number"
+                    className="w-full pl-12 pr-3 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-lg"
+                    placeholder="Enter your maximum budget..."
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(e.target.value)}
+                  />
+                </div>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
