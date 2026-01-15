@@ -13,7 +13,7 @@ const HostelList = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showRooms, setShowRooms] = useState(false);
 
-  const fetchHostels = async () => {
+  const fetchHostels = async (priceFilter = maxPrice, searchFilter = searchQuery) => {
     try {
       setLoading(true);
       setError('');
@@ -22,8 +22,8 @@ const HostelList = () => {
       let filteredData = res.data;
       
       // Apply search filter
-      if (searchQuery && searchQuery.trim()) {
-        const query = searchQuery.toLowerCase().trim();
+      if (searchFilter && searchFilter.trim()) {
+        const query = searchFilter.toLowerCase().trim();
         filteredData = filteredData.filter(hostel => {
           const nameMatch = hostel.name.toLowerCase().includes(query);
           const roomTypeMatch = hostel.roomTypes?.some(room => 
@@ -34,7 +34,7 @@ const HostelList = () => {
       }
       
       // If no price filter, show hostels
-      if (!maxPrice || maxPrice <= 0) {
+      if (!priceFilter || priceFilter <= 0) {
         setHostels(filteredData);
         setRooms([]);
         setShowRooms(false);
@@ -44,7 +44,7 @@ const HostelList = () => {
         filteredData.forEach(hostel => {
           if (hostel.roomTypes && hostel.roomTypes.length > 0) {
             hostel.roomTypes.forEach(room => {
-              if (room.price <= Number(maxPrice)) {
+              if (room.price <= Number(priceFilter)) {
                 allRooms.push({
                   ...room,
                   hostelId: hostel._id,
@@ -72,19 +72,19 @@ const HostelList = () => {
   };
 
   useEffect(() => {
-    fetchHostels();
+    fetchHostels('', '');
   }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
-    fetchHostels();
+    fetchHostels(maxPrice, searchQuery);
   };
 
   const clearFilter = () => {
     setMaxPrice('');
     setSearchQuery('');
     setShowRooms(false);
-    setTimeout(fetchHostels, 100);
+    fetchHostels('', '');
   };
 
   return (
