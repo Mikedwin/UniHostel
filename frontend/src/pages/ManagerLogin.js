@@ -21,13 +21,20 @@ const ManagerLogin = () => {
         try {
             const res = await axios.post(`${API_URL}/api/auth/login`, formData);
             
-            if (res.data.user.role !== 'manager') {
+            const role = res.data.user.role;
+            
+            if (role === 'student') {
                 setError('This login is for hostel managers only. Please use the student login.');
                 return;
             }
             
             login(res.data.user, res.data.token);
-            navigate('/manager-dashboard');
+            
+            if (role === 'admin') {
+                navigate('/admin-dashboard');
+            } else {
+                navigate('/manager-dashboard');
+            }
         } catch (err) {
             setError(err.response?.data?.message || 'Invalid credentials');
         } finally {
