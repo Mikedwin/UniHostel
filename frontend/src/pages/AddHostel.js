@@ -200,6 +200,10 @@ const AddHostel = () => {
                                     onChange={(e) => {
                                         const file = e.target.files[0];
                                         if (file) {
+                                            if (file.size > 500000) {
+                                                alert('Image too large! Please use images under 500KB');
+                                                return;
+                                            }
                                             const reader = new FileReader();
                                             reader.onload = (event) => setHostelViewImage(event.target.result);
                                             reader.readAsDataURL(file);
@@ -315,6 +319,10 @@ const AddHostel = () => {
                                             onChange={(e) => {
                                                 const file = e.target.files[0];
                                                 if (file) {
+                                                    if (file.size > 500000) {
+                                                        alert('Image too large! Please use images under 500KB');
+                                                        return;
+                                                    }
                                                     const reader = new FileReader();
                                                     reader.onload = (event) => setCurrentRoom({...currentRoom, roomImage: event.target.result});
                                                     reader.readAsDataURL(file);
