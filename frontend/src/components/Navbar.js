@@ -31,7 +31,11 @@ const Navbar = () => {
             {user ? (
               <>
                 <Link 
-                  to={user.role === 'manager' ? '/manager-dashboard' : '/student-dashboard'} 
+                  to={
+                    user.role === 'admin' ? '/admin-dashboard' :
+                    user.role === 'manager' ? '/manager-dashboard' : 
+                    '/student-dashboard'
+                  } 
                   className="flex items-center text-gray-700 hover:text-primary-600"
                 >
                   <LayoutDashboard className="w-4 h-4 mr-1" />
