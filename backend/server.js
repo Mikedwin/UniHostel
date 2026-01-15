@@ -65,12 +65,26 @@ app.post('/api/auth/register', async (req, res) => {
     if (existingUser) return res.status(400).json({ message: 'User already exists' });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ name, email, password: hashedPassword, role: role || 'student' });
+    const userRole = role || 'student';
+    
+    // New managers need verification, students and existing users don't
+    const newUser = new User({ 
+      name, 
+      email, 
+      password: hashedPassword, 
+      role: userRole,
+      isVerified: userRole === 'manager' ? false : true,
+      accountStatus: userRole === 'manager' ? 'pending_verification' : 'active'
+    });
     await newUser.save();
     console.log('User created successfully:', newUser._id);
 
     const token = jwt.sign({ id: newUser._id, role: newUser.role }, process.env.JWT_SECRET);
-    res.json({ token, user: { id: newUser._id, name, email, role: newUser.role } });
+    res.json({ 
+      token, 
+      user: { id: newUser._id, name, email, role: newUser.role },
+      needsVerification: userRole === 'manager' && !newUser.isVerified
+    });
   } catch (err) {
     console.error('Registration error:', err);
     res.status(500).json({ message: err.message || 'Registration failed' });
@@ -83,11 +97,36 @@ app.post('/api/auth/login', async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: 'User does not exist' });
 
+    // Check account status
+    if (user.accountStatus === 'suspended') {
+      return res.status(403).json({ message: `Account suspended. Reason: ${user.suspensionReason || 'Contact admin'}` });
+    }
+    if (user.accountStatus === 'banned') {
+      return res.status(403).json({ message: `Account banned. Reason: ${user.suspensionReason || 'Contact admin'}` });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
+    // Update last login and add to login history
+    user.lastLogin = new Date();
+    user.loginHistory.push({
+      timestamp: new Date(),
+      ipAddress: req.ip || req.connection.remoteAddress,
+      userAgent: req.headers['user-agent']
+    });
+    // Keep only last 10 login records
+    if (user.loginHistory.length > 10) {
+      user.loginHistory = user.loginHistory.slice(-10);
+    }
+    await user.save();
+
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET);
-    res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+    res.json({ 
+      token, 
+      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+      passwordResetRequired: user.passwordResetRequired
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -125,6 +164,12 @@ app.get('/api/hostels', async (req, res) => {
 
 app.post('/api/hostels', auth, checkRole('manager'), async (req, res) => {
   try {
+    // Check if manager is verified
+    const manager = await User.findById(req.user.id);
+    if (!manager.isVerified || manager.accountStatus === 'pending_verification') {
+      return res.status(403).json({ message: 'Your account is pending admin verification. You cannot create hostels yet.' });
+    }
+    
     console.log('Creating hostel with data:', {
       ...req.body,
       images: req.body.images ? `[${req.body.images.length} images]` : 'no images'

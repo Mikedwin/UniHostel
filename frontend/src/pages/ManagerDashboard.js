@@ -8,7 +8,8 @@ import API_URL from '../config';
 const ManagerDashboard = () => {
     const [applications, setApplications] = useState([]);
     const [hostels, setHostels] = useState([]);
-    const { token } = useAuth();
+    const [userInfo, setUserInfo] = useState(null);
+    const { token, user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -16,7 +17,7 @@ const ManagerDashboard = () => {
         setLoading(true);
         setError(null);
         try {
-            const [appRes, hostRes] = await Promise.all([
+            const [appRes, hostRes, userRes] = await Promise.all([
                 axios.get(`${API_URL}/api/applications/manager`, { 
                     headers: { Authorization: `Bearer ${token}` },
                     timeout: 10000
@@ -24,10 +25,15 @@ const ManagerDashboard = () => {
                 axios.get(`${API_URL}/api/hostels/my-listings`, { 
                     headers: { Authorization: `Bearer ${token}` },
                     timeout: 10000
-                })
+                }),
+                axios.get(`${API_URL}/api/admin/users/${user.id}`, { 
+                    headers: { Authorization: `Bearer ${token}` },
+                    timeout: 10000
+                }).catch(() => ({ data: null }))
             ]);
             setApplications(appRes.data || []);
             setHostels(hostRes.data || []);
+            setUserInfo(userRes.data);
         } catch (err) {
             console.error('Dashboard fetch error:', err);
             setError(err.response?.data?.error || err.message || 'Failed to load dashboard data');
@@ -70,6 +76,25 @@ const ManagerDashboard = () => {
 
     return (
         <div className="max-w-7xl mx-auto px-4 py-8">
+            {/* Pending Verification Banner */}
+            {userInfo && !userInfo.isVerified && userInfo.accountStatus === 'pending_verification' && (
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                    <div className="flex">
+                        <div className="flex-shrink-0">
+                            <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                        <div className="ml-3">
+                            <h3 className="text-sm font-medium text-yellow-800">Account Pending Verification</h3>
+                            <div className="mt-2 text-sm text-yellow-700">
+                                <p>Your manager account is awaiting admin approval. You cannot create or manage hostels until your account is verified. This usually takes 24-48 hours.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="flex justify-between items-center mb-8">
                 <h1 className="text-2xl font-bold">Manager Dashboard</h1>
                 <Link to="/add-hostel" className="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 flex items-center">

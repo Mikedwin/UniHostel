@@ -3,6 +3,9 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { Users, Building2, FileText, Activity } from 'lucide-react';
 import API_URL from '../config';
+import UserManagementTable from '../components/admin/UserManagementTable';
+import UserActionModal from '../components/admin/UserActionModal';
+import UserDetailsModal from '../components/admin/UserDetailsModal';
 
 const AdminDashboard = () => {
     const [stats, setStats] = useState(null);
@@ -12,6 +15,12 @@ const AdminDashboard = () => {
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('overview');
+    const [modalOpen, setModalOpen] = useState(false);
+    const [modalAction, setModalAction] = useState('');
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [actionLoading, setActionLoading] = useState(false);
+    const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
     const { token } = useAuth();
 
     useEffect(() => {
@@ -156,7 +165,7 @@ const AdminDashboard = () => {
                 <div className="bg-white rounded-lg shadow mb-6">
                     <div className="border-b">
                         <div className="flex space-x-4 px-4">
-                            {['overview', 'hostels', 'managers', 'applications', 'logs'].map(tab => (
+                            {['overview', 'users', 'hostels', 'managers', 'applications', 'logs'].map(tab => (
                                 <button
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
@@ -169,6 +178,10 @@ const AdminDashboard = () => {
                     </div>
 
                     <div className="p-4">
+                        {activeTab === 'users' && (
+                            <UserManagementTable token={token} onAction={handleUserAction} />
+                        )}
+
                         {activeTab === 'hostels' && (
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
@@ -280,8 +293,129 @@ const AdminDashboard = () => {
                     </div>
                 </div>
             </div>
+
+            {/* User Action Modal */}
+            <UserActionModal
+                isOpen={modalOpen}
+                onClose={() => { setModalOpen(false); setSelectedUser(null); setModalAction(''); }}
+                action={modalAction}
+                user={selectedUser}
+                onConfirm={handleActionConfirm}
+                loading={actionLoading}
+            />
+
+            {/* User Details Modal */}
+            <UserDetailsModal
+                isOpen={detailsModalOpen}
+                onClose={() => { setDetailsModalOpen(false); setSelectedUser(null); }}
+                user={selectedUser}
+                token={token}
+            />
+
+            {/* Success Message */}
+            {successMessage && (
+                <div className="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg">
+                    {successMessage}
+                </div>
+            )}
         </div>
     );
+
+    function handleUserAction(action, user) {
+        if (action === 'view') {
+            setSelectedUser(user);
+            setDetailsModalOpen(true);
+        } else if (action.startsWith('bulk-')) {
+            handleBulkAction(action.replace('bulk-', ''), user);
+        } else {
+            setModalAction(action);
+            setSelectedUser(user);
+            setModalOpen(true);
+        }
+    }
+
+    async function handleActionConfirm(data) {
+        setActionLoading(true);
+        try {
+            let endpoint = '';
+            let method = 'patch';
+            let payload = data;
+
+            switch (modalAction) {
+                case 'suspend':
+                    endpoint = `/api/admin/users/${selectedUser._id}/suspend`;
+                    break;
+                case 'ban':
+                    endpoint = `/api/admin/users/${selectedUser._id}/ban`;
+                    break;
+                case 'activate':
+                    endpoint = `/api/admin/users/${selectedUser._id}/activate`;
+                    break;
+                case 'verify':
+                    endpoint = `/api/admin/users/${selectedUser._id}/verify`;
+                    break;
+                case 'reject':
+                    endpoint = `/api/admin/users/${selectedUser._id}/reject`;
+                    break;
+                case 'reset-password':
+                    endpoint = `/api/admin/users/${selectedUser._id}/reset-password`;
+                    method = 'post';
+                    break;
+                case 'delete':
+                    endpoint = `/api/admin/users/${selectedUser._id}`;
+                    method = 'delete';
+                    break;
+                default:
+                    throw new Error('Unknown action');
+            }
+
+            const res = await axios[method](`${API_URL}${endpoint}`, payload, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (modalAction === 'reset-password' && res.data.temporaryPassword) {
+                alert(`Password reset successful!\n\nTemporary Password: ${res.data.temporaryPassword}\n\nPlease save this password and share it with the user securely.`);
+            }
+
+            showSuccess(res.data.message || 'Action completed successfully');
+            setModalOpen(false);
+            setSelectedUser(null);
+            setModalAction('');
+        } catch (err) {
+            alert(err.response?.data?.error || 'Action failed');
+        } finally {
+            setActionLoading(false);
+        }
+    }
+
+    async function handleBulkAction(action, userIds) {
+        const reason = action === 'suspend' || action === 'ban' ? prompt(`Enter reason for bulk ${action}:`) : null;
+        if ((action === 'suspend' || action === 'ban') && !reason) return;
+
+        if (!window.confirm(`Are you sure you want to ${action} ${userIds.length} user(s)?`)) return;
+
+        try {
+            const res = await axios.post(`${API_URL}/api/admin/users/bulk-action`, {
+                userIds,
+                action,
+                reason
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            const { success, failed } = res.data.results;
+            let message = `Bulk action completed: ${success.length} succeeded`;
+            if (failed.length > 0) message += `, ${failed.length} failed`;
+            showSuccess(message);
+        } catch (err) {
+            alert(err.response?.data?.error || 'Bulk action failed');
+        }
+    }
+
+    function showSuccess(message) {
+        setSuccessMessage(message);
+        setTimeout(() => setSuccessMessage(''), 3000);
+    }
 };
 
 export default AdminDashboard;

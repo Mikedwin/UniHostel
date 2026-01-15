@@ -1,9 +1,13 @@
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const User = require('../models/User');
 const Hostel = require('../models/Hostel');
 const Application = require('../models/Application');
 const AdminLog = require('../models/AdminLog');
+const UserActivity = require('../models/UserActivity');
+const ImpersonationLog = require('../models/ImpersonationLog');
 const { auth, checkRole } = require('../middleware/auth');
 
 const checkAdmin = checkRole('admin');
@@ -183,6 +187,261 @@ router.get('/logs', auth, checkAdmin, async (req, res) => {
     const { limit = 50 } = req.query;
     const logs = await AdminLog.find().populate('adminId', 'name email').sort({ timestamp: -1 }).limit(parseInt(limit)).lean();
     res.json(logs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// USER MANAGEMENT ENDPOINTS
+router.get('/users', auth, checkAdmin, async (req, res) => {
+  try {
+    const { search, role, status, page = 1, limit = 50 } = req.query;
+    let query = {};
+    if (search) query.$or = [{ name: { $regex: search, $options: 'i' } }, { email: { $regex: search, $options: 'i' } }];
+    if (role) query.role = role;
+    if (status) query.accountStatus = status;
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const [users, total] = await Promise.all([
+      User.find(query).select('-password -temporaryPassword').sort({ createdAt: -1 }).skip(skip).limit(parseInt(limit)).lean(),
+      User.countDocuments(query)
+    ]);
+    res.json({ users, total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/users/:id', auth, checkAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password -temporaryPassword').populate('suspendedBy', 'name email').lean();
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/users/:id/activity', auth, checkAdmin, async (req, res) => {
+  try {
+    const { limit = 50 } = req.query;
+    const activities = await UserActivity.find({ userId: req.params.id }).sort({ timestamp: -1 }).limit(parseInt(limit)).lean();
+    res.json(activities);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.patch('/users/:id/suspend', auth, checkAdmin, async (req, res) => {
+  try {
+    const { reason, note } = req.body;
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.role === 'admin') return res.status(403).json({ error: 'Cannot suspend admin users' });
+
+    user.accountStatus = 'suspended';
+    user.suspensionReason = reason;
+    user.suspensionNote = note;
+    user.suspendedBy = req.user.id;
+    user.suspendedAt = new Date();
+    await user.save();
+    await logAdminAction(req.user.id, 'SUSPEND_USER', 'user', user._id, `Suspended ${user.role}: ${user.name} - Reason: ${reason}`);
+    res.json({ message: 'User suspended successfully', user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.patch('/users/:id/ban', auth, checkAdmin, async (req, res) => {
+  try {
+    const { reason, note } = req.body;
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.role === 'admin') return res.status(403).json({ error: 'Cannot ban admin users' });
+
+    user.accountStatus = 'banned';
+    user.suspensionReason = reason;
+    user.suspensionNote = note;
+    user.suspendedBy = req.user.id;
+    user.suspendedAt = new Date();
+    await user.save();
+    await logAdminAction(req.user.id, 'BAN_USER', 'user', user._id, `Banned ${user.role}: ${user.name} - Reason: ${reason}`);
+    res.json({ message: 'User banned successfully', user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.patch('/users/:id/activate', auth, checkAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    user.accountStatus = 'active';
+    user.suspensionReason = null;
+    user.suspensionNote = null;
+    user.suspendedBy = null;
+    user.suspendedAt = null;
+    await user.save();
+    await logAdminAction(req.user.id, 'ACTIVATE_USER', 'user', user._id, `Activated ${user.role}: ${user.name}`);
+    res.json({ message: 'User activated successfully', user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.patch('/users/:id/verify', auth, checkAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.role !== 'manager') return res.status(400).json({ error: 'Only managers require verification' });
+
+    user.isVerified = true;
+    user.accountStatus = 'active';
+    await user.save();
+    await logAdminAction(req.user.id, 'VERIFY_MANAGER', 'user', user._id, `Verified manager: ${user.name}`);
+    res.json({ message: 'Manager verified successfully', user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.patch('/users/:id/reject', auth, checkAdmin, async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.role !== 'manager') return res.status(400).json({ error: 'Only managers can be rejected' });
+
+    user.isVerified = false;
+    user.accountStatus = 'banned';
+    user.suspensionReason = reason || 'Manager verification rejected';
+    user.suspendedBy = req.user.id;
+    user.suspendedAt = new Date();
+    await user.save();
+    await logAdminAction(req.user.id, 'REJECT_MANAGER', 'user', user._id, `Rejected manager: ${user.name} - Reason: ${reason}`);
+    res.json({ message: 'Manager rejected successfully', user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/users/:id/reset-password', auth, checkAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const tempPassword = crypto.randomBytes(8).toString('hex');
+    const hashedPassword = await bcrypt.hash(tempPassword, 10);
+    user.password = hashedPassword;
+    user.temporaryPassword = tempPassword;
+    user.passwordResetRequired = true;
+    await user.save();
+    await logAdminAction(req.user.id, 'RESET_PASSWORD', 'user', user._id, `Reset password for ${user.role}: ${user.name}`);
+    res.json({ message: 'Password reset successfully', temporaryPassword: tempPassword });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/users/:id', auth, checkAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.role === 'admin') return res.status(403).json({ error: 'Cannot delete admin users' });
+
+    await User.findByIdAndDelete(req.params.id);
+    await logAdminAction(req.user.id, 'DELETE_USER', 'user', user._id, `Deleted ${user.role}: ${user.name} (${user.email})`);
+    res.json({ message: 'User deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/users/bulk-action', auth, checkAdmin, async (req, res) => {
+  try {
+    const { userIds, action, reason, note } = req.body;
+    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+      return res.status(400).json({ error: 'User IDs required' });
+    }
+
+    const results = { success: [], failed: [] };
+    for (const userId of userIds) {
+      try {
+        const user = await User.findById(userId);
+        if (!user) { results.failed.push({ userId, error: 'User not found' }); continue; }
+        if (user.role === 'admin') { results.failed.push({ userId, error: 'Cannot modify admin users' }); continue; }
+
+        if (action === 'suspend') {
+          user.accountStatus = 'suspended';
+          user.suspensionReason = reason;
+          user.suspensionNote = note;
+          user.suspendedBy = req.user.id;
+          user.suspendedAt = new Date();
+        } else if (action === 'ban') {
+          user.accountStatus = 'banned';
+          user.suspensionReason = reason;
+          user.suspensionNote = note;
+          user.suspendedBy = req.user.id;
+          user.suspendedAt = new Date();
+        } else if (action === 'activate') {
+          user.accountStatus = 'active';
+          user.suspensionReason = null;
+          user.suspensionNote = null;
+          user.suspendedBy = null;
+          user.suspendedAt = null;
+        } else if (action === 'delete') {
+          await User.findByIdAndDelete(userId);
+          results.success.push(userId);
+          await logAdminAction(req.user.id, 'BULK_DELETE_USER', 'user', userId, `Bulk deleted user: ${user.name}`);
+          continue;
+        }
+
+        await user.save();
+        results.success.push(userId);
+        await logAdminAction(req.user.id, `BULK_${action.toUpperCase()}_USER`, 'user', userId, `Bulk ${action} user: ${user.name}`);
+      } catch (err) {
+        results.failed.push({ userId, error: err.message });
+      }
+    }
+
+    res.json({ message: 'Bulk action completed', results });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/users/:id/impersonate', auth, checkAdmin, async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const targetUser = await User.findById(req.params.id);
+    if (!targetUser) return res.status(404).json({ error: 'User not found' });
+    if (targetUser.role === 'admin') return res.status(403).json({ error: 'Cannot impersonate admin users' });
+
+    const impersonationLog = await ImpersonationLog.create({
+      adminId: req.user.id,
+      targetUserId: targetUser._id,
+      reason: reason || 'Troubleshooting',
+      startTime: new Date()
+    });
+
+    await logAdminAction(req.user.id, 'START_IMPERSONATION', 'user', targetUser._id, `Started impersonating ${targetUser.role}: ${targetUser.name}`);
+    res.json({ message: 'Impersonation started', impersonationId: impersonationLog._id, targetUser: { id: targetUser._id, name: targetUser.name, email: targetUser.email, role: targetUser.role } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/impersonate/exit', auth, checkAdmin, async (req, res) => {
+  try {
+    const { impersonationId } = req.body;
+    const log = await ImpersonationLog.findById(impersonationId);
+    if (!log) return res.status(404).json({ error: 'Impersonation session not found' });
+
+    log.endTime = new Date();
+    await log.save();
+    await logAdminAction(req.user.id, 'END_IMPERSONATION', 'user', log.targetUserId, 'Ended impersonation session');
+    res.json({ message: 'Impersonation ended successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -6,7 +6,26 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { type: String, enum: ['student', 'manager', 'admin'], default: 'student' },
   isActive: { type: Boolean, default: true },
+  accountStatus: { type: String, enum: ['active', 'suspended', 'banned', 'pending_verification'], default: 'active' },
+  isVerified: { type: Boolean, default: true },
+  suspensionReason: { type: String },
+  suspensionNote: { type: String },
+  suspendedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  suspendedAt: { type: Date },
+  lastLogin: { type: Date },
+  loginHistory: [{
+    timestamp: { type: Date, default: Date.now },
+    ipAddress: { type: String },
+    userAgent: { type: String }
+  }],
+  passwordResetRequired: { type: Boolean, default: false },
+  temporaryPassword: { type: String },
   createdAt: { type: Date, default: Date.now }
 });
+
+userSchema.index({ email: 1 });
+userSchema.index({ role: 1, accountStatus: 1 });
+userSchema.index({ lastLogin: -1 });
+userSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('User', userSchema);
