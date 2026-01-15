@@ -30,6 +30,23 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/unihostel',
   .then(() => console.log('MongoDB Connected'))
   .catch(err => console.log('MongoDB Error:', err));
 
+// Health check endpoint
+app.get('/', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    message: 'UniHostel API is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'ok',
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
 // --- AUTH ROUTES ---
 app.post('/api/auth/register', async (req, res) => {
   try {
