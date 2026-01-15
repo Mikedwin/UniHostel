@@ -26,7 +26,7 @@ const initAdmin = async () => {
       name: process.env.ADMIN_USERNAME,
       email: adminEmail,
       password: hashedPassword,
-      role: 'manager'
+      role: 'admin'
     });
 
     await admin.save();

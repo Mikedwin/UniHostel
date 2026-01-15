@@ -23,6 +23,9 @@ const hostelSchema = new mongoose.Schema({
   description: { type: String, required: true },
   roomTypes: [roomTypeSchema],
   isAvailable: { type: Boolean, default: true },
+  isActive: { type: Boolean, default: true },
+  isFlagged: { type: Boolean, default: false },
+  flagReason: { type: String },
   createdAt: { type: Date, default: Date.now }
 });
 
