@@ -11,6 +11,7 @@ import StudentRegister from './pages/StudentRegister';
 import ManagerRegister from './pages/ManagerRegister';
 import StudentDashboard from './pages/StudentDashboard';
 import ManagerDashboard from './pages/ManagerDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import AddHostel from './pages/AddHostel';
 import EditHostel from './pages/EditHostel';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -42,6 +43,12 @@ function App() {
             <Route path="/manager-dashboard" element={
               <ProtectedRoute role="manager">
                 <ManagerDashboard />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/admin-dashboard" element={
+              <ProtectedRoute role="admin">
+                <AdminDashboard />
               </ProtectedRoute>
             } />
             

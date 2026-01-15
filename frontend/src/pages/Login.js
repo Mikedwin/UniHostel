@@ -15,7 +15,10 @@ const Login = () => {
         try {
             const res = await axios.post(`${API_URL}/api/auth/login`, formData);
             login(res.data.user, res.data.token);
-            navigate(res.data.user.role === 'manager' ? '/manager-dashboard' : '/hostels');
+            const role = res.data.user.role;
+            if (role === 'admin') navigate('/admin-dashboard');
+            else if (role === 'manager') navigate('/manager-dashboard');
+            else navigate('/hostels');
         } catch (err) {
             setError(err.response?.data?.message || 'Invalid credentials');
         }
