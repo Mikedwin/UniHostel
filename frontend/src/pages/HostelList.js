@@ -20,17 +20,52 @@ const HostelList = () => {
       const res = await axios.get(`${API_URL}/api/hostels`);
       
       let filteredData = res.data;
+      let isRoomTypeSearch = false;
       
-      // Apply search filter
+      // Check if search is for room type
       if (searchFilter && searchFilter.trim()) {
         const query = searchFilter.toLowerCase().trim();
-        filteredData = filteredData.filter(hostel => {
-          const nameMatch = hostel.name.toLowerCase().includes(query);
-          const roomTypeMatch = hostel.roomTypes?.some(room => 
-            room.type.toLowerCase().includes(query)
-          );
-          return nameMatch || roomTypeMatch;
+        const roomTypes = ['1 in a room', '2 in a room', '3 in a room', '4 in a room'];
+        isRoomTypeSearch = roomTypes.some(type => type.includes(query) || query.includes(type.replace(' in a room', '')));
+      }
+      
+      // If searching for room type, show all matching rooms globally
+      if (isRoomTypeSearch && searchFilter.trim()) {
+        const query = searchFilter.toLowerCase().trim();
+        let allMatchingRooms = [];
+        
+        filteredData.forEach(hostel => {
+          if (hostel.roomTypes && hostel.roomTypes.length > 0) {
+            hostel.roomTypes.forEach(room => {
+              if (room.type.toLowerCase().includes(query)) {
+                // Apply price filter if set
+                if (!priceFilter || priceFilter <= 0 || room.price <= Number(priceFilter)) {
+                  allMatchingRooms.push({
+                    ...room,
+                    hostelId: hostel._id,
+                    hostelName: hostel.name,
+                    hostelLocation: hostel.location,
+                    hostelImage: hostel.hostelViewImage
+                  });
+                }
+              }
+            });
+          }
         });
+        
+        allMatchingRooms.sort((a, b) => b.price - a.price);
+        setRooms(allMatchingRooms);
+        setHostels([]);
+        setShowRooms(true);
+        return;
+      }
+      
+      // Apply hostel name search filter
+      if (searchFilter && searchFilter.trim() && !isRoomTypeSearch) {
+        const query = searchFilter.toLowerCase().trim();
+        filteredData = filteredData.filter(hostel => 
+          hostel.name.toLowerCase().includes(query)
+        );
       }
       
       // If no price filter, show hostels
@@ -108,6 +143,7 @@ const HostelList = () => {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
+                  <p className="text-xs text-gray-500 mt-1">Search by hostel name or room type (1, 2, 3, or 4 in a room)</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Maximum Price (per semester)</label>
@@ -159,7 +195,11 @@ const HostelList = () => {
             <div className="mb-4 flex justify-between items-center">
               <p className="text-gray-600">
                 {showRooms ? (
-                  <>{rooms.length} {rooms.length === 1 ? 'room' : 'rooms'} found within your budget</>
+                  searchQuery && searchQuery.trim() ? (
+                    <>{rooms.length} {rooms.length === 1 ? 'room' : 'rooms'} found matching "{searchQuery}"</>
+                  ) : (
+                    <>{rooms.length} {rooms.length === 1 ? 'room' : 'rooms'} found within your budget</>
+                  )
                 ) : (
                   <>{hostels.length} {hostels.length === 1 ? 'hostel' : 'hostels'} available</>
                 )}
