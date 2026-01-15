@@ -64,6 +64,8 @@ const AdminDashboard = () => {
         }
     };
 
+    // Reserved for future room management features
+    // eslint-disable-next-line no-unused-vars
     const resetRoomCapacity = async (hostelId, roomType) => {
         const newCapacity = prompt(`Enter new occupied capacity for ${roomType}:`);
         if (newCapacity === null) return;
@@ -78,7 +80,6 @@ const AdminDashboard = () => {
             alert('Failed to reset capacity');
         }
     };
-    // Note: resetRoomCapacity will be used in future room management features
 
     if (loading) {
         return <div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;

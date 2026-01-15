@@ -28,7 +28,6 @@ const AddHostel = () => {
         facilities: [],
         totalCapacity: ''
     });
-    const [facilityInput, setFacilityInput] = useState('');
     const [expandedRoom, setExpandedRoom] = useState(null);
 
     const commonFacilities = {
@@ -55,7 +54,6 @@ const AddHostel = () => {
     const addFacility = (facility) => {
         if (facility && !currentRoom.facilities.includes(facility)) {
             setCurrentRoom({...currentRoom, facilities: [...currentRoom.facilities, facility]});
-            setFacilityInput('');
         }
     };
 
@@ -80,7 +78,6 @@ const AddHostel = () => {
             facilities: [],
             totalCapacity: ''
         });
-        setFacilityInput('');
     };
 
     const removeRoomType = (index) => {
