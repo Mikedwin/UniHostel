@@ -204,11 +204,12 @@ const AddHostel = () => {
                                     Hostel View Image
                                 </label>
                                 <p className="text-xs text-gray-500 mb-3">
-                                    This image will be displayed at the top of the hostel page when students browse hostels.
+                                    📸 Take a photo of your hostel exterior or upload from gallery
                                 </p>
                                 <input
                                     type="file"
                                     accept="image/*"
+                                    capture="environment"
                                     onChange={async (e) => {
                                         const file = e.target.files[0];
                                         if (file) {
@@ -218,7 +219,7 @@ const AddHostel = () => {
                                             reader.readAsDataURL(compressed);
                                         }
                                     }}
-                                    className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 mb-3"
+                                    className="w-full border-2 border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-blue-500 mb-3 text-base file:mr-4 file:py-3 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                 />
                                 {hostelViewImage && (
                                     <div className="relative group border-2 border-blue-200 rounded-lg overflow-hidden">
@@ -226,7 +227,7 @@ const AddHostel = () => {
                                         <button
                                             type="button"
                                             onClick={() => setHostelViewImage('')}
-                                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 transition-colors"
+                                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg"
                                         >
                                             <X className="w-5 h-5" />
                                         </button>
@@ -234,11 +235,11 @@ const AddHostel = () => {
                                 )}
                             </div>
                             
-                            <div className="flex justify-end space-x-4 pt-4">
+                            <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-4">
                                 <button 
                                     type="button"
                                     onClick={() => navigate('/manager-dashboard')}
-                                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                                    className="w-full sm:w-auto px-6 py-4 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-base active:scale-95 transition-transform"
                                 >
                                     Cancel
                                 </button>
@@ -246,9 +247,9 @@ const AddHostel = () => {
                                     type="button"
                                     onClick={() => setStep(2)}
                                     disabled={!canProceedToStep2()}
-                                    className="px-6 py-3 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full sm:w-auto px-6 py-4 bg-blue-600 text-white rounded-lg font-bold text-base hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-md active:scale-95 transition-transform"
                                 >
-                                    Next: Add Room Types
+                                    Next: Add Room Types →
                                 </button>
                             </div>
                         </div>
@@ -267,13 +268,13 @@ const AddHostel = () => {
                                 <div className="border-2 border-dashed border-blue-300 rounded-lg p-6 bg-blue-50">
                                     <h3 className="font-semibold text-lg mb-4">Add Room Type</h3>
                                     
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div className="grid grid-cols-1 gap-4 mb-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                                 Room Type <span className="text-red-500">*</span>
                                             </label>
                                             <select 
-                                                className="w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-blue-500 bg-white" 
+                                                className="w-full border border-gray-300 rounded-md p-4 text-base focus:ring-2 focus:ring-blue-500 bg-white" 
                                                 value={currentRoom.type}
                                                 onChange={e => setCurrentRoom({...currentRoom, type: e.target.value})}
                                             >
@@ -290,7 +291,7 @@ const AddHostel = () => {
                                             <input 
                                                 type="number" 
                                                 min="1"
-                                                className="w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-blue-500" 
+                                                className="w-full border border-gray-300 rounded-md p-4 text-base focus:ring-2 focus:ring-blue-500" 
                                                 placeholder="Enter price"
                                                 value={currentRoom.price}
                                                 onChange={e => setCurrentRoom({...currentRoom, price: e.target.value})}
@@ -308,7 +309,7 @@ const AddHostel = () => {
                                         <input 
                                             type="number" 
                                             min="1"
-                                            className="w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-blue-500" 
+                                            className="w-full border border-gray-300 rounded-md p-4 text-base focus:ring-2 focus:ring-blue-500" 
                                             placeholder="e.g., 20 students"
                                             value={currentRoom.totalCapacity}
                                             onChange={e => setCurrentRoom({...currentRoom, totalCapacity: e.target.value})}
@@ -320,11 +321,12 @@ const AddHostel = () => {
                                             Room Image <span className="text-red-500">*</span>
                                         </label>
                                         <p className="text-xs text-gray-500 mb-2">
-                                            Upload an image showing the interior of this room type.
+                                            📸 Take a photo or upload from gallery
                                         </p>
                                         <input
                                             type="file"
                                             accept="image/*"
+                                            capture="environment"
                                             onChange={async (e) => {
                                                 const file = e.target.files[0];
                                                 if (file) {
@@ -334,7 +336,7 @@ const AddHostel = () => {
                                                     reader.readAsDataURL(compressed);
                                                 }
                                             }}
-                                            className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 mb-2 bg-white"
+                                            className="w-full border-2 border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-blue-500 mb-2 bg-white text-base file:mr-4 file:py-3 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                         />
                                         {currentRoom.roomImage && (
                                             <div className="relative group border rounded-lg overflow-hidden">
@@ -342,9 +344,9 @@ const AddHostel = () => {
                                                 <button
                                                     type="button"
                                                     onClick={() => setCurrentRoom({...currentRoom, roomImage: ''})}
-                                                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center hover:bg-red-600"
+                                                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-red-600 shadow-lg"
                                                 >
-                                                    <X className="w-4 h-4" />
+                                                    <X className="w-5 h-5" />
                                                 </button>
                                             </div>
                                         )}
@@ -352,24 +354,24 @@ const AddHostel = () => {
                                     
                                     {/* Facilities */}
                                     <div className="mb-4">
-                                        <label className="block text-sm font-medium text-gray-700 mb-3">Room Facilities</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-3">Room Facilities (Tap to select)</label>
                                         
                                         {Object.entries(commonFacilities).map(([category, items]) => (
                                             <div key={category} className="mb-4">
                                                 <p className="text-xs font-medium text-gray-600 mb-2">{category}</p>
-                                                <div className="flex flex-wrap gap-2">
+                                                <div className="grid grid-cols-2 gap-2">
                                                     {items.map(facility => (
                                                         <button
                                                             key={facility}
                                                             type="button"
                                                             onClick={() => addFacility(facility)}
-                                                            className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
+                                                            className={`px-4 py-3 text-sm font-medium rounded-lg border-2 transition-all ${
                                                                 currentRoom.facilities.includes(facility)
-                                                                    ? 'bg-blue-600 text-white border-blue-600'
-                                                                    : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
+                                                                    ? 'bg-blue-600 text-white border-blue-600 shadow-md'
+                                                                    : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400 active:scale-95'
                                                             }`}
                                                         >
-                                                            {facility}
+                                                            {currentRoom.facilities.includes(facility) && '✓ '}{facility}
                                                         </button>
                                                     ))}
                                                 </div>
@@ -401,9 +403,9 @@ const AddHostel = () => {
                                         type="button"
                                         onClick={addRoomType}
                                         disabled={!isRoomValid()}
-                                        className="w-full bg-green-600 text-white py-3 rounded-md font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                                        className="w-full bg-green-600 text-white py-4 rounded-lg font-bold text-base hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-md active:scale-95 transition-transform"
                                     >
-                                        <Plus className="w-5 h-5 mr-2" />
+                                        <Plus className="w-6 h-6 mr-2" />
                                         Add This Room Type
                                     </button>
                                 </div>
@@ -458,21 +460,21 @@ const AddHostel = () => {
                                 )}
                             </div>
                             
-                            <div className="flex justify-between">
+                            <div className="flex flex-col sm:flex-row justify-between gap-3">
                                 <button 
                                     type="button"
                                     onClick={() => setStep(1)}
-                                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                                    className="w-full sm:w-auto px-6 py-4 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-base active:scale-95 transition-transform"
                                 >
-                                    Back
+                                    ← Back
                                 </button>
                                 <button 
                                     type="button"
                                     onClick={handleSubmit}
                                     disabled={loading || roomTypes.length === 0}
-                                    className="px-8 py-3 bg-blue-600 text-white rounded-md font-bold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white rounded-lg font-bold text-base hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-md active:scale-95 transition-transform"
                                 >
-                                    {loading ? 'Publishing...' : 'Submit Hostel Listing'}
+                                    {loading ? 'Publishing...' : '✓ Submit Hostel Listing'}
                                 </button>
                             </div>
                         </div>
