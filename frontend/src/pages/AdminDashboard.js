@@ -14,7 +14,6 @@ const AdminDashboard = () => {
     const [stats, setStats] = useState(null);
     const [hostels, setHostels] = useState([]);
     const [managers, setManagers] = useState([]);
-    const [applications, setApplications] = useState([]);
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('overview');
@@ -40,17 +39,15 @@ const AdminDashboard = () => {
     const fetchDashboardData = async () => {
         try {
             setLoading(true);
-            const [statsRes, hostelsRes, managersRes, appsRes, logsRes] = await Promise.all([
+            const [statsRes, hostelsRes, managersRes, logsRes] = await Promise.all([
                 axios.get(`${API_URL}/api/admin/dashboard/stats`, { headers: { Authorization: `Bearer ${token}` } }),
                 axios.get(`${API_URL}/api/admin/hostels`, { headers: { Authorization: `Bearer ${token}` } }),
                 axios.get(`${API_URL}/api/admin/managers`, { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get(`${API_URL}/api/admin/applications`, { headers: { Authorization: `Bearer ${token}` } }),
                 axios.get(`${API_URL}/api/admin/logs?limit=20`, { headers: { Authorization: `Bearer ${token}` } })
             ]);
             setStats(statsRes.data);
             setHostels(hostelsRes.data);
             setManagers(managersRes.data);
-            setApplications(appsRes.data);
             setLogs(logsRes.data);
         } catch (err) {
             console.error('Admin dashboard error:', err);
