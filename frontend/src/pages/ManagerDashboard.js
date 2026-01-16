@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Check, X, Plus, Edit, Trash2 } from 'lucide-react';
+import { Check, X, Plus, Edit, Trash2, Search, Eye, TrendingUp, Users, Home, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import API_URL from '../config';
 
@@ -12,6 +12,14 @@ const ManagerDashboard = () => {
     const { token, user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    
+    // Filter states
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [hostelFilter, setHostelFilter] = useState('all');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedApp, setSelectedApp] = useState(null);
+    const [showDetailsModal, setShowDetailsModal] = useState(false);
+    const [selectedApps, setSelectedApps] = useState([]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -74,6 +82,48 @@ const ManagerDashboard = () => {
         }
     };
 
+    const handleBulkAction = async (action) => {
+        if (selectedApps.length === 0) return;
+        if (!window.confirm(`${action === 'approved' ? 'Approve' : 'Reject'} ${selectedApps.length} application(s)?`)) return;
+        
+        try {
+            await Promise.all(selectedApps.map(id => 
+                axios.patch(`${API_URL}/api/applications/${id}`, { status: action }, {
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+            ));
+            setSelectedApps([]);
+            fetchData();
+        } catch (err) {
+            console.error('Bulk action error:', err);
+            alert('Some actions failed');
+        }
+    };
+
+    const filteredApplications = useMemo(() => {
+        return applications.filter(app => {
+            const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
+            const matchesHostel = hostelFilter === 'all' || app.hostelId?._id === hostelFilter;
+            const matchesSearch = !searchQuery || 
+                app.studentName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                app.studentId?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                app.contactNumber?.includes(searchQuery);
+            return matchesStatus && matchesHostel && matchesSearch;
+        });
+    }, [applications, statusFilter, hostelFilter, searchQuery]);
+
+    const stats = useMemo(() => {
+        const totalApps = applications.length;
+        const pending = applications.filter(a => a.status === 'pending').length;
+        const approved = applications.filter(a => a.status === 'approved').length;
+        const rejected = applications.filter(a => a.status === 'rejected').length;
+        const totalCapacity = hostels.reduce((sum, h) => sum + h.roomTypes.reduce((s, r) => s + r.totalCapacity, 0), 0);
+        const totalOccupied = hostels.reduce((sum, h) => sum + h.roomTypes.reduce((s, r) => s + (r.occupiedCapacity || 0), 0), 0);
+        const occupancyRate = totalCapacity > 0 ? ((totalOccupied / totalCapacity) * 100).toFixed(1) : 0;
+        
+        return { totalApps, pending, approved, rejected, totalHostels: hostels.length, occupancyRate };
+    }, [applications, hostels]);
+
     return (
         <div className="max-w-7xl mx-auto px-4 py-8">
             {/* Pending Verification Banner */}
@@ -126,17 +176,140 @@ const ManagerDashboard = () => {
             )}
 
             {!loading && !error && (
+                <>
+                {/* KPI Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-blue-500">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-gray-600">Total Applications</p>
+                                <p className="text-2xl font-bold text-gray-900">{stats.totalApps}</p>
+                            </div>
+                            <Users className="w-8 h-8 text-blue-500" />
+                        </div>
+                    </div>
+                    <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-yellow-500">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-gray-600">Pending</p>
+                                <p className="text-2xl font-bold text-gray-900">{stats.pending}</p>
+                            </div>
+                            <Clock className="w-8 h-8 text-yellow-500" />
+                        </div>
+                    </div>
+                    <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-green-500">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-gray-600">Occupancy Rate</p>
+                                <p className="text-2xl font-bold text-gray-900">{stats.occupancyRate}%</p>
+                            </div>
+                            <TrendingUp className="w-8 h-8 text-green-500" />
+                        </div>
+                    </div>
+                    <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-purple-500">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-gray-600">Total Hostels</p>
+                                <p className="text-2xl font-bold text-gray-900">{stats.totalHostels}</p>
+                            </div>
+                            <Home className="w-8 h-8 text-purple-500" />
+                        </div>
+                    </div>
+                </div>
+
                 <div className="grid grid-cols-1 lg:grid-cols-10 gap-8">
                     <div className="lg:col-span-7">
-                    <h2 className="text-lg font-bold mb-4">Incoming Applications</h2>
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-lg font-bold">Incoming Applications</h2>
+                        {stats.pending > 0 && (
+                            <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded-full">
+                                {stats.pending} Pending
+                            </span>
+                        )}
+                    </div>
+                    
+                    {/* Filters */}
+                    <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Search student..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-10 pr-3 py-2 border rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                />
+                            </div>
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="px-3 py-2 border rounded-md focus:ring-2 focus:ring-primary-500"
+                            >
+                                <option value="all">All Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                            <select
+                                value={hostelFilter}
+                                onChange={(e) => setHostelFilter(e.target.value)}
+                                className="px-3 py-2 border rounded-md focus:ring-2 focus:ring-primary-500"
+                            >
+                                <option value="all">All Hostels</option>
+                                {hostels.map(h => (
+                                    <option key={h._id} value={h._id}>{h.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        {selectedApps.length > 0 && (
+                            <div className="mt-4 flex items-center gap-3">
+                                <span className="text-sm text-gray-600">{selectedApps.length} selected</span>
+                                <button
+                                    onClick={() => handleBulkAction('approved')}
+                                    className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+                                >
+                                    Approve All
+                                </button>
+                                <button
+                                    onClick={() => handleBulkAction('rejected')}
+                                    className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+                                >
+                                    Reject All
+                                </button>
+                                <button
+                                    onClick={() => setSelectedApps([])}
+                                    className="text-gray-600 text-sm hover:underline"
+                                >
+                                    Clear
+                                </button>
+                            </div>
+                        )}
+                    </div>
                     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                        {applications.length === 0 ? (
-                            <p className="p-8 text-gray-500 text-center">No applications yet.</p>
+                        {filteredApplications.length === 0 ? (
+                            <p className="p-8 text-gray-500 text-center">
+                                {applications.length === 0 ? 'No applications yet.' : 'No applications match your filters.'}
+                            </p>
                         ) : (
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
+                                            <th className="px-4 py-3 text-left">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedApps.length === filteredApplications.filter(a => a.status === 'pending').length && filteredApplications.filter(a => a.status === 'pending').length > 0}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setSelectedApps(filteredApplications.filter(a => a.status === 'pending').map(a => a._id));
+                                                        } else {
+                                                            setSelectedApps([]);
+                                                        }
+                                                    }}
+                                                    className="rounded"
+                                                />
+                                            </th>
                                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
                                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
                                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hostel</th>
@@ -147,8 +320,24 @@ const ManagerDashboard = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
-                                        {applications.map(app => (
-                                            <tr key={app._id}>
+                                        {filteredApplications.map(app => (
+                                            <tr key={app._id} className="hover:bg-gray-50">
+                                                <td className="px-4 py-3 whitespace-nowrap">
+                                                    {app.status === 'pending' && (
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedApps.includes(app._id)}
+                                                            onChange={(e) => {
+                                                                if (e.target.checked) {
+                                                                    setSelectedApps([...selectedApps, app._id]);
+                                                                } else {
+                                                                    setSelectedApps(selectedApps.filter(id => id !== app._id));
+                                                                }
+                                                            }}
+                                                            className="rounded"
+                                                        />
+                                                    )}
+                                                </td>
                                                 <td className="px-4 py-3 whitespace-nowrap">
                                                     <div className="text-sm font-medium text-gray-900">{app.studentName || app.studentId?.name}</div>
                                                     <div className="text-xs text-gray-500">{app.studentId?.email}</div>
@@ -174,22 +363,27 @@ const ManagerDashboard = () => {
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-3 whitespace-nowrap text-sm">
-                                                    {app.status === 'pending' ? (
-                                                        <div className="flex space-x-2">
-                                                            <button 
-                                                                onClick={() => handleStatusUpdate(app._id, 'approved')}
-                                                                className="text-green-600 hover:bg-green-50 p-1 rounded" title="Approve">
-                                                                <Check className="w-5 h-5" />
-                                                            </button>
-                                                            <button 
-                                                                onClick={() => handleStatusUpdate(app._id, 'rejected')}
-                                                                className="text-red-600 hover:bg-red-50 p-1 rounded" title="Reject">
-                                                                <X className="w-5 h-5" />
-                                                            </button>
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-gray-400">-</span>
-                                                    )}
+                                                    <div className="flex space-x-2">
+                                                        <button 
+                                                            onClick={() => { setSelectedApp(app); setShowDetailsModal(true); }}
+                                                            className="text-blue-600 hover:bg-blue-50 p-1 rounded" title="View Details">
+                                                            <Eye className="w-5 h-5" />
+                                                        </button>
+                                                        {app.status === 'pending' && (
+                                                            <>
+                                                                <button 
+                                                                    onClick={() => handleStatusUpdate(app._id, 'approved')}
+                                                                    className="text-green-600 hover:bg-green-50 p-1 rounded" title="Approve">
+                                                                    <Check className="w-5 h-5" />
+                                                                </button>
+                                                                <button 
+                                                                    onClick={() => handleStatusUpdate(app._id, 'rejected')}
+                                                                    className="text-red-600 hover:bg-red-50 p-1 rounded" title="Reject">
+                                                                    <X className="w-5 h-5" />
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
@@ -261,6 +455,99 @@ const ManagerDashboard = () => {
                     </div>
                     </div>
                 </div>
+                
+                {/* Application Details Modal */}
+                {showDetailsModal && selectedApp && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                            <div className="p-6">
+                                <div className="flex justify-between items-start mb-4">
+                                    <h3 className="text-xl font-bold">Application Details</h3>
+                                    <button onClick={() => setShowDetailsModal(false)} className="text-gray-400 hover:text-gray-600">
+                                        <X className="w-6 h-6" />
+                                    </button>
+                                </div>
+                                
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-sm text-gray-600">Student Name</p>
+                                            <p className="font-semibold">{selectedApp.studentName}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-600">Email</p>
+                                            <p className="font-semibold">{selectedApp.studentId?.email}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-600">Contact Number</p>
+                                            <p className="font-semibold">{selectedApp.contactNumber}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-600">Status</p>
+                                            <span className={`inline-block px-2 py-1 text-xs font-bold rounded-full uppercase ${
+                                                selectedApp.status === 'approved' ? 'bg-green-100 text-green-700' : 
+                                                selectedApp.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+                                            }`}>
+                                                {selectedApp.status}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-600">Hostel</p>
+                                            <p className="font-semibold">{selectedApp.hostelId?.name}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-600">Location</p>
+                                            <p className="font-semibold">{selectedApp.hostelId?.location}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-600">Room Type</p>
+                                            <p className="font-semibold">{selectedApp.roomType}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-600">Semester</p>
+                                            <p className="font-semibold">{selectedApp.semester}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-600">Applied On</p>
+                                            <p className="font-semibold">{new Date(selectedApp.createdAt).toLocaleDateString()}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    {selectedApp.message && (
+                                        <div>
+                                            <p className="text-sm text-gray-600 mb-2">Message</p>
+                                            <p className="bg-gray-50 p-3 rounded border">{selectedApp.message}</p>
+                                        </div>
+                                    )}
+                                    
+                                    {selectedApp.status === 'pending' && (
+                                        <div className="flex gap-3 pt-4 border-t">
+                                            <button
+                                                onClick={() => {
+                                                    handleStatusUpdate(selectedApp._id, 'approved');
+                                                    setShowDetailsModal(false);
+                                                }}
+                                                className="flex-1 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                                            >
+                                                Approve Application
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    handleStatusUpdate(selectedApp._id, 'rejected');
+                                                    setShowDetailsModal(false);
+                                                }}
+                                                className="flex-1 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                                            >
+                                                Reject Application
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                </>
             )}
         </div>
     );
