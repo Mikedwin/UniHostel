@@ -12,6 +12,8 @@ const HostelList = () => {
   const [maxPrice, setMaxPrice] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showRooms, setShowRooms] = useState(false);
+  const [sortBy, setSortBy] = useState('newest');
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const fetchHostels = async (priceFilter = maxPrice, searchFilter = searchQuery) => {
     try {
@@ -53,7 +55,6 @@ const HostelList = () => {
           }
         });
         
-        allMatchingRooms.sort((a, b) => b.price - a.price);
         setRooms(allMatchingRooms);
         setHostels([]);
         setShowRooms(true);
@@ -92,8 +93,6 @@ const HostelList = () => {
           }
         });
         
-        allRooms.sort((a, b) => b.price - a.price);
-        
         setRooms(allRooms);
         setHostels([]);
         setShowRooms(true);
@@ -119,8 +118,44 @@ const HostelList = () => {
   const clearFilter = () => {
     setMaxPrice('');
     setSearchQuery('');
+    setSortBy('newest');
     setShowRooms(false);
     fetchHostels('', '');
+  };
+
+  // Sort hostels/rooms based on selected option
+  const sortedHostels = React.useMemo(() => {
+    const items = [...hostels];
+    if (sortBy === 'price_low') return items.sort((a, b) => {
+      const minA = Math.min(...(a.roomTypes?.map(r => r.price) || [0]));
+      const minB = Math.min(...(b.roomTypes?.map(r => r.price) || [0]));
+      return minA - minB;
+    });
+    if (sortBy === 'price_high') return items.sort((a, b) => {
+      const maxA = Math.max(...(a.roomTypes?.map(r => r.price) || [0]));
+      const maxB = Math.max(...(b.roomTypes?.map(r => r.price) || [0]));
+      return maxB - maxA;
+    });
+    return items.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  }, [hostels, sortBy]);
+
+  const sortedRooms = React.useMemo(() => {
+    const items = [...rooms];
+    if (sortBy === 'price_low') return items.sort((a, b) => a.price - b.price);
+    if (sortBy === 'price_high') return items.sort((a, b) => b.price - a.price);
+    return items;
+  }, [rooms, sortBy]);
+
+  // Calculate hostel stats
+  const getHostelStats = (hostel) => {
+    const totalCapacity = hostel.roomTypes?.reduce((sum, r) => sum + r.totalCapacity, 0) || 0;
+    const totalOccupied = hostel.roomTypes?.reduce((sum, r) => sum + (r.occupiedCapacity || 0), 0) || 0;
+    const availableSlots = totalCapacity - totalOccupied;
+    const prices = hostel.roomTypes?.map(r => r.price) || [];
+    const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+    const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+    const isAvailable = availableSlots > 0;
+    return { totalCapacity, totalOccupied, availableSlots, minPrice, maxPrice, isAvailable };
   };
 
   return (
@@ -131,7 +166,17 @@ const HostelList = () => {
           <p className="text-gray-600">Discover verified student accommodation within your budget</p>
         </div>
 
-        <div className="mb-8 bg-white p-6 rounded-lg shadow-sm">
+        {/* Mobile Filter Button */}
+        <button
+          onClick={() => setShowMobileFilters(true)}
+          className="md:hidden w-full mb-4 bg-primary-600 text-white px-4 py-4 rounded-lg hover:bg-primary-700 transition-colors duration-200 flex items-center justify-center font-medium shadow-md"
+        >
+          <Filter className="w-5 h-5 mr-2" />
+          Filters & Search
+        </button>
+
+        {/* Desktop Filter Bar (Sticky) */}
+        <div className="hidden md:block sticky top-0 z-10 mb-8 bg-white p-6 rounded-lg shadow-sm">
           <form onSubmit={handleSearch} className="space-y-4">
             <div className="max-w-4xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -161,10 +206,10 @@ const HostelList = () => {
                 </div>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <button 
                 type="submit" 
-                className="flex-1 sm:flex-none bg-primary-600 text-white px-8 py-3 rounded-md hover:bg-primary-700 transition-colors duration-200 flex items-center justify-center font-medium"
+                className="bg-primary-600 text-white px-8 py-4 rounded-md hover:bg-primary-700 transition-colors duration-200 flex items-center justify-center font-medium"
               >
                 <Filter className="w-4 h-4 mr-2" />
                 Search Hostels
@@ -172,13 +217,93 @@ const HostelList = () => {
               <button 
                 type="button"
                 onClick={clearFilter}
-                className="flex-1 sm:flex-none bg-gray-200 text-gray-700 px-8 py-3 rounded-md hover:bg-gray-300 transition-colors duration-200 font-medium"
+                className="bg-gray-200 text-gray-700 px-8 py-4 rounded-md hover:bg-gray-300 transition-colors duration-200 font-medium"
               >
                 Clear Filter
               </button>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="px-4 py-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 font-medium"
+              >
+                <option value="newest">Newest First</option>
+                <option value="price_low">Price: Low to High</option>
+                <option value="price_high">Price: High to Low</option>
+              </select>
             </div>
           </form>
         </div>
+
+        {/* Mobile Bottom Sheet Filter */}
+        {showMobileFilters && (
+          <div className="md:hidden fixed inset-0 z-50 flex items-end">
+            <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowMobileFilters(false)}></div>
+            <div className="relative bg-white w-full rounded-t-2xl shadow-2xl animate-slide-up max-h-[85vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
+                <h3 className="text-lg font-bold">Filters & Search</h3>
+                <button onClick={() => setShowMobileFilters(false)} className="text-gray-500 hover:text-gray-700">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <form onSubmit={(e) => { handleSearch(e); setShowMobileFilters(false); }} className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Search by Hostel Name or Room Type</label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="e.g., Sunrise Hostel or 2 in a Room..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Search by hostel name or room type (1, 2, 3, or 4 in a room)</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Maximum Price (per semester)</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-4 text-gray-400 font-medium">GH₵</span>
+                    <input
+                      type="number"
+                      className="w-full pl-12 pr-3 py-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      placeholder="Enter budget..."
+                      value={maxPrice}
+                      onChange={(e) => setMaxPrice(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="w-full px-4 py-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 font-medium"
+                  >
+                    <option value="newest">Newest First</option>
+                    <option value="price_low">Price: Low to High</option>
+                    <option value="price_high">Price: High to Low</option>
+                  </select>
+                </div>
+                <div className="space-y-3 pt-2">
+                  <button 
+                    type="submit" 
+                    className="w-full bg-primary-600 text-white px-8 py-4 rounded-md hover:bg-primary-700 transition-colors duration-200 flex items-center justify-center font-medium"
+                  >
+                    <Filter className="w-5 h-5 mr-2" />
+                    Apply Filters
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => { clearFilter(); setShowMobileFilters(false); }}
+                    className="w-full bg-gray-200 text-gray-700 px-8 py-4 rounded-md hover:bg-gray-300 transition-colors duration-200 font-medium"
+                  >
+                    Clear All
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
@@ -209,7 +334,7 @@ const HostelList = () => {
             
             {showRooms ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {rooms.map((room, index) => (
+                {sortedRooms.map((room, index) => (
                   <div
                     key={`${room.hostelId}-${index}`} 
                     className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200"
@@ -255,30 +380,66 @@ const HostelList = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {hostels.map(hostel => (
+                {sortedHostels.map(hostel => {
+                  const stats = getHostelStats(hostel);
+                  return (
                   <Link 
                     to={`/hostels/${hostel._id}`} 
                     key={hostel._id} 
                     className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1"
                   >
-                    <img 
-                      src={hostel.hostelViewImage || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80'} 
-                      alt={hostel.name} 
-                      className="h-48 w-full object-cover"
-                      onError={(e) => {
-                        e.target.src = 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80';
-                      }}
-                    />
+                    <div className="relative">
+                      <img 
+                        src={hostel.hostelViewImage || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80'} 
+                        alt={hostel.name} 
+                        className="h-48 w-full object-cover"
+                        onError={(e) => {
+                          e.target.src = 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80';
+                        }}
+                      />
+                      {/* Availability Badge */}
+                      <div className="absolute top-3 right-3">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold shadow-md ${
+                          stats.isAvailable 
+                            ? 'bg-green-500 text-white' 
+                            : 'bg-red-500 text-white'
+                        }`}>
+                          {stats.isAvailable ? 'Available' : 'Full'}
+                        </span>
+                      </div>
+                    </div>
                     <div className="p-4">
                       <h3 className="font-bold text-lg text-gray-900 mb-2">{hostel.name}</h3>
-                      <div className="flex items-center text-gray-600 text-sm mb-3">
+                      <div className="flex items-center text-gray-600 text-sm mb-2">
                         <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
                         <span className="truncate">{hostel.location}</span>
                       </div>
+                      
+                      {/* Price Range */}
+                      {stats.minPrice > 0 && (
+                        <div className="mb-2">
+                          <span className="text-primary-600 font-bold text-lg">
+                            GH₵{stats.minPrice}
+                            {stats.maxPrice !== stats.minPrice && ` – GH₵${stats.maxPrice}`}
+                          </span>
+                          <span className="text-gray-500 text-xs ml-1">/semester</span>
+                        </div>
+                      )}
+                      
+                      {/* Room Capacity */}
+                      {stats.isAvailable && (
+                        <div className="mb-3">
+                          <span className="text-sm text-green-600 font-semibold">
+                            {stats.availableSlots} {stats.availableSlots === 1 ? 'slot' : 'slots'} available
+                          </span>
+                        </div>
+                      )}
+                      
                       <p className="text-sm text-gray-600 line-clamp-2">{hostel.description}</p>
                     </div>
                   </Link>
-                ))}
+                  );
+                })}
               </div>
             )}
           </>
