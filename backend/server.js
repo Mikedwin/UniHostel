@@ -79,7 +79,7 @@ app.post('/api/auth/register', async (req, res) => {
     await newUser.save();
     console.log('User created successfully:', newUser._id);
 
-    const token = jwt.sign({ id: newUser._id, role: newUser.role }, process.env.JWT_SECRET);
+    const token = jwt.sign({ id: newUser._id, role: newUser.role }, process.env.JWT_SECRET, { expiresIn: '24h' });
     res.json({ 
       token, 
       user: { id: newUser._id, name, email, role: newUser.role },
@@ -121,7 +121,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
     await user.save();
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET);
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '24h' });
     res.json({ 
       token, 
       user: { id: user._id, name: user.name, email: user.email, role: user.role },

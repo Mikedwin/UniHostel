@@ -11,6 +11,12 @@ const auth = (req, res, next) => {
     req.user = verified;
     next();
   } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'Session expired. Please login again.' });
+    }
+    if (err.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: 'Invalid token. Please login again.' });
+    }
     res.status(500).json({ error: err.message });
   }
 };

@@ -1,6 +1,7 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { setupAxiosInterceptors } from './utils/axiosInterceptor';
 import Navbar from './components/Navbar';
 import Landing from './pages/Landing';
 import HostelList from './pages/HostelList';
@@ -16,55 +17,68 @@ import AddHostel from './pages/AddHostel';
 import EditHostel from './pages/EditHostel';
 import ProtectedRoute from './components/ProtectedRoute';
 
+function AppContent() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    setupAxiosInterceptors(logout, navigate);
+  }, [logout, navigate]);
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/hostels" element={<HostelList />} />
+        <Route path="/hostels/:id" element={<HostelDetail />} />
+        
+        {/* Authentication Routes */}
+        <Route path="/student-login" element={<StudentLogin />} />
+        <Route path="/manager-login" element={<ManagerLogin />} />
+        <Route path="/student-register" element={<StudentRegister />} />
+        <Route path="/manager-register" element={<ManagerRegister />} />
+        
+        {/* Protected Routes */}
+        <Route path="/student-dashboard" element={
+          <ProtectedRoute role="student">
+            <StudentDashboard />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/manager-dashboard" element={
+          <ProtectedRoute role="manager">
+            <ManagerDashboard />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/admin-dashboard" element={
+          <ProtectedRoute role="admin">
+            <AdminDashboard />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/add-hostel" element={
+          <ProtectedRoute role="manager">
+            <AddHostel />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/edit-hostel/:id" element={
+          <ProtectedRoute role="manager">
+            <EditHostel />
+          </ProtectedRoute>
+        } />
+      </Routes>
+    </div>
+  );
+}
+
 function App() {
   return (
     <Router>
       <AuthProvider>
-        <div className="min-h-screen bg-gray-50">
-          <Navbar />
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/hostels" element={<HostelList />} />
-            <Route path="/hostels/:id" element={<HostelDetail />} />
-            
-            {/* Authentication Routes */}
-            <Route path="/student-login" element={<StudentLogin />} />
-            <Route path="/manager-login" element={<ManagerLogin />} />
-            <Route path="/student-register" element={<StudentRegister />} />
-            <Route path="/manager-register" element={<ManagerRegister />} />
-            
-            {/* Protected Routes */}
-            <Route path="/student-dashboard" element={
-              <ProtectedRoute role="student">
-                <StudentDashboard />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/manager-dashboard" element={
-              <ProtectedRoute role="manager">
-                <ManagerDashboard />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/admin-dashboard" element={
-              <ProtectedRoute role="admin">
-                <AdminDashboard />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/add-hostel" element={
-              <ProtectedRoute role="manager">
-                <AddHostel />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/edit-hostel/:id" element={
-              <ProtectedRoute role="manager">
-                <EditHostel />
-              </ProtectedRoute>
-            } />
-          </Routes>
-        </div>
+        <AppContent />
       </AuthProvider>
     </Router>
   );
