@@ -12,7 +12,7 @@ const HostelList = () => {
   const [maxPrice, setMaxPrice] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showRooms, setShowRooms] = useState(false);
-  const [sortBy, setSortBy] = useState('newest');
+  const [sortBy, setSortBy] = useState('price_low');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const fetchHostels = async (priceFilter = maxPrice, searchFilter = searchQuery) => {
@@ -118,7 +118,7 @@ const HostelList = () => {
   const clearFilter = () => {
     setMaxPrice('');
     setSearchQuery('');
-    setSortBy('newest');
+    setSortBy('price_low');
     setShowRooms(false);
     fetchHostels('', '');
   };
@@ -136,7 +136,7 @@ const HostelList = () => {
       const maxB = Math.max(...(b.roomTypes?.map(r => r.price) || [0]));
       return maxB - maxA;
     });
-    return items.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    return items;
   }, [hostels, sortBy]);
 
   const sortedRooms = React.useMemo(() => {
@@ -226,7 +226,6 @@ const HostelList = () => {
                 onChange={(e) => setSortBy(e.target.value)}
                 className="px-4 py-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 font-medium"
               >
-                <option value="newest">Newest First</option>
                 <option value="price_low">Price: Low to High</option>
                 <option value="price_high">Price: High to Low</option>
               </select>
@@ -279,7 +278,6 @@ const HostelList = () => {
                     onChange={(e) => setSortBy(e.target.value)}
                     className="w-full px-4 py-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 font-medium"
                   >
-                    <option value="newest">Newest First</option>
                     <option value="price_low">Price: Low to High</option>
                     <option value="price_high">Price: High to Low</option>
                   </select>
