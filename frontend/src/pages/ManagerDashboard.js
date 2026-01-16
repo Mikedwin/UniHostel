@@ -26,7 +26,7 @@ const ManagerDashboard = () => {
         setLoading(true);
         setError(null);
         try {
-            const [appRes, hostRes, userRes] = await Promise.all([
+            const [appRes, hostRes] = await Promise.all([
                 axios.get(`${API_URL}/api/applications/manager`, { 
                     headers: { Authorization: `Bearer ${token}` },
                     timeout: 10000
@@ -34,15 +34,11 @@ const ManagerDashboard = () => {
                 axios.get(`${API_URL}/api/hostels/my-listings`, { 
                     headers: { Authorization: `Bearer ${token}` },
                     timeout: 10000
-                }),
-                axios.get(`${API_URL}/api/admin/users/${user.id}`, { 
-                    headers: { Authorization: `Bearer ${token}` },
-                    timeout: 10000
-                }).catch(() => ({ data: null }))
+                })
             ]);
             setApplications(appRes.data || []);
             setHostels(hostRes.data || []);
-            setUserInfo(userRes.data);
+            setUserInfo(user);
         } catch (err) {
             console.error('Dashboard fetch error:', err);
             setError(err.response?.data?.error || err.message || 'Failed to load dashboard data');
