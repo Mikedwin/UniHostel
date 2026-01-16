@@ -12,7 +12,6 @@ const HostelList = () => {
   const [maxPrice, setMaxPrice] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showRooms, setShowRooms] = useState(false);
-  const [sortBy, setSortBy] = useState('price_low');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const fetchHostels = async (priceFilter = maxPrice, searchFilter = searchQuery) => {
@@ -118,33 +117,24 @@ const HostelList = () => {
   const clearFilter = () => {
     setMaxPrice('');
     setSearchQuery('');
-    setSortBy('price_low');
     setShowRooms(false);
     fetchHostels('', '');
   };
 
-  // Sort hostels/rooms based on selected option
+  // Sort hostels/rooms by price low to high
   const sortedHostels = React.useMemo(() => {
     const items = [...hostels];
-    if (sortBy === 'price_low') return items.sort((a, b) => {
+    return items.sort((a, b) => {
       const minA = Math.min(...(a.roomTypes?.map(r => r.price) || [0]));
       const minB = Math.min(...(b.roomTypes?.map(r => r.price) || [0]));
       return minA - minB;
     });
-    if (sortBy === 'price_high') return items.sort((a, b) => {
-      const maxA = Math.max(...(a.roomTypes?.map(r => r.price) || [0]));
-      const maxB = Math.max(...(b.roomTypes?.map(r => r.price) || [0]));
-      return maxB - maxA;
-    });
-    return items;
-  }, [hostels, sortBy]);
+  }, [hostels]);
 
   const sortedRooms = React.useMemo(() => {
     const items = [...rooms];
-    if (sortBy === 'price_low') return items.sort((a, b) => a.price - b.price);
-    if (sortBy === 'price_high') return items.sort((a, b) => b.price - a.price);
-    return items;
-  }, [rooms, sortBy]);
+    return items.sort((a, b) => a.price - b.price);
+  }, [rooms]);
 
   // Calculate hostel stats
   const getHostelStats = (hostel) => {
@@ -206,7 +196,7 @@ const HostelList = () => {
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <button 
                 type="submit" 
                 className="bg-primary-600 text-white px-8 py-4 rounded-md hover:bg-primary-700 transition-colors duration-200 flex items-center justify-center font-medium"
@@ -221,14 +211,6 @@ const HostelList = () => {
               >
                 Clear Filter
               </button>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 font-medium"
-              >
-                <option value="price_low">Price: Low to High</option>
-                <option value="price_high">Price: High to Low</option>
-              </select>
             </div>
           </form>
         </div>
@@ -270,17 +252,6 @@ const HostelList = () => {
                       onChange={(e) => setMaxPrice(e.target.value)}
                     />
                   </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="w-full px-4 py-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 font-medium"
-                  >
-                    <option value="price_low">Price: Low to High</option>
-                    <option value="price_high">Price: High to Low</option>
-                  </select>
                 </div>
                 <div className="space-y-3 pt-2">
                   <button 
