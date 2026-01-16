@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Check, X, Plus, Edit, Trash2, Search, Eye, TrendingUp, Users, Home, Clock } from 'lucide-react';
+import { Check, X, Plus, Edit, Trash2, Search, Eye, TrendingUp, Users, Home, Clock, BarChart3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import API_URL from '../config';
+import ManagerAnalytics from '../components/manager/ManagerAnalytics';
 
 const ManagerDashboard = () => {
     const [applications, setApplications] = useState([]);
@@ -12,6 +13,7 @@ const ManagerDashboard = () => {
     const { token, user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [activeTab, setActiveTab] = useState('dashboard');
     
     // Filter states
     const [statusFilter, setStatusFilter] = useState('all');
@@ -118,8 +120,10 @@ const ManagerDashboard = () => {
         const totalCapacity = hostels.reduce((sum, h) => sum + h.roomTypes.reduce((s, r) => s + r.totalCapacity, 0), 0);
         const totalOccupied = hostels.reduce((sum, h) => sum + h.roomTypes.reduce((s, r) => s + (r.occupiedCapacity || 0), 0), 0);
         const occupancyRate = totalCapacity > 0 ? ((totalOccupied / totalCapacity) * 100).toFixed(1) : 0;
+        const activeHostels = hostels.filter(h => h.isActive !== false).length;
+        const inactiveHostels = hostels.length - activeHostels;
         
-        return { totalApps, pending, approved, rejected, totalHostels: hostels.length, occupancyRate };
+        return { totalApps, pending, approved, rejected, totalHostels: hostels.length, activeHostels, inactiveHostels, occupancyRate, totalCapacity, totalOccupied };
     }, [applications, hostels]);
 
     return (
@@ -144,7 +148,32 @@ const ManagerDashboard = () => {
             )}
 
             <div className="flex justify-between items-center mb-8">
-                <h1 className="text-2xl font-bold">Manager Dashboard</h1>
+                <div>
+                    <h1 className="text-2xl font-bold">Manager Dashboard</h1>
+                    <div className="flex gap-2 mt-3">
+                        <button
+                            onClick={() => setActiveTab('dashboard')}
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                                activeTab === 'dashboard'
+                                    ? 'bg-primary-600 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            Dashboard
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('analytics')}
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+                                activeTab === 'analytics'
+                                    ? 'bg-primary-600 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            <BarChart3 className="w-4 h-4" />
+                            Analytics
+                        </button>
+                    </div>
+                </div>
                 <Link to="/add-hostel" className="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 flex items-center">
                     <Plus className="w-4 h-4 mr-2" />
                     List New Hostel
@@ -175,43 +204,89 @@ const ManagerDashboard = () => {
 
             {!loading && !error && (
                 <>
+                {activeTab === 'analytics' ? (
+                    <ManagerAnalytics applications={applications} hostels={hostels} />
+                ) : (
+                <>
                 {/* KPI Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                    <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-blue-500">
-                        <div className="flex items-center justify-between">
+                    {/* Total Hostels */}
+                    <div className="bg-gradient-to-br from-purple-50 to-white rounded-lg shadow-md p-5 border border-purple-100 hover:shadow-lg transition-shadow cursor-pointer">
+                        <div className="flex items-center justify-between mb-3">
                             <div>
-                                <p className="text-sm text-gray-600">Total Applications</p>
-                                <p className="text-2xl font-bold text-gray-900">{stats.totalApps}</p>
+                                <p className="text-xs font-medium text-purple-600 uppercase tracking-wide">Total Hostels</p>
+                                <p className="text-3xl font-bold text-gray-900 mt-1">{stats.totalHostels}</p>
                             </div>
-                            <Users className="w-8 h-8 text-blue-500" />
+                            <div className="bg-purple-100 p-3 rounded-full">
+                                <Home className="w-6 h-6 text-purple-600" />
+                            </div>
+                        </div>
+                        <div className="flex items-center text-xs text-gray-600">
+                            <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold">{stats.activeHostels} Active</span>
+                            {stats.inactiveHostels > 0 && (
+                                <span className="ml-2 text-gray-500">{stats.inactiveHostels} Inactive</span>
+                            )}
                         </div>
                     </div>
-                    <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-yellow-500">
-                        <div className="flex items-center justify-between">
+
+                    {/* Total Applications */}
+                    <div className="bg-gradient-to-br from-blue-50 to-white rounded-lg shadow-md p-5 border border-blue-100 hover:shadow-lg transition-shadow cursor-pointer">
+                        <div className="flex items-center justify-between mb-3">
                             <div>
-                                <p className="text-sm text-gray-600">Pending</p>
-                                <p className="text-2xl font-bold text-gray-900">{stats.pending}</p>
+                                <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Total Applications</p>
+                                <p className="text-3xl font-bold text-gray-900 mt-1">{stats.totalApps}</p>
                             </div>
-                            <Clock className="w-8 h-8 text-yellow-500" />
+                            <div className="bg-blue-100 p-3 rounded-full">
+                                <Users className="w-6 h-6 text-blue-600" />
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs">
+                            <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-semibold">{stats.pending} Pending</span>
+                            <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold">{stats.approved} Approved</span>
+                            <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-semibold">{stats.rejected} Rejected</span>
                         </div>
                     </div>
-                    <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-green-500">
-                        <div className="flex items-center justify-between">
+
+                    {/* Occupancy Rate */}
+                    <div className="bg-gradient-to-br from-green-50 to-white rounded-lg shadow-md p-5 border border-green-100 hover:shadow-lg transition-shadow cursor-pointer">
+                        <div className="flex items-center justify-between mb-3">
                             <div>
-                                <p className="text-sm text-gray-600">Occupancy Rate</p>
-                                <p className="text-2xl font-bold text-gray-900">{stats.occupancyRate}%</p>
+                                <p className="text-xs font-medium text-green-600 uppercase tracking-wide">Occupancy Rate</p>
+                                <p className="text-3xl font-bold text-gray-900 mt-1">{stats.occupancyRate}%</p>
                             </div>
-                            <TrendingUp className="w-8 h-8 text-green-500" />
+                            <div className="bg-green-100 p-3 rounded-full">
+                                <TrendingUp className="w-6 h-6 text-green-600" />
+                            </div>
+                        </div>
+                        <div className="space-y-1">
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div 
+                                    className={`h-2 rounded-full transition-all ${
+                                        stats.occupancyRate >= 90 ? 'bg-red-500' :
+                                        stats.occupancyRate >= 70 ? 'bg-yellow-500' :
+                                        'bg-green-500'
+                                    }`}
+                                    style={{ width: `${stats.occupancyRate}%` }}
+                                ></div>
+                            </div>
+                            <p className="text-xs text-gray-600">{stats.totalOccupied} / {stats.totalCapacity} slots filled</p>
                         </div>
                     </div>
-                    <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-purple-500">
-                        <div className="flex items-center justify-between">
+
+                    {/* Pending Actions */}
+                    <div className="bg-gradient-to-br from-yellow-50 to-white rounded-lg shadow-md p-5 border border-yellow-100 hover:shadow-lg transition-shadow cursor-pointer">
+                        <div className="flex items-center justify-between mb-3">
                             <div>
-                                <p className="text-sm text-gray-600">Total Hostels</p>
-                                <p className="text-2xl font-bold text-gray-900">{stats.totalHostels}</p>
+                                <p className="text-xs font-medium text-yellow-600 uppercase tracking-wide">Pending Actions</p>
+                                <p className="text-3xl font-bold text-gray-900 mt-1">{stats.pending}</p>
                             </div>
-                            <Home className="w-8 h-8 text-purple-500" />
+                            <div className="bg-yellow-100 p-3 rounded-full">
+                                <Clock className="w-6 h-6 text-yellow-600" />
+                            </div>
                         </div>
+                        <p className="text-xs text-gray-600">
+                            {stats.pending === 0 ? 'All caught up!' : `${stats.pending} application${stats.pending > 1 ? 's' : ''} awaiting review`}
+                        </p>
                     </div>
                 </div>
 
@@ -618,6 +693,8 @@ const ManagerDashboard = () => {
                             </div>
                         </div>
                     </div>
+                )}
+                </>
                 )}
                 </>
             )}
