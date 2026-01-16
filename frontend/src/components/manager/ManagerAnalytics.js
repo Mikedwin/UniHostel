@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Download, Calendar, TrendingUp, Users, Home, CheckCircle } from 'lucide-react';
+import { Download, Calendar, TrendingUp, Users, Home, CheckCircle, HelpCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 
@@ -158,10 +158,26 @@ const ManagerAnalytics = ({ applications, hostels }) => {
 
     return (
         <div className="space-y-6">
+            {/* Simple Explanation Banner */}
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
+                <div className="flex items-start gap-3">
+                    <div className="bg-blue-100 p-2 rounded-full">
+                        <HelpCircle className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-blue-900 mb-1">How to Use This Page</h3>
+                        <p className="text-sm text-blue-800">
+                            This page shows you how your hostels are performing. You can see how many students applied, 
+                            which hostels are full, and which rooms are popular. Use the "Export Excel" button to save all data to your computer.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-4 rounded-lg shadow-sm">
                 <div>
-                    <h2 className="text-xl font-bold text-gray-900">Analytics & Insights</h2>
-                    <p className="text-sm text-gray-600">Track performance and trends</p>
+                    <h2 className="text-xl font-bold text-gray-900">Your Business Summary</h2>
+                    <p className="text-sm text-gray-600">See how your hostels are doing</p>
                 </div>
                 <div className="flex gap-3">
                     <div className="flex items-center gap-2">
@@ -192,59 +208,72 @@ const ManagerAnalytics = ({ applications, hostels }) => {
                 <div className="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-500">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-xs text-gray-600 uppercase">Applications</p>
-                            <p className="text-2xl font-bold">{filteredData.allApplications.length}</p>
-                            <p className="text-xs text-gray-500 mt-1">Last {dateRange}d: {filteredData.applications.length}</p>
+                            <p className="text-xs text-gray-600 font-semibold">TOTAL STUDENTS APPLIED</p>
+                            <p className="text-3xl font-bold text-blue-600">{filteredData.allApplications.length}</p>
+                            <p className="text-xs text-gray-600 mt-1">📅 Last {dateRange} days: <span className="font-semibold">{filteredData.applications.length}</span></p>
                         </div>
-                        <Users className="w-8 h-8 text-blue-500" />
+                        <Users className="w-10 h-10 text-blue-500" />
                     </div>
+                    <p className="text-xs text-gray-500 mt-2 italic">How many students want to stay in your hostels</p>
                 </div>
                 <div className="bg-white p-4 rounded-lg shadow-sm border-l-4 border-green-500">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-xs text-gray-600 uppercase">Approval Rate</p>
-                            <p className="text-2xl font-bold">
-                                {filteredData.allApplications.length > 0 
-                                    ? ((filteredData.allApplications.filter(a => a.status === 'approved').length / filteredData.allApplications.length) * 100).toFixed(1)
-                                    : 0}%
+                            <p className="text-xs text-gray-600 font-semibold">STUDENTS ACCEPTED</p>
+                            <p className="text-3xl font-bold text-green-600">
+                                {filteredData.allApplications.filter(a => a.status === 'approved').length}
                             </p>
-                            <p className="text-xs text-gray-500 mt-1">{filteredData.allApplications.filter(a => a.status === 'approved').length} approved</p>
+                            <p className="text-xs text-gray-600 mt-1">Out of {filteredData.allApplications.length} applications</p>
                         </div>
-                        <CheckCircle className="w-8 h-8 text-green-500" />
+                        <CheckCircle className="w-10 h-10 text-green-500" />
                     </div>
+                    <p className="text-xs text-gray-500 mt-2 italic">Students you said YES to</p>
                 </div>
                 <div className="bg-white p-4 rounded-lg shadow-sm border-l-4 border-purple-500">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-xs text-gray-600 uppercase">Hostels</p>
-                            <p className="text-2xl font-bold">{hostels.length}</p>
-                            <p className="text-xs text-gray-500 mt-1">Active properties</p>
+                            <p className="text-xs text-gray-600 font-semibold">YOUR HOSTELS</p>
+                            <p className="text-3xl font-bold text-purple-600">{hostels.length}</p>
+                            <p className="text-xs text-gray-600 mt-1">Properties you manage</p>
                         </div>
-                        <Home className="w-8 h-8 text-purple-500" />
+                        <Home className="w-10 h-10 text-purple-500" />
                     </div>
+                    <p className="text-xs text-gray-500 mt-2 italic">Total number of your hostels</p>
                 </div>
                 <div className="bg-white p-4 rounded-lg shadow-sm border-l-4 border-orange-500">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-xs text-gray-600 uppercase">Avg Occupancy</p>
-                            <p className="text-2xl font-bold">
+                            <p className="text-xs text-gray-600 font-semibold">ROOMS FILLED</p>
+                            <p className="text-3xl font-bold text-orange-600">
                                 {hostels.length > 0 
                                     ? (hostels.reduce((sum, h) => {
                                         const cap = h.roomTypes?.reduce((s, r) => s + r.totalCapacity, 0) || 0;
                                         const occ = h.roomTypes?.reduce((s, r) => s + (r.occupiedCapacity || 0), 0) || 0;
                                         return sum + (cap > 0 ? (occ / cap) * 100 : 0);
-                                    }, 0) / hostels.length).toFixed(1)
+                                    }, 0) / hostels.length).toFixed(0)
                                     : 0}%
                             </p>
-                            <p className="text-xs text-gray-500 mt-1">All hostels</p>
+                            <p className="text-xs text-gray-600 mt-1">Average across all hostels</p>
                         </div>
-                        <TrendingUp className="w-8 h-8 text-orange-500" />
+                        <TrendingUp className="w-10 h-10 text-orange-500" />
                     </div>
+                    <p className="text-xs text-gray-500 mt-2 italic">How full your hostels are</p>
                 </div>
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow-sm">
-                <h3 className="text-lg font-bold mb-4">Application Trends</h3>
+                <div className="flex items-start gap-2 mb-4">
+                    <div>
+                        <h3 className="text-lg font-bold text-gray-900">📈 Daily Applications</h3>
+                        <p className="text-sm text-gray-600">See how many students apply each day</p>
+                    </div>
+                </div>
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-4">
+                    <p className="text-sm text-yellow-800">
+                        <span className="font-semibold">How to read:</span> Each line shows different types of applications. 
+                        Higher lines = more students. Look for patterns to know your busy days.
+                    </p>
+                </div>
                 <ResponsiveContainer width="100%" height={300}>
                     <LineChart data={applicationTrends}>
                         <CartesianGrid strokeDasharray="3 3" />
@@ -262,7 +291,16 @@ const ManagerAnalytics = ({ applications, hostels }) => {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white p-6 rounded-lg shadow-sm">
-                    <h3 className="text-lg font-bold mb-4">Status Distribution</h3>
+                    <div className="mb-4">
+                        <h3 className="text-lg font-bold text-gray-900">🎯 Application Status</h3>
+                        <p className="text-sm text-gray-600">Where your applications stand</p>
+                    </div>
+                    <div className="bg-blue-50 border-l-4 border-blue-400 p-3 mb-4">
+                        <p className="text-sm text-blue-800">
+                            <span className="font-semibold">Simple:</span> Yellow = Waiting for your decision, 
+                            Green = You accepted them, Red = You rejected them
+                        </p>
+                    </div>
                     <ResponsiveContainer width="100%" height={300}>
                         <PieChart>
                             <Pie
@@ -292,7 +330,16 @@ const ManagerAnalytics = ({ applications, hostels }) => {
                 </div>
 
                 <div className="bg-white p-6 rounded-lg shadow-sm">
-                    <h3 className="text-lg font-bold mb-4">Room Capacity</h3>
+                    <div className="mb-4">
+                        <h3 className="text-lg font-bold text-gray-900">🏠 Room Availability</h3>
+                        <p className="text-sm text-gray-600">Which rooms are full or empty</p>
+                    </div>
+                    <div className="bg-green-50 border-l-4 border-green-400 p-3 mb-4">
+                        <p className="text-sm text-green-800">
+                            <span className="font-semibold">Easy:</span> Green bars = Rooms with students, 
+                            Gray bars = Empty rooms. Taller bars = more rooms.
+                        </p>
+                    </div>
                     <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={roomTypeDistribution}>
                             <CartesianGrid strokeDasharray="3 3" />
@@ -308,7 +355,16 @@ const ManagerAnalytics = ({ applications, hostels }) => {
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow-sm">
-                <h3 className="text-lg font-bold mb-4">Hostel Performance</h3>
+                <div className="mb-4">
+                    <h3 className="text-lg font-bold text-gray-900">⭐ Which Hostel is Doing Best?</h3>
+                    <p className="text-sm text-gray-600">Compare all your hostels</p>
+                </div>
+                <div className="bg-purple-50 border-l-4 border-purple-400 p-3 mb-4">
+                    <p className="text-sm text-purple-800">
+                        <span className="font-semibold">What this means:</span> Blue bars = How many students applied. 
+                        Green bars = How full the hostel is. Taller bars = better performance.
+                    </p>
+                </div>
                 <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={hostelPerformance}>
                         <CartesianGrid strokeDasharray="3 3" />
