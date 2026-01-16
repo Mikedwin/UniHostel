@@ -15,7 +15,6 @@ const ManagerDashboard = () => {
     
     // Filter states
     const [statusFilter, setStatusFilter] = useState('all');
-    const [hostelFilter, setHostelFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedApp, setSelectedApp] = useState(null);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -103,14 +102,13 @@ const ManagerDashboard = () => {
     const filteredApplications = useMemo(() => {
         return applications.filter(app => {
             const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
-            const matchesHostel = hostelFilter === 'all' || app.hostelId?._id === hostelFilter;
             const matchesSearch = !searchQuery || 
                 app.studentName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 app.studentId?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 app.contactNumber?.includes(searchQuery);
-            return matchesStatus && matchesHostel && matchesSearch;
+            return matchesStatus && matchesSearch;
         });
-    }, [applications, statusFilter, hostelFilter, searchQuery]);
+    }, [applications, statusFilter, searchQuery]);
 
     const stats = useMemo(() => {
         const totalApps = applications.length;
@@ -230,7 +228,7 @@ const ManagerDashboard = () => {
                     
                     {/* Filters */}
                     <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                                 <input
@@ -250,16 +248,6 @@ const ManagerDashboard = () => {
                                 <option value="pending">Pending</option>
                                 <option value="approved">Approved</option>
                                 <option value="rejected">Rejected</option>
-                            </select>
-                            <select
-                                value={hostelFilter}
-                                onChange={(e) => setHostelFilter(e.target.value)}
-                                className="px-3 py-2 border rounded-md focus:ring-2 focus:ring-primary-500"
-                            >
-                                <option value="all">Filter by Hostel</option>
-                                {hostels.map(h => (
-                                    <option key={h._id} value={h._id}>{h.name}</option>
-                                ))}
                             </select>
                         </div>
                         {selectedApps.length > 0 && (
