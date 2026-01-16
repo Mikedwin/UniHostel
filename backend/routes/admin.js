@@ -698,4 +698,105 @@ router.post('/applications/:id/refund', auth, checkAdmin, async (req, res) => {
   }
 });
 
+// ANALYTICS & REPORTING ENDPOINTS
+router.get('/analytics/overview', auth, checkAdmin, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    let dateQuery = {};
+    if (startDate && endDate) {
+      dateQuery = { createdAt: { $gte: new Date(startDate), $lte: new Date(endDate) } };
+    }
+
+    const [totalUsers, totalStudents, totalManagers, totalApplications, approvedApps, rejectedApps, totalHostels, activeHostels] = await Promise.all([
+      User.countDocuments(dateQuery),
+      User.countDocuments({ ...dateQuery, role: 'student' }),
+      User.countDocuments({ ...dateQuery, role: 'manager' }),
+      Application.countDocuments(dateQuery),
+      Application.countDocuments({ ...dateQuery, status: 'approved' }),
+      Application.countDocuments({ ...dateQuery, status: 'rejected' }),
+      Hostel.countDocuments(dateQuery),
+      Hostel.countDocuments({ ...dateQuery, isActive: true })
+    ]);
+
+    const approvalRate = totalApplications > 0 ? ((approvedApps / totalApplications) * 100).toFixed(2) : 0;
+    const rejectionRate = totalApplications > 0 ? ((rejectedApps / totalApplications) * 100).toFixed(2) : 0;
+
+    res.json({ totalUsers, totalStudents, totalManagers, totalApplications, approvedApps, rejectedApps, approvalRate, rejectionRate, totalHostels, activeHostels });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/analytics/growth', auth, checkAdmin, async (req, res) => {
+  try {
+    const { startDate, endDate, interval = 'day' } = req.query;
+    const start = startDate ? new Date(startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const end = endDate ? new Date(endDate) : new Date();
+
+    const groupFormat = interval === 'month' ? '%Y-%m' : '%Y-%m-%d';
+
+    const [studentGrowth, managerGrowth, hostelGrowth, applicationGrowth] = await Promise.all([
+      User.aggregate([{ $match: { role: 'student', createdAt: { $gte: start, $lte: end } } }, { $group: { _id: { $dateToString: { format: groupFormat, date: '$createdAt' } }, count: { $sum: 1 } } }, { $sort: { _id: 1 } }]),
+      User.aggregate([{ $match: { role: 'manager', createdAt: { $gte: start, $lte: end } } }, { $group: { _id: { $dateToString: { format: groupFormat, date: '$createdAt' } }, count: { $sum: 1 } } }, { $sort: { _id: 1 } }]),
+      Hostel.aggregate([{ $match: { createdAt: { $gte: start, $lte: end } } }, { $group: { _id: { $dateToString: { format: groupFormat, date: '$createdAt' } }, count: { $sum: 1 } } }, { $sort: { _id: 1 } }]),
+      Application.aggregate([{ $match: { createdAt: { $gte: start, $lte: end } } }, { $group: { _id: { $dateToString: { format: groupFormat, date: '$createdAt' } }, count: { $sum: 1 } } }, { $sort: { _id: 1 } }])
+    ]);
+
+    res.json({ studentGrowth, managerGrowth, hostelGrowth, applicationGrowth });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/analytics/locations', auth, checkAdmin, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    let dateQuery = {};
+    if (startDate && endDate) {
+      dateQuery = { createdAt: { $gte: new Date(startDate), $lte: new Date(endDate) } };
+    }
+
+    const locationData = await Hostel.aggregate([
+      { $match: dateQuery },
+      { $group: { _id: '$location', hostelCount: { $sum: 1 }, totalApplications: { $sum: 0 } } },
+      { $sort: { hostelCount: -1 } },
+      { $limit: 10 }
+    ]);
+
+    for (let loc of locationData) {
+      const hostels = await Hostel.find({ location: loc._id }).select('_id');
+      const hostelIds = hostels.map(h => h._id);
+      loc.totalApplications = await Application.countDocuments({ hostelId: { $in: hostelIds } });
+    }
+
+    res.json(locationData);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/analytics/peak-seasons', auth, checkAdmin, async (req, res) => {
+  try {
+    const peakData = await Application.aggregate([
+      { $group: { _id: { month: { $month: '$createdAt' }, year: { $year: '$createdAt' } }, count: { $sum: 1 } } },
+      { $sort: { '_id.year': -1, '_id.month': -1 } },
+      { $limit: 12 }
+    ]);
+
+    res.json(peakData);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/analytics/export', auth, checkAdmin, async (req, res) => {
+  try {
+    const { reportType, startDate, endDate, format } = req.body;
+    await logAdminAction(req.user.id, 'EXPORT_ANALYTICS', 'report', null, `Exported ${reportType} report as ${format} for ${startDate} to ${endDate}`);
+    res.json({ message: 'Export logged successfully', timestamp: new Date() });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
