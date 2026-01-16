@@ -6,6 +6,9 @@ import API_URL from '../config';
 import UserManagementTable from '../components/admin/UserManagementTable';
 import UserActionModal from '../components/admin/UserActionModal';
 import UserDetailsModal from '../components/admin/UserDetailsModal';
+import ApplicationManagementTable from '../components/admin/ApplicationManagementTable';
+import ApplicationDetailsModal from '../components/admin/ApplicationDetailsModal';
+import ApplicationActionModal from '../components/admin/ApplicationActionModal';
 
 const AdminDashboard = () => {
     const [stats, setStats] = useState(null);
@@ -21,6 +24,10 @@ const AdminDashboard = () => {
     const [actionLoading, setActionLoading] = useState(false);
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
+    const [appModalOpen, setAppModalOpen] = useState(false);
+    const [appModalAction, setAppModalAction] = useState('');
+    const [selectedApp, setSelectedApp] = useState(null);
+    const [appDetailsModalOpen, setAppDetailsModalOpen] = useState(false);
     const { token } = useAuth();
 
     useEffect(() => {
@@ -182,6 +189,10 @@ const AdminDashboard = () => {
                             <UserManagementTable token={token} onAction={handleUserAction} />
                         )}
 
+                        {activeTab === 'applications' && (
+                            <ApplicationManagementTable token={token} onAction={handleApplicationAction} />
+                        )}
+
                         {activeTab === 'hostels' && (
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
@@ -244,39 +255,6 @@ const AdminDashboard = () => {
                             </div>
                         )}
 
-                        {activeTab === 'applications' && (
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Student</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Hostel</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Room Type</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {applications.map(app => (
-                                            <tr key={app._id}>
-                                                <td className="px-4 py-2 text-sm">{app.studentId?.name}</td>
-                                                <td className="px-4 py-2 text-sm">{app.hostelId?.name}</td>
-                                                <td className="px-4 py-2 text-sm">{app.roomType}</td>
-                                                <td className="px-4 py-2 text-sm">
-                                                    <span className={`px-2 py-1 text-xs rounded ${
-                                                        app.status === 'approved' ? 'bg-green-100 text-green-700' :
-                                                        app.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                                                        'bg-yellow-100 text-yellow-700'
-                                                    }`}>{app.status}</span>
-                                                </td>
-                                                <td className="px-4 py-2 text-sm">{new Date(app.createdAt).toLocaleDateString()}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-
                         {activeTab === 'logs' && (
                             <div className="space-y-2">
                                 {logs.map(log => (
@@ -310,6 +288,25 @@ const AdminDashboard = () => {
                 onClose={() => { setDetailsModalOpen(false); setSelectedUser(null); }}
                 user={selectedUser}
                 token={token}
+            />
+
+            {/* Application Action Modal */}
+            <ApplicationActionModal
+                isOpen={appModalOpen}
+                onClose={() => { setAppModalOpen(false); setSelectedApp(null); setAppModalAction(''); }}
+                action={appModalAction}
+                application={selectedApp}
+                onConfirm={handleAppActionConfirm}
+                loading={actionLoading}
+            />
+
+            {/* Application Details Modal */}
+            <ApplicationDetailsModal
+                isOpen={appDetailsModalOpen}
+                onClose={() => { setAppDetailsModalOpen(false); setSelectedApp(null); }}
+                application={selectedApp}
+                token={token}
+                onRefresh={fetchDashboardData}
             />
 
             {/* Success Message */}
@@ -415,6 +412,100 @@ const AdminDashboard = () => {
     function showSuccess(message) {
         setSuccessMessage(message);
         setTimeout(() => setSuccessMessage(''), 3000);
+    }
+
+    function handleApplicationAction(action, app, refreshCallback) {
+        if (action === 'view') {
+            setSelectedApp(app);
+            setAppDetailsModalOpen(true);
+        } else if (action.startsWith('bulk-')) {
+            handleBulkApplicationAction(action.replace('bulk-', ''), app, refreshCallback);
+        } else {
+            setAppModalAction(action);
+            setSelectedApp(app);
+            setAppModalOpen(true);
+        }
+    }
+
+    async function handleAppActionConfirm(data) {
+        setActionLoading(true);
+        try {
+            let endpoint = '';
+            let method = 'post';
+            let payload = data;
+
+            switch (appModalAction) {
+                case 'approve':
+                    endpoint = `/api/admin/applications/${selectedApp._id}/override`;
+                    method = 'patch';
+                    payload = { status: 'approved', reason: data.reason };
+                    break;
+                case 'reject':
+                    endpoint = `/api/admin/applications/${selectedApp._id}/override`;
+                    method = 'patch';
+                    payload = { status: 'rejected', reason: data.reason };
+                    break;
+                case 'note':
+                    endpoint = `/api/admin/applications/${selectedApp._id}/note`;
+                    payload = { note: data.note, visibleToManager: data.visibleToManager };
+                    break;
+                case 'dispute':
+                    endpoint = `/api/admin/applications/${selectedApp._id}/dispute`;
+                    payload = { disputeReason: data.disputeReason, disputeDetails: data.disputeDetails };
+                    break;
+                case 'resolve-dispute':
+                    endpoint = `/api/admin/applications/${selectedApp._id}/dispute/resolve`;
+                    method = 'patch';
+                    payload = { resolution: data.resolution, newStatus: data.newStatus };
+                    break;
+                case 'refund':
+                    endpoint = `/api/admin/applications/${selectedApp._id}/refund`;
+                    payload = { refundAmount: parseFloat(data.refundAmount), reason: data.reason };
+                    break;
+                default:
+                    throw new Error('Unknown action');
+            }
+
+            const res = await axios[method](`${API_URL}${endpoint}`, payload, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            showSuccess(res.data.message || 'Action completed successfully');
+            setAppModalOpen(false);
+            setSelectedApp(null);
+            setAppModalAction('');
+            fetchDashboardData();
+        } catch (err) {
+            alert(err.response?.data?.error || 'Action failed');
+        } finally {
+            setActionLoading(false);
+        }
+    }
+
+    async function handleBulkApplicationAction(action, appIds, refreshCallback) {
+        const reason = prompt(`Enter reason for bulk ${action}:`);
+        if (!reason) return;
+
+        if (!window.confirm(`Are you sure you want to ${action} ${appIds.length} application(s)?`)) return;
+
+        try {
+            const res = await axios.post(`${API_URL}/api/admin/applications/bulk-action`, {
+                applicationIds: appIds,
+                action,
+                reason
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            const { success, failed } = res.data.results;
+            let message = `Bulk action completed: ${success.length} succeeded`;
+            if (failed.length > 0) message += `, ${failed.length} failed`;
+            showSuccess(message);
+            if (refreshCallback) refreshCallback();
+            fetchDashboardData();
+        } catch (err) {
+            alert(err.response?.data?.error || 'Bulk action failed');
+        }
     }
 };
 

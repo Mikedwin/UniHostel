@@ -127,14 +127,34 @@ router.patch('/hostels/:hostelId/rooms/:roomType/reset-capacity', auth, checkAdm
 
 router.get('/applications', auth, checkAdmin, async (req, res) => {
   try {
-    const { status, hostelId, studentId } = req.query;
+    const { status, hostelId, studentId, hasDispute, disputeStatus, search, page = 1, limit = 50 } = req.query;
     let query = {};
     if (status) query.status = status;
     if (hostelId) query.hostelId = hostelId;
     if (studentId) query.studentId = studentId;
+    if (hasDispute === 'true') query.hasDispute = true;
+    if (disputeStatus) query.disputeStatus = disputeStatus;
+    if (search) {
+      query.$or = [
+        { studentName: { $regex: search, $options: 'i' } },
+        { contactNumber: { $regex: search, $options: 'i' } }
+      ];
+    }
 
-    const applications = await Application.find(query).populate('hostelId', 'name location').populate('studentId', 'name email').sort({ createdAt: -1 }).lean();
-    res.json(applications);
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const [applications, total] = await Promise.all([
+      Application.find(query)
+        .populate('hostelId', 'name location')
+        .populate('studentId', 'name email')
+        .populate('overriddenBy', 'name email')
+        .populate('adminNotes.adminId', 'name')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean(),
+      Application.countDocuments(query)
+    ]);
+    res.json({ applications, total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -442,6 +462,237 @@ router.post('/impersonate/exit', auth, checkAdmin, async (req, res) => {
     await log.save();
     await logAdminAction(req.user.id, 'END_IMPERSONATION', 'user', log.targetUserId, 'Ended impersonation session');
     res.json({ message: 'Impersonation ended successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// APPLICATION INTERVENTION ENDPOINTS
+router.get('/applications/:id', auth, checkAdmin, async (req, res) => {
+  try {
+    const application = await Application.findById(req.params.id)
+      .populate('hostelId', 'name location roomTypes')
+      .populate('studentId', 'name email contactNumber')
+      .populate('overriddenBy', 'name email')
+      .populate('disputeResolvedBy', 'name email')
+      .populate('adminNotes.adminId', 'name email')
+      .lean();
+    if (!application) return res.status(404).json({ error: 'Application not found' });
+    res.json(application);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.patch('/applications/:id/override', auth, checkAdmin, async (req, res) => {
+  try {
+    const { status, reason } = req.body;
+    if (!['approved', 'rejected'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+    if (!reason) return res.status(400).json({ error: 'Override reason required' });
+
+    const app = await Application.findById(req.params.id).populate('hostelId');
+    if (!app) return res.status(404).json({ error: 'Application not found' });
+
+    const oldStatus = app.status;
+    const hostel = await Hostel.findById(app.hostelId._id);
+    const roomIndex = hostel.roomTypes.findIndex(r => r.type === app.roomType);
+
+    if (roomIndex === -1) return res.status(404).json({ error: 'Room type not found' });
+
+    // Update capacity based on status change
+    if (status === 'approved' && oldStatus !== 'approved') {
+      if (hostel.roomTypes[roomIndex].occupiedCapacity >= hostel.roomTypes[roomIndex].totalCapacity) {
+        return res.status(400).json({ error: 'Room is at full capacity' });
+      }
+      hostel.roomTypes[roomIndex].occupiedCapacity += 1;
+    } else if (status === 'rejected' && oldStatus === 'approved') {
+      if (hostel.roomTypes[roomIndex].occupiedCapacity > 0) {
+        hostel.roomTypes[roomIndex].occupiedCapacity -= 1;
+      }
+    }
+
+    hostel.roomTypes[roomIndex].available = hostel.roomTypes[roomIndex].occupiedCapacity < hostel.roomTypes[roomIndex].totalCapacity;
+    await hostel.save();
+
+    app.status = status;
+    app.adminOverride = true;
+    app.overriddenBy = req.user.id;
+    app.overrideReason = reason;
+    app.overrideTimestamp = new Date();
+    await app.save();
+
+    await logAdminAction(req.user.id, 'OVERRIDE_APPLICATION', 'application', app._id, `Overrode application status to ${status} - Reason: ${reason}`);
+    res.json({ message: 'Application status overridden successfully', application: app });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/applications/:id/note', auth, checkAdmin, async (req, res) => {
+  try {
+    const { note, visibleToManager = false } = req.body;
+    if (!note) return res.status(400).json({ error: 'Note content required' });
+
+    const app = await Application.findById(req.params.id);
+    if (!app) return res.status(404).json({ error: 'Application not found' });
+
+    app.adminNotes.push({ adminId: req.user.id, note, visibleToManager, timestamp: new Date() });
+    await app.save();
+
+    await logAdminAction(req.user.id, 'ADD_APPLICATION_NOTE', 'application', app._id, `Added note to application`);
+    res.json({ message: 'Note added successfully', application: app });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/applications/:id/dispute', auth, checkAdmin, async (req, res) => {
+  try {
+    const { disputeReason, disputeDetails } = req.body;
+    if (!disputeReason) return res.status(400).json({ error: 'Dispute reason required' });
+
+    const app = await Application.findById(req.params.id);
+    if (!app) return res.status(404).json({ error: 'Application not found' });
+
+    app.hasDispute = true;
+    app.disputeReason = disputeReason;
+    app.disputeDetails = disputeDetails;
+    app.disputeStatus = 'under_review';
+    await app.save();
+
+    await logAdminAction(req.user.id, 'CREATE_DISPUTE', 'application', app._id, `Created dispute: ${disputeReason}`);
+    res.json({ message: 'Dispute created successfully', application: app });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.patch('/applications/:id/dispute/resolve', auth, checkAdmin, async (req, res) => {
+  try {
+    const { resolution, newStatus } = req.body;
+    if (!resolution) return res.status(400).json({ error: 'Resolution details required' });
+
+    const app = await Application.findById(req.params.id).populate('hostelId');
+    if (!app) return res.status(404).json({ error: 'Application not found' });
+    if (!app.hasDispute) return res.status(400).json({ error: 'No active dispute' });
+
+    // Handle status change if provided
+    if (newStatus && ['approved', 'rejected', 'pending'].includes(newStatus)) {
+      const oldStatus = app.status;
+      const hostel = await Hostel.findById(app.hostelId._id);
+      const roomIndex = hostel.roomTypes.findIndex(r => r.type === app.roomType);
+
+      if (roomIndex !== -1) {
+        if (newStatus === 'approved' && oldStatus !== 'approved') {
+          if (hostel.roomTypes[roomIndex].occupiedCapacity < hostel.roomTypes[roomIndex].totalCapacity) {
+            hostel.roomTypes[roomIndex].occupiedCapacity += 1;
+          }
+        } else if (newStatus !== 'approved' && oldStatus === 'approved') {
+          if (hostel.roomTypes[roomIndex].occupiedCapacity > 0) {
+            hostel.roomTypes[roomIndex].occupiedCapacity -= 1;
+          }
+        }
+        hostel.roomTypes[roomIndex].available = hostel.roomTypes[roomIndex].occupiedCapacity < hostel.roomTypes[roomIndex].totalCapacity;
+        await hostel.save();
+      }
+      app.status = newStatus;
+    }
+
+    app.disputeStatus = 'resolved';
+    app.disputeResolution = resolution;
+    app.disputeResolvedBy = req.user.id;
+    app.disputeResolvedAt = new Date();
+    await app.save();
+
+    await logAdminAction(req.user.id, 'RESOLVE_DISPUTE', 'application', app._id, `Resolved dispute: ${resolution}`);
+    res.json({ message: 'Dispute resolved successfully', application: app });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/applications/bulk-action', auth, checkAdmin, async (req, res) => {
+  try {
+    const { applicationIds, action, reason } = req.body;
+    if (!applicationIds || !Array.isArray(applicationIds) || applicationIds.length === 0) {
+      return res.status(400).json({ error: 'Application IDs required' });
+    }
+    if (!['approve', 'reject'].includes(action)) {
+      return res.status(400).json({ error: 'Invalid action' });
+    }
+    if (!reason) return res.status(400).json({ error: 'Reason required for bulk action' });
+
+    const results = { success: [], failed: [] };
+    for (const appId of applicationIds) {
+      try {
+        const app = await Application.findById(appId).populate('hostelId');
+        if (!app) { results.failed.push({ appId, error: 'Application not found' }); continue; }
+
+        const oldStatus = app.status;
+        const newStatus = action === 'approve' ? 'approved' : 'rejected';
+        const hostel = await Hostel.findById(app.hostelId._id);
+        const roomIndex = hostel.roomTypes.findIndex(r => r.type === app.roomType);
+
+        if (roomIndex !== -1) {
+          if (newStatus === 'approved' && oldStatus !== 'approved') {
+            if (hostel.roomTypes[roomIndex].occupiedCapacity >= hostel.roomTypes[roomIndex].totalCapacity) {
+              results.failed.push({ appId, error: 'Room at full capacity' });
+              continue;
+            }
+            hostel.roomTypes[roomIndex].occupiedCapacity += 1;
+          } else if (newStatus === 'rejected' && oldStatus === 'approved') {
+            if (hostel.roomTypes[roomIndex].occupiedCapacity > 0) {
+              hostel.roomTypes[roomIndex].occupiedCapacity -= 1;
+            }
+          }
+          hostel.roomTypes[roomIndex].available = hostel.roomTypes[roomIndex].occupiedCapacity < hostel.roomTypes[roomIndex].totalCapacity;
+          await hostel.save();
+        }
+
+        app.status = newStatus;
+        app.adminOverride = true;
+        app.overriddenBy = req.user.id;
+        app.overrideReason = reason;
+        app.overrideTimestamp = new Date();
+        await app.save();
+
+        results.success.push(appId);
+        await logAdminAction(req.user.id, `BULK_${action.toUpperCase()}_APPLICATION`, 'application', appId, `Bulk ${action}: ${reason}`);
+      } catch (err) {
+        results.failed.push({ appId, error: err.message });
+      }
+    }
+
+    res.json({ message: 'Bulk action completed', results });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/applications/:id/refund', auth, checkAdmin, async (req, res) => {
+  try {
+    const { refundAmount, reason } = req.body;
+    if (!refundAmount || refundAmount <= 0) {
+      return res.status(400).json({ error: 'Valid refund amount required' });
+    }
+
+    const app = await Application.findById(req.params.id);
+    if (!app) return res.status(404).json({ error: 'Application not found' });
+    if (app.paymentStatus !== 'paid') {
+      return res.status(400).json({ error: 'No payment to refund' });
+    }
+
+    app.refundStatus = 'completed';
+    app.refundAmount = refundAmount;
+    app.refundProcessedBy = req.user.id;
+    app.refundProcessedAt = new Date();
+    app.paymentStatus = 'refunded';
+    await app.save();
+
+    await logAdminAction(req.user.id, 'PROCESS_REFUND', 'application', app._id, `Processed refund of ${refundAmount} - Reason: ${reason || 'N/A'}`);
+    res.json({ message: 'Refund processed successfully', application: app });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

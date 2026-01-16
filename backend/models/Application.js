@@ -9,10 +9,43 @@ const applicationSchema = new mongoose.Schema({
   studentName: { type: String, required: true },
   contactNumber: { type: String, required: true },
   message: String,
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  
+  // Admin intervention fields
+  adminOverride: { type: Boolean, default: false },
+  overriddenBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  overrideReason: String,
+  overrideTimestamp: Date,
+  
+  // Dispute handling
+  hasDispute: { type: Boolean, default: false, index: true },
+  disputeReason: String,
+  disputeDetails: String,
+  disputeStatus: { type: String, enum: ['open', 'under_review', 'resolved'], default: 'open' },
+  disputeResolvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  disputeResolvedAt: Date,
+  disputeResolution: String,
+  
+  // Internal admin notes
+  adminNotes: [{
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    note: { type: String, required: true },
+    timestamp: { type: Date, default: Date.now },
+    visibleToManager: { type: Boolean, default: false }
+  }],
+  
+  // Payment tracking (for future integration)
+  paymentStatus: { type: String, enum: ['pending', 'paid', 'refunded', 'failed'], default: 'pending' },
+  paymentAmount: Number,
+  refundStatus: { type: String, enum: ['not_applicable', 'pending', 'completed', 'failed'], default: 'not_applicable' },
+  refundAmount: Number,
+  refundProcessedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  refundProcessedAt: Date
 });
 
 applicationSchema.index({ hostelId: 1, createdAt: -1 });
 applicationSchema.index({ studentId: 1, createdAt: -1 });
+applicationSchema.index({ hasDispute: 1, disputeStatus: 1 });
+applicationSchema.index({ status: 1, paymentStatus: 1 });
 
 module.exports = mongoose.model('Application', applicationSchema);
