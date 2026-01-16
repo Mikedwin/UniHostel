@@ -383,61 +383,61 @@ const HostelList = () => {
                 {sortedHostels.map(hostel => {
                   const stats = getHostelStats(hostel);
                   return (
-                  <Link 
-                    to={`/hostels/${hostel._id}`} 
-                    key={hostel._id} 
-                    className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1"
-                  >
-                    <div className="relative">
-                      <img 
-                        src={hostel.hostelViewImage || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80'} 
-                        alt={hostel.name} 
-                        className="h-48 w-full object-cover"
-                        onError={(e) => {
-                          e.target.src = 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80';
-                        }}
-                      />
-                      {/* Availability Badge */}
-                      <div className="absolute top-3 right-3">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold shadow-md ${
-                          stats.isAvailable 
-                            ? 'bg-green-500 text-white' 
-                            : 'bg-red-500 text-white'
-                        }`}>
-                          {stats.isAvailable ? 'Available' : 'Full'}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-bold text-lg text-gray-900 mb-2">{hostel.name}</h3>
-                      <div className="flex items-center text-gray-600 text-sm mb-2">
-                        <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
-                        <span className="truncate">{hostel.location}</span>
-                      </div>
-                      
-                      {/* Price Range */}
-                      {stats.minPrice > 0 && (
-                        <div className="mb-2">
-                          <span className="text-primary-600 font-bold text-lg">
-                            GH₵{stats.minPrice}
-                            {stats.maxPrice !== stats.minPrice && ` – GH₵${stats.maxPrice}`}
-                          </span>
-                          <span className="text-gray-500 text-xs ml-1">/semester</span>
-                        </div>
-                      )}
-                      
-                      {/* Room Capacity */}
-                      {stats.isAvailable && (
-                        <div className="mb-3">
-                          <span className="text-sm text-green-600 font-semibold">
-                            {stats.availableSlots} {stats.availableSlots === 1 ? 'slot' : 'slots'} available
+                    <Link 
+                      to={`/hostels/${hostel._id}`} 
+                      key={hostel._id} 
+                      className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1"
+                    >
+                      <div className="relative">
+                        <img 
+                          src={hostel.hostelViewImage || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80'} 
+                          alt={hostel.name} 
+                          className="h-48 w-full object-cover"
+                          onError={(e) => {
+                            e.target.src = 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80';
+                          }}
+                        />
+                        {/* Availability Badge */}
+                        <div className="absolute top-3 right-3">
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold shadow-md ${
+                            stats.isAvailable 
+                              ? 'bg-green-500 text-white' 
+                              : 'bg-red-500 text-white'
+                          }`}>
+                            {stats.isAvailable ? 'Available' : 'Full'}
                           </span>
                         </div>
-                      )}
-                      
-                      <p className="text-sm text-gray-600 line-clamp-2">{hostel.description}</p>
-                    </div>
-                  </Link>
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-bold text-lg text-gray-900 mb-2">{hostel.name}</h3>
+                        <div className="flex items-center text-gray-600 text-sm mb-2">
+                          <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
+                          <span className="truncate">{hostel.location}</span>
+                        </div>
+                        
+                        {/* Price Range */}
+                        {stats.minPrice > 0 && (
+                          <div className="mb-2">
+                            <span className="text-primary-600 font-bold text-lg">
+                              GH₵{stats.minPrice}
+                              {stats.maxPrice !== stats.minPrice && ` – GH₵${stats.maxPrice}`}
+                            </span>
+                            <span className="text-gray-500 text-xs ml-1">/semester</span>
+                          </div>
+                        )}
+                        
+                        {/* Room Capacity */}
+                        {stats.isAvailable && (
+                          <div className="mb-3">
+                            <span className="text-sm text-green-600 font-semibold">
+                              {stats.availableSlots} {stats.availableSlots === 1 ? 'slot' : 'slots'} available
+                            </span>
+                          </div>
+                        )}
+                        
+                        <p className="text-sm text-gray-600 line-clamp-2">{hostel.description}</p>
+                      </div>
+                    </Link>
                   );
                 })}
               </div>
