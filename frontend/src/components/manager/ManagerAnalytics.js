@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Download, Calendar, TrendingUp, Users, Home, CheckCircle, HelpCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
@@ -259,34 +259,6 @@ const ManagerAnalytics = ({ applications, hostels }) => {
                     </div>
                     <p className="text-xs text-gray-500 mt-2 italic">How full your hostels are</p>
                 </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-                <div className="flex items-start gap-2 mb-4">
-                    <div>
-                        <h3 className="text-lg font-bold text-gray-900">📈 Daily Applications</h3>
-                        <p className="text-sm text-gray-600">See how many students apply each day</p>
-                    </div>
-                </div>
-                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-4">
-                    <p className="text-sm text-yellow-800">
-                        <span className="font-semibold">How to read:</span> Each line shows different types of applications. 
-                        Higher lines = more students. Look for patterns to know your busy days.
-                    </p>
-                </div>
-                <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={applicationTrends}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Line type="monotone" dataKey="total" stroke="#3B82F6" strokeWidth={2} name="Total" />
-                        <Line type="monotone" dataKey="pending" stroke="#F59E0B" strokeWidth={2} name="Pending" />
-                        <Line type="monotone" dataKey="approved" stroke="#10B981" strokeWidth={2} name="Approved" />
-                        <Line type="monotone" dataKey="rejected" stroke="#EF4444" strokeWidth={2} name="Rejected" />
-                    </LineChart>
-                </ResponsiveContainer>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
