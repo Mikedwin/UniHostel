@@ -186,7 +186,7 @@ const AdminDashboard = () => {
                             <div className="space-y-4">
                                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                                     <h3 className="font-semibold text-blue-900 mb-2">Welcome to Admin Dashboard</h3>
-                                    <p className="text-sm text-blue-800">Manage users, hostels, applications, and monitor system activity from this central hub.</p>
+                                    <p className="text-sm text-blue-800">Manage users, hostels, applications, and monitor system activity from this central control hub.</p>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="bg-white border rounded-lg p-4">
