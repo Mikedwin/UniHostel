@@ -256,7 +256,7 @@ const ManagerDashboard = () => {
                                 onChange={(e) => setHostelFilter(e.target.value)}
                                 className="px-3 py-2 border rounded-md focus:ring-2 focus:ring-primary-500"
                             >
-                                <option value="all">All Hostels</option>
+                                <option value="all">Filter by Hostel</option>
                                 {hostels.map(h => (
                                     <option key={h._id} value={h._id}>{h.name}</option>
                                 ))}
