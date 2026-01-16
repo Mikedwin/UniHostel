@@ -147,7 +147,7 @@ const ManagerDashboard = () => {
                 </div>
             )}
 
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                 <div>
                     <h1 className="text-2xl font-bold">Manager Dashboard</h1>
                     <div className="flex gap-2 mt-3">
@@ -174,7 +174,7 @@ const ManagerDashboard = () => {
                         </button>
                     </div>
                 </div>
-                <Link to="/add-hostel" className="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 flex items-center">
+                <Link to="/add-hostel" className="w-full sm:w-auto bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 flex items-center justify-center">
                     <Plus className="w-4 h-4 mr-2" />
                     List New Hostel
                 </Link>
