@@ -182,6 +182,34 @@ const AdminDashboard = () => {
                     </div>
 
                     <div className="p-4">
+                        {activeTab === 'overview' && (
+                            <div className="space-y-4">
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                    <h3 className="font-semibold text-blue-900 mb-2">Welcome to Admin Dashboard</h3>
+                                    <p className="text-sm text-blue-800">Manage users, hostels, applications, and monitor system activity from this central hub.</p>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="bg-white border rounded-lg p-4">
+                                        <h4 className="font-semibold mb-2">Quick Stats</h4>
+                                        <ul className="text-sm space-y-1">
+                                            <li>• {stats?.overview.totalHostels} total hostels ({stats?.overview.activeHostels} active)</li>
+                                            <li>• {stats?.overview.totalManagers} managers registered</li>
+                                            <li>• {stats?.overview.totalStudents} students registered</li>
+                                            <li>• {stats?.overview.totalApplications} applications ({stats?.overview.pendingApplications} pending)</li>
+                                        </ul>
+                                    </div>
+                                    <div className="bg-white border rounded-lg p-4">
+                                        <h4 className="font-semibold mb-2">Quick Actions</h4>
+                                        <div className="space-y-2">
+                                            <button onClick={() => setActiveTab('users')} className="w-full text-left px-3 py-2 bg-blue-50 hover:bg-blue-100 rounded text-sm">Manage Users</button>
+                                            <button onClick={() => setActiveTab('applications')} className="w-full text-left px-3 py-2 bg-green-50 hover:bg-green-100 rounded text-sm">Review Applications</button>
+                                            <button onClick={() => setActiveTab('hostels')} className="w-full text-left px-3 py-2 bg-purple-50 hover:bg-purple-100 rounded text-sm">Manage Hostels</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {activeTab === 'users' && (
                             <UserManagementTable token={token} onAction={handleUserAction} />
                         )}
