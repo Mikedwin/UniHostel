@@ -172,8 +172,8 @@ const HostelDetail = () => {
                         {/* Occupancy Progress Bar */}
                         <div className="mb-3">
                           <div className="flex justify-between text-xs text-gray-600 mb-1">
-                            <span className="font-medium">Occupancy</span>
-                            <span className="font-semibold">{room.occupiedCapacity || 0} / {room.totalCapacity} ({occupancyPercent}%)</span>
+                            <span className="font-medium">Approved Occupancy</span>
+                            <span className="font-semibold">{room.occupiedCapacity || 0} / {room.totalCapacity} slots filled</span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">
                             <div 
@@ -230,7 +230,7 @@ const HostelDetail = () => {
                             disabled
                             className="w-full bg-gray-300 text-gray-500 py-4 rounded-md cursor-not-allowed font-medium"
                           >
-                            Fully Booked
+                            Fully Booked ({room.totalCapacity}/{room.totalCapacity} approved)
                           </button>
                         ) : null}
                       </div>
@@ -282,8 +282,8 @@ const HostelDetail = () => {
                           {/* Occupancy Progress Bar */}
                           <div className="mb-3">
                             <div className="flex justify-between text-xs text-gray-600 mb-1">
-                              <span className="font-medium">Occupancy</span>
-                              <span className="font-semibold">{room.occupiedCapacity || 0} / {room.totalCapacity} ({occupancyPercent}%)</span>
+                              <span className="font-medium">Approved Occupancy</span>
+                              <span className="font-semibold">{room.occupiedCapacity || 0} / {room.totalCapacity} slots</span>
                             </div>
                             <div className="w-full bg-gray-200 rounded-full h-2.5">
                               <div 
@@ -343,7 +343,7 @@ const HostelDetail = () => {
                               disabled
                               className="w-full bg-gray-300 text-gray-500 py-4 rounded-md cursor-not-allowed font-medium"
                             >
-                              Fully Booked
+                              Fully Booked ({room.totalCapacity}/{room.totalCapacity} approved)
                             </button>
                           ) : null}
                         </div>
@@ -369,13 +369,13 @@ const HostelDetail = () => {
                 
                 {(() => {
                   const selectedRoom = hostel.roomTypes?.find(r => r.type === appData.roomType);
-                  const isRoomFull = selectedRoom && selectedRoom.occupiedCapacity >= selectedRoom.totalCapacity;
+                  const isRoomFull = selectedRoom && (selectedRoom.occupiedCapacity >= selectedRoom.totalCapacity);
                   
                   if (isRoomFull) {
                     return (
                       <div className="bg-red-100 text-red-700 p-4 rounded-md text-center mb-6">
                         <p className="font-medium">This room is fully booked!</p>
-                        <p className="text-sm">Please select another room type.</p>
+                        <p className="text-sm">All {selectedRoom.totalCapacity} slots have been approved. Please select another room type.</p>
                       </div>
                     );
                   }

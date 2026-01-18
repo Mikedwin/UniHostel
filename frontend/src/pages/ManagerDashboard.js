@@ -56,12 +56,24 @@ const ManagerDashboard = () => {
 
     const handleStatusUpdate = async (id, status) => {
         try {
-            await axios.patch(`${API_URL}/api/applications/${id}`, { status }, {
+            const response = await axios.patch(`${API_URL}/api/applications/${id}`, { status }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+            
+            // Check if approval failed due to capacity
+            if (response.data.error) {
+                alert(response.data.error);
+                return;
+            }
+            
             fetchData();
         } catch (err) {
             console.error(err);
+            if (err.response?.data?.error) {
+                alert(err.response.data.error);
+            } else {
+                alert('Failed to update application status');
+            }
         }
     };
 
@@ -84,11 +96,18 @@ const ManagerDashboard = () => {
         if (!window.confirm(`${action === 'approved' ? 'Approve' : 'Reject'} ${selectedApps.length} application(s)?`)) return;
         
         try {
-            await Promise.all(selectedApps.map(id => 
+            const results = await Promise.allSettled(selectedApps.map(id => 
                 axios.patch(`${API_URL}/api/applications/${id}`, { status: action }, {
                     headers: { Authorization: `Bearer ${token}` }
                 })
             ));
+            
+            const failed = results.filter(r => r.status === 'rejected');
+            if (failed.length > 0) {
+                const errors = failed.map(f => f.reason?.response?.data?.error || 'Unknown error').join('\n');
+                alert(`Some actions failed:\n${errors}`);
+            }
+            
             setSelectedApps([]);
             fetchData();
         } catch (err) {

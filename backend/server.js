@@ -280,7 +280,7 @@ app.post('/api/applications', auth, checkRole('student'), async (req, res) => {
   try {
     const { hostelId, roomType, semester, studentName, contactNumber } = req.body;
     
-    // Check if room has capacity
+    // Check if hostel and room type exist
     const hostel = await Hostel.findById(hostelId);
     if (!hostel) {
       return res.status(404).json({ error: 'Hostel not found' });
@@ -291,9 +291,9 @@ app.post('/api/applications', auth, checkRole('student'), async (req, res) => {
       return res.status(404).json({ error: 'Room type not found' });
     }
     
-    if (room.occupiedCapacity >= room.totalCapacity) {
-      return res.status(400).json({ error: 'This room type is fully booked' });
-    }
+    // NOTE: We allow applications even if room appears full
+    // Occupancy is only updated when manager APPROVES the application
+    // This allows over-application and manager can choose best candidates
     
     const application = new Application({
       hostelId,
@@ -375,33 +375,56 @@ app.patch('/api/applications/:id', auth, checkRole('manager'), async (req, res) 
           return res.status(404).json({ error: 'Application not found' });
         }
         
-        // If approving, increase occupied capacity
-        if (status === 'approved' && app.status !== 'approved') {
-          const hostel = await Hostel.findById(app.hostelId._id);
-          const roomIndex = hostel.roomTypes.findIndex(r => r.type === app.roomType);
-          
-          if (roomIndex !== -1) {
-            hostel.roomTypes[roomIndex].occupiedCapacity += 1;
-            hostel.roomTypes[roomIndex].available = hostel.roomTypes[roomIndex].occupiedCapacity < hostel.roomTypes[roomIndex].totalCapacity;
-            await hostel.save();
-          }
+        const hostel = await Hostel.findById(app.hostelId._id);
+        const roomIndex = hostel.roomTypes.findIndex(r => r.type === app.roomType);
+        
+        if (roomIndex === -1) {
+          return res.status(404).json({ error: 'Room type not found' });
         }
         
-        // If rejecting a previously approved application, decrease occupied capacity
-        if (status === 'rejected' && app.status === 'approved') {
-          const hostel = await Hostel.findById(app.hostelId._id);
-          const roomIndex = hostel.roomTypes.findIndex(r => r.type === app.roomType);
-          
-          if (roomIndex !== -1 && hostel.roomTypes[roomIndex].occupiedCapacity > 0) {
-            hostel.roomTypes[roomIndex].occupiedCapacity -= 1;
-            hostel.roomTypes[roomIndex].available = hostel.roomTypes[roomIndex].occupiedCapacity < hostel.roomTypes[roomIndex].totalCapacity;
-            await hostel.save();
+        const room = hostel.roomTypes[roomIndex];
+        const previousStatus = app.status;
+        
+        // APPROVAL LOGIC: Only approved applications count toward occupancy
+        if (status === 'approved' && previousStatus !== 'approved') {
+          // Check if room has capacity before approving
+          if (room.occupiedCapacity >= room.totalCapacity) {
+            return res.status(400).json({ 
+              error: 'Cannot approve: This room type is already at full capacity',
+              currentOccupancy: room.occupiedCapacity,
+              totalCapacity: room.totalCapacity
+            });
           }
+          
+          // Increase occupancy only on approval
+          hostel.roomTypes[roomIndex].occupiedCapacity = Math.min(
+            (room.occupiedCapacity || 0) + 1,
+            room.totalCapacity
+          );
+          hostel.roomTypes[roomIndex].available = hostel.roomTypes[roomIndex].occupiedCapacity < room.totalCapacity;
         }
         
+        // REJECTION/CANCELLATION LOGIC: Decrease occupancy if previously approved
+        if ((status === 'rejected' || status === 'pending') && previousStatus === 'approved') {
+          hostel.roomTypes[roomIndex].occupiedCapacity = Math.max(
+            (room.occupiedCapacity || 0) - 1,
+            0
+          );
+          hostel.roomTypes[roomIndex].available = hostel.roomTypes[roomIndex].occupiedCapacity < room.totalCapacity;
+        }
+        
+        await hostel.save();
         app.status = status;
         await app.save();
-        res.json(app);
+        
+        res.json({
+          application: app,
+          roomStatus: {
+            occupiedCapacity: hostel.roomTypes[roomIndex].occupiedCapacity,
+            totalCapacity: hostel.roomTypes[roomIndex].totalCapacity,
+            available: hostel.roomTypes[roomIndex].available
+          }
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
