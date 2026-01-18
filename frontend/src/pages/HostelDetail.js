@@ -230,7 +230,7 @@ const HostelDetail = () => {
                             disabled
                             className="w-full bg-gray-300 text-gray-500 py-4 rounded-md cursor-not-allowed font-medium"
                           >
-                            Fully Booked
+                            Fully Booked ({room.totalCapacity}/{room.totalCapacity} approved)
                           </button>
                         ) : null}
                       </div>
@@ -343,7 +343,7 @@ const HostelDetail = () => {
                               disabled
                               className="w-full bg-gray-300 text-gray-500 py-4 rounded-md cursor-not-allowed font-medium"
                             >
-                              Fully Booked
+                              Fully Booked ({room.totalCapacity}/{room.totalCapacity} approved)
                             </button>
                           ) : null}
                         </div>
