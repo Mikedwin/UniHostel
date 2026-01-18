@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { MapPin, CheckCircle, MessageSquare } from 'lucide-react';
+import { MapPin, CheckCircle, MessageSquare, Wifi, Droplet, Zap, Shield, Car, Wind, Utensils, Tv, Users, Clock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import API_URL from '../config';
 
@@ -14,12 +14,17 @@ const HostelDetail = () => {
   const [loading, setLoading] = useState(true);
   const [appData, setAppData] = useState({ roomType: '', semester: 'First Semester', studentName: '', contactNumber: '' });
   const [success, setSuccess] = useState(false);
+  const [applicationStats, setApplicationStats] = useState({});
 
   useEffect(() => {
     const fetchHostel = async () => {
       try {
-        const res = await axios.get(`${API_URL}/api/hostels/${id}`);
-        setHostel(res.data);
+        const [hostelRes, statsRes] = await Promise.all([
+          axios.get(`${API_URL}/api/hostels/${id}`),
+          axios.get(`${API_URL}/api/applications/hostel/${id}/stats`).catch(() => ({ data: {} }))
+        ]);
+        setHostel(hostelRes.data);
+        setApplicationStats(statsRes.data || {});
         
         // Auto-select room if passed from filtered results
         if (location.state?.selectedRoom) {
@@ -48,6 +53,47 @@ const HostelDetail = () => {
     } catch (err) {
       console.error(err);
     }
+  };
+
+  // Facility icon mapping
+  const getFacilityIcon = (facility) => {
+    const icons = {
+      'wifi': <Wifi className="w-4 h-4" />,
+      'wi-fi': <Wifi className="w-4 h-4" />,
+      'water': <Droplet className="w-4 h-4" />,
+      'electricity': <Zap className="w-4 h-4" />,
+      'security': <Shield className="w-4 h-4" />,
+      'parking': <Car className="w-4 h-4" />,
+      'ac': <Wind className="w-4 h-4" />,
+      'air conditioning': <Wind className="w-4 h-4" />,
+      'kitchen': <Utensils className="w-4 h-4" />,
+      'tv': <Tv className="w-4 h-4" />,
+      'television': <Tv className="w-4 h-4" />
+    };
+    const key = facility.toLowerCase();
+    return icons[key] || <CheckCircle className="w-4 h-4" />;
+  };
+
+  // Calculate occupancy percentage
+  const getOccupancyPercentage = (room) => {
+    if (!room.totalCapacity) return 0;
+    return Math.round((room.occupiedCapacity / room.totalCapacity) * 100);
+  };
+
+  // Get application count for room
+  const getApplicationCount = (roomType) => {
+    return applicationStats[roomType] || 0;
+  };
+
+  // Get last booking time
+  const getLastBookingTime = (roomType) => {
+    const lastBooking = applicationStats[`${roomType}_lastBooking`];
+    if (!lastBooking) return null;
+    const days = Math.floor((Date.now() - new Date(lastBooking)) / (1000 * 60 * 60 * 24));
+    if (days === 0) return 'Today';
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days} days ago`;
+    return null;
   };
 
   if (loading) return <div className="text-center py-20">Loading hostel details...</div>;
@@ -86,9 +132,17 @@ const HostelDetail = () => {
             {/* Available Room Types */}
             <div className="bg-white p-6 rounded-xl shadow-sm">
               <h2 className="text-2xl font-bold mb-6">Available Room Types</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* Desktop: Grid Layout */}
+              <div className="hidden md:grid md:grid-cols-2 gap-6">
                 {hostel.roomTypes && hostel.roomTypes.length > 0 ? (
-                  hostel.roomTypes.map((room, index) => (
+                  hostel.roomTypes.map((room, index) => {
+                    const occupancyPercent = getOccupancyPercentage(room);
+                    const isAlmostFull = occupancyPercent >= 80 && occupancyPercent < 100;
+                    const appCount = getApplicationCount(room.type);
+                    const lastBooking = getLastBookingTime(room.type);
+                    
+                    return (
                     <div key={index} className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
                       <img 
                         src={room.roomImage || 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=800&q=80'} 
@@ -98,24 +152,68 @@ const HostelDetail = () => {
                       <div className="p-4">
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="font-bold text-lg">{room.type}</h3>
-                          <span className={`text-xs px-2 py-1 rounded-full ${
-                            room.available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                          }`}>
-                            {room.available ? 'Available' : 'Full'}
-                          </span>
+                          <div className="flex gap-1">
+                            {isAlmostFull && (
+                              <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-700 font-semibold">
+                                Almost Full
+                              </span>
+                            )}
+                            <span className={`text-xs px-2 py-1 rounded-full ${
+                              room.available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                            }`}>
+                              {room.available ? 'Available' : 'Full'}
+                            </span>
+                          </div>
                         </div>
                         <div className="text-primary-600 font-bold text-2xl mb-2">
                           GH₵{room.price} <span className="text-sm text-gray-500 font-normal">/ semester</span>
                         </div>
-                        <div className="text-sm text-gray-600 mb-3">
-                          <span className="font-medium">Capacity:</span> {room.totalCapacity - room.occupiedCapacity} / {room.totalCapacity} spots available
+                        
+                        {/* Occupancy Progress Bar */}
+                        <div className="mb-3">
+                          <div className="flex justify-between text-xs text-gray-600 mb-1">
+                            <span className="font-medium">Occupancy</span>
+                            <span className="font-semibold">{room.occupiedCapacity || 0} / {room.totalCapacity} ({occupancyPercent}%)</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className={`h-2 rounded-full transition-all ${
+                                occupancyPercent >= 90 ? 'bg-red-500' :
+                                occupancyPercent >= 80 ? 'bg-orange-500' :
+                                occupancyPercent >= 50 ? 'bg-yellow-500' :
+                                'bg-green-500'
+                              }`}
+                              style={{ width: `${occupancyPercent}%` }}
+                            ></div>
+                          </div>
                         </div>
+                        
+                        {/* Social Proof & Activity */}
+                        <div className="flex flex-wrap gap-2 mb-3 text-xs">
+                          {appCount > 0 && (
+                            <span className="flex items-center text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                              <Users className="w-3 h-3 mr-1" />
+                              {appCount} {appCount === 1 ? 'student' : 'students'} applied
+                            </span>
+                          )}
+                          {lastBooking && (
+                            <span className="flex items-center text-green-600 bg-green-50 px-2 py-1 rounded">
+                              <Clock className="w-3 h-3 mr-1" />
+                              Last booked: {lastBooking}
+                            </span>
+                          )}
+                        </div>
+                        
+                        {/* Facilities with Icons */}
                         {room.facilities && room.facilities.length > 0 && (
                           <div className="mb-3">
                             <p className="text-xs font-medium text-gray-700 mb-2">Facilities:</p>
-                            <div className="flex flex-wrap gap-1">
+                            <div className="flex flex-wrap gap-2">
                               {room.facilities.map((f, i) => (
-                                <span key={i} className="text-xs bg-gray-100 px-2 py-1 rounded">{f}</span>
+                                <span key={i} className="flex items-center text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded gap-1">
+                                  {getFacilityIcon(f)}
+                                  {f}
+                                </span>
                               ))}
                             </div>
                           </div>
@@ -123,24 +221,139 @@ const HostelDetail = () => {
                         {room.available && user?.role === 'student' ? (
                           <button
                             onClick={() => setAppData({...appData, roomType: room.type})}
-                            className="w-full bg-primary-600 text-white py-2 rounded-md hover:bg-primary-700 transition-colors"
+                            className="w-full bg-primary-600 text-white py-4 rounded-md hover:bg-primary-700 transition-colors font-medium"
                           >
                             Apply for this Room
                           </button>
                         ) : !room.available ? (
                           <button
                             disabled
-                            className="w-full bg-gray-300 text-gray-500 py-2 rounded-md cursor-not-allowed"
+                            className="w-full bg-gray-300 text-gray-500 py-4 rounded-md cursor-not-allowed font-medium"
                           >
                             Fully Booked
                           </button>
                         ) : null}
                       </div>
                     </div>
-                  ))
+                  );
+                  })
                 ) : (
                   <p className="text-gray-500 col-span-2">No room types available at the moment.</p>
                 )}
+              </div>
+              
+              {/* Mobile: Swipeable Horizontal Scroll */}
+              <div className="md:hidden overflow-x-auto scrollbar-hide -mx-6 px-6">
+                <div className="flex gap-4 pb-4">
+                  {hostel.roomTypes && hostel.roomTypes.length > 0 ? (
+                    hostel.roomTypes.map((room, index) => {
+                      const occupancyPercent = getOccupancyPercentage(room);
+                      const isAlmostFull = occupancyPercent >= 80 && occupancyPercent < 100;
+                      const appCount = getApplicationCount(room.type);
+                      const lastBooking = getLastBookingTime(room.type);
+                      
+                      return (
+                      <div key={index} className="flex-shrink-0 w-[85vw] border rounded-lg overflow-hidden shadow-md">
+                        <img 
+                          src={room.roomImage || 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=800&q=80'} 
+                          alt={room.type} 
+                          className="w-full h-48 object-cover"
+                        />
+                        <div className="p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <h3 className="font-bold text-lg">{room.type}</h3>
+                            <div className="flex flex-col gap-1">
+                              {isAlmostFull && (
+                                <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-700 font-semibold text-center">
+                                  Almost Full
+                                </span>
+                              )}
+                              <span className={`text-xs px-2 py-1 rounded-full text-center ${
+                                room.available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                              }`}>
+                                {room.available ? 'Available' : 'Full'}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-primary-600 font-bold text-2xl mb-3">
+                            GH₵{room.price} <span className="text-sm text-gray-500 font-normal">/ semester</span>
+                          </div>
+                          
+                          {/* Occupancy Progress Bar */}
+                          <div className="mb-3">
+                            <div className="flex justify-between text-xs text-gray-600 mb-1">
+                              <span className="font-medium">Occupancy</span>
+                              <span className="font-semibold">{room.occupiedCapacity || 0} / {room.totalCapacity} ({occupancyPercent}%)</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2.5">
+                              <div 
+                                className={`h-2.5 rounded-full transition-all ${
+                                  occupancyPercent >= 90 ? 'bg-red-500' :
+                                  occupancyPercent >= 80 ? 'bg-orange-500' :
+                                  occupancyPercent >= 50 ? 'bg-yellow-500' :
+                                  'bg-green-500'
+                                }`}
+                                style={{ width: `${occupancyPercent}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                          
+                          {/* Social Proof & Activity */}
+                          <div className="flex flex-wrap gap-2 mb-3 text-xs">
+                            {appCount > 0 && (
+                              <span className="flex items-center text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                <Users className="w-3 h-3 mr-1" />
+                                {appCount} applied
+                              </span>
+                            )}
+                            {lastBooking && (
+                              <span className="flex items-center text-green-600 bg-green-50 px-2 py-1 rounded">
+                                <Clock className="w-3 h-3 mr-1" />
+                                {lastBooking}
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Facilities with Icons */}
+                          {room.facilities && room.facilities.length > 0 && (
+                            <div className="mb-3">
+                              <p className="text-xs font-medium text-gray-700 mb-2">Facilities:</p>
+                              <div className="flex flex-wrap gap-2">
+                                {room.facilities.slice(0, 4).map((f, i) => (
+                                  <span key={i} className="flex items-center text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded gap-1">
+                                    {getFacilityIcon(f)}
+                                    {f}
+                                  </span>
+                                ))}
+                                {room.facilities.length > 4 && (
+                                  <span className="text-xs text-gray-500">+{room.facilities.length - 4}</span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          {room.available && user?.role === 'student' ? (
+                            <button
+                              onClick={() => setAppData({...appData, roomType: room.type})}
+                              className="w-full bg-primary-600 text-white py-4 rounded-md hover:bg-primary-700 transition-colors font-medium"
+                            >
+                              Apply for this Room
+                            </button>
+                          ) : !room.available ? (
+                            <button
+                              disabled
+                              className="w-full bg-gray-300 text-gray-500 py-4 rounded-md cursor-not-allowed font-medium"
+                            >
+                              Fully Booked
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
+                    );
+                    })
+                  ) : (
+                    <p className="text-gray-500">No room types available at the moment.</p>
+                  )}
+                </div>
               </div>
             </div>
           </div>

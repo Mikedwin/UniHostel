@@ -121,21 +121,6 @@ const HostelList = () => {
     fetchHostels('', '');
   };
 
-  // Sort hostels/rooms by price low to high
-  const sortedHostels = React.useMemo(() => {
-    const items = [...hostels];
-    return items.sort((a, b) => {
-      const minA = Math.min(...(a.roomTypes?.map(r => r.price) || [0]));
-      const minB = Math.min(...(b.roomTypes?.map(r => r.price) || [0]));
-      return minA - minB;
-    });
-  }, [hostels]);
-
-  const sortedRooms = React.useMemo(() => {
-    const items = [...rooms];
-    return items.sort((a, b) => a.price - b.price);
-  }, [rooms]);
-
   // Calculate hostel stats
   const getHostelStats = (hostel) => {
     const totalCapacity = hostel.roomTypes?.reduce((sum, r) => sum + r.totalCapacity, 0) || 0;
@@ -303,7 +288,7 @@ const HostelList = () => {
             
             {showRooms ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {sortedRooms.map((room, index) => (
+                {rooms.map((room, index) => (
                   <div
                     key={`${room.hostelId}-${index}`} 
                     className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200"
@@ -349,7 +334,7 @@ const HostelList = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {sortedHostels.map(hostel => {
+                {hostels.map(hostel => {
                   const stats = getHostelStats(hostel);
                   return (
                     <Link 

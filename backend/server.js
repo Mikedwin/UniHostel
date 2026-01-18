@@ -339,6 +339,33 @@ app.get('/api/applications/manager', auth, checkRole('manager'), async (req, res
   }
 });
 
+// Get application statistics for a hostel
+app.get('/api/applications/hostel/:hostelId/stats', async (req, res) => {
+  try {
+    const { hostelId } = req.params;
+    const applications = await Application.find({ hostelId, status: { $in: ['pending', 'approved'] } }).lean();
+    
+    const stats = {};
+    applications.forEach(app => {
+      // Count applications per room type
+      if (!stats[app.roomType]) {
+        stats[app.roomType] = 0;
+      }
+      stats[app.roomType]++;
+      
+      // Track last booking time per room type
+      const lastBookingKey = `${app.roomType}_lastBooking`;
+      if (!stats[lastBookingKey] || new Date(app.createdAt) > new Date(stats[lastBookingKey])) {
+        stats[lastBookingKey] = app.createdAt;
+      }
+    });
+    
+    res.json(stats);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.patch('/api/applications/:id', auth, checkRole('manager'), async (req, res) => {
     try {
         const { status } = req.body;
