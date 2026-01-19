@@ -25,19 +25,6 @@ const StudentDashboard = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             
-            // Check for changes (new apps or status updates)
-            if (applications.length > 0) {
-                const hasChanges = res.data.some((newApp, index) => {
-                    const oldApp = applications.find(a => a._id === newApp._id);
-                    return !oldApp || oldApp.status !== newApp.status;
-                });
-                
-                if (hasChanges || res.data.length !== applications.length) {
-                    setNewUpdates(prev => prev + 1);
-                    showToast('Status updated!');
-                }
-            }
-            
             setApplications(res.data);
         } catch (err) {
             console.error(err);

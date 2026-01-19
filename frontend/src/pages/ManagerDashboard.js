@@ -65,12 +65,6 @@ const ManagerDashboard = () => {
                 })
             ]);
             
-            if (applications.length > 0 && appRes.data.length > applications.length) {
-                const newCount = appRes.data.length - applications.length;
-                setNewUpdates(newCount);
-                showToast(`${newCount} new application${newCount > 1 ? 's' : ''}!`);
-            }
-            
             setApplications(appRes.data || []);
             setHostels(hostRes.data || []);
             setUserInfo(user);
