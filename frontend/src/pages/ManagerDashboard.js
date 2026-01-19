@@ -23,10 +23,29 @@ const ManagerDashboard = () => {
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [selectedApps, setSelectedApps] = useState([]);
     const [toast, setToast] = useState(null);
+    const [contextMenu, setContextMenu] = useState(null);
 
     const showToast = (message, type = 'success') => {
         setToast({ message, type });
         setTimeout(() => setToast(null), 3000);
+    };
+
+    const handleContextMenu = (e, app) => {
+        e.preventDefault();
+        if (viewMode === 'active' && (app.status === 'approved' || app.status === 'rejected')) {
+            setContextMenu({
+                x: e.pageX,
+                y: e.pageY,
+                app: app
+            });
+        }
+    };
+
+    const handleArchiveFromContext = (appId) => {
+        setContextMenu(null);
+        if (window.confirm('Are you sure you want to move this item to history?')) {
+            handleArchive(appId, true);
+        }
     };
 
     const fetchData = async () => {
@@ -59,6 +78,11 @@ const ManagerDashboard = () => {
         if (token) {
             fetchData();
         }
+        
+        // Close context menu on click outside
+        const handleClick = () => setContextMenu(null);
+        document.addEventListener('click', handleClick);
+        return () => document.removeEventListener('click', handleClick);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token, viewMode]);
 
@@ -457,7 +481,11 @@ const ManagerDashboard = () => {
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
                                         {filteredApplications.map(app => (
-                                            <tr key={app._id} className="hover:bg-gray-50">
+                                            <tr 
+                                                key={app._id} 
+                                                className="hover:bg-gray-50"
+                                                onContextMenu={(e) => handleContextMenu(e, app)}
+                                            >
                                                 <td className="px-4 py-3 whitespace-nowrap">
                                                     {app.status === 'pending' && (
                                                         <input
@@ -827,6 +855,30 @@ const ManagerDashboard = () => {
                 </>
                 )}
                 </>
+            )}
+            
+            {/* Context Menu */}
+            {contextMenu && (
+                <div 
+                    className="fixed bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 min-w-[180px]"
+                    style={{ 
+                        left: `${contextMenu.x}px`, 
+                        top: `${contextMenu.y}px` 
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <button
+                        onClick={() => handleArchiveFromContext(contextMenu.app._id)}
+                        className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-3 text-gray-700"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                        <span className="font-medium">Move to History</span>
+                    </button>
+                    <div className="border-t border-gray-200 my-1"></div>
+                    <div className="px-4 py-2 text-xs text-gray-500">
+                        {contextMenu.app.studentName} - {contextMenu.app.hostelId?.name}
+                    </div>
+                </div>
             )}
         </div>
     );
