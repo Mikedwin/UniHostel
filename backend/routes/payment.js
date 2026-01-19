@@ -5,39 +5,26 @@ const Application = require('../models/Application');
 const Hostel = require('../models/Hostel');
 const { auth } = require('../middleware/auth');
 
-// Initialize payment
+// Step 4: Initialize payment (only for approved_for_payment applications)
 router.post('/initialize', auth, async (req, res) => {
   try {
-    const { hostelId, roomType, semester, studentName, contactNumber } = req.body;
+    const { applicationId } = req.body;
 
-    // Get hostel and room details
-    const hostel = await Hostel.findById(hostelId);
-    if (!hostel) return res.status(404).json({ message: 'Hostel not found' });
+    const application = await Application.findById(applicationId).populate('hostelId');
+    if (!application) return res.status(404).json({ message: 'Application not found' });
+    
+    // Check if application is approved for payment
+    if (application.status !== 'approved_for_payment') {
+      return res.status(400).json({ message: 'Application must be approved by manager before payment' });
+    }
+    
+    // Check if already paid
+    if (application.paymentStatus === 'paid') {
+      return res.status(400).json({ message: 'Application already paid' });
+    }
 
-    const room = hostel.roomTypes.find(r => r.type === roomType);
-    if (!room) return res.status(404).json({ message: 'Room type not found' });
-
-    // Calculate payment amounts
-    const hostelFee = room.price;
-    const commissionPercent = parseFloat(process.env.ADMIN_COMMISSION_PERCENT) || 10;
-    const adminCommission = Math.round(hostelFee * (commissionPercent / 100));
-    const totalAmount = hostelFee + adminCommission;
-
-    // Create application with pending payment
-    const application = new Application({
-      hostelId,
-      studentId: req.user.id,
-      roomType,
-      semester,
-      studentName,
-      contactNumber,
-      status: 'pending',
-      paymentStatus: 'pending',
-      hostelFee,
-      adminCommission,
-      totalAmount
-    });
-    await application.save();
+    const hostel = application.hostelId;
+    const { totalAmount, hostelFee, adminCommission } = application;
 
     // Initialize Paystack payment
     const paystackResponse = await axios.post(
@@ -50,8 +37,8 @@ router.post('/initialize', auth, async (req, res) => {
         metadata: {
           applicationId: application._id.toString(),
           hostelName: hostel.name,
-          roomType,
-          semester,
+          roomType: application.roomType,
+          semester: application.semester,
           hostelFee,
           adminCommission
         }
@@ -82,7 +69,7 @@ router.post('/initialize', auth, async (req, res) => {
   }
 });
 
-// Verify payment
+// Step 5: Verify payment
 router.get('/verify/:reference', auth, async (req, res) => {
   try {
     const { reference } = req.params;
@@ -104,12 +91,13 @@ router.get('/verify/:reference', auth, async (req, res) => {
       const application = await Application.findById(metadata.applicationId);
       if (application) {
         application.paymentStatus = 'paid';
+        application.status = 'paid_awaiting_final'; // Step 5: Awaiting final approval
         application.paidAt = new Date();
         await application.save();
 
         res.json({ 
           success: true, 
-          message: 'Payment verified successfully',
+          message: 'Payment verified successfully. Awaiting final manager approval.',
           application 
         });
       } else {
@@ -137,11 +125,12 @@ router.post('/webhook', async (req, res) => {
       const event = req.body;
 
       if (event.event === 'charge.success') {
-        const { reference, metadata } = event.data;
+        const { metadata } = event.data;
         
         const application = await Application.findById(metadata.applicationId);
         if (application && application.paymentStatus === 'pending') {
           application.paymentStatus = 'paid';
+          application.status = 'paid_awaiting_final';
           application.paidAt = new Date();
           await application.save();
         }

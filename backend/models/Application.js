@@ -4,7 +4,12 @@ const applicationSchema = new mongoose.Schema({
   hostelId: { type: mongoose.Schema.Types.ObjectId, ref: 'Hostel', required: true, index: true },
   studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   roomType: { type: String, enum: ['1 in a Room', '2 in a Room', '3 in a Room', '4 in a Room'], required: true },
-  status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending', index: true },
+  status: { 
+    type: String, 
+    enum: ['pending', 'approved_for_payment', 'paid_awaiting_final', 'approved', 'rejected'], 
+    default: 'pending', 
+    index: true 
+  },
   semester: { type: String, enum: ['First Semester', 'Second Semester'], required: true },
   studentName: { type: String, required: true },
   contactNumber: { type: String, required: true },
@@ -44,7 +49,12 @@ const applicationSchema = new mongoose.Schema({
   refundStatus: { type: String, enum: ['not_applicable', 'pending', 'completed', 'failed'], default: 'not_applicable' },
   refundAmount: Number,
   refundProcessedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  refundProcessedAt: Date
+  refundProcessedAt: Date,
+  
+  // Access code (issued after final approval)
+  accessCode: { type: String, unique: true, sparse: true },
+  accessCodeIssuedAt: Date,
+  finalApprovedAt: Date
 });
 
 applicationSchema.index({ hostelId: 1, createdAt: -1 });
