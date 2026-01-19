@@ -135,10 +135,10 @@ const StudentDashboard = () => {
                                         {app.status === 'approved_for_payment' ? (
                                             <button
                                                 onClick={() => handleProceedToPayment(app._id)}
-                                                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2"
+                                                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2 font-semibold"
                                             >
                                                 <CreditCard className="w-4 h-4" />
-                                                Proceed to Payment
+                                                Pay Now
                                             </button>
                                         ) : app.status === 'pending' ? (
                                             <button 
@@ -148,6 +148,10 @@ const StudentDashboard = () => {
                                             >
                                                 <X className="w-4 h-4" />
                                             </button>
+                                        ) : app.status === 'paid_awaiting_final' ? (
+                                            <span className="text-orange-600 text-xs font-medium">Awaiting Final Approval</span>
+                                        ) : app.status === 'approved' ? (
+                                            <span className="text-green-600 text-xs font-medium">Completed</span>
                                         ) : (
                                             <span className="text-gray-400">-</span>
                                         )}
