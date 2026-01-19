@@ -5,7 +5,7 @@ import { Check, X, Plus, Edit, Trash2, Search, Eye, TrendingUp, Users, Home, Clo
 import { Link } from 'react-router-dom';
 import API_URL from '../config';
 import ManagerAnalytics from '../components/manager/ManagerAnalytics';
-import Alert from '../components/Alert';
+import Swal from 'sweetalert2';
 
 const ManagerDashboard = () => {
     const [applications, setApplications] = useState([]);
@@ -26,7 +26,6 @@ const ManagerDashboard = () => {
     const [toast, setToast] = useState(null);
     const [contextMenu, setContextMenu] = useState(null);
     const [newUpdates, setNewUpdates] = useState(0);
-    const [alert, setAlert] = useState({ isOpen: false, title: '', message: '', type: 'confirm', onConfirm: null });
 
     const showToast = (message, type = 'success') => {
         setToast({ message, type });
@@ -44,18 +43,22 @@ const ManagerDashboard = () => {
         }
     };
 
-    const handleArchiveFromContext = (appId) => {
+    const handleArchiveFromContext = async (appId) => {
         setContextMenu(null);
-        setAlert({
-            isOpen: true,
+        const result = await Swal.fire({
             title: 'Move to History',
-            message: 'Are you sure you want to move this item to history?',
-            type: 'confirm',
-            onConfirm: () => {
-                handleArchive(appId, true);
-                setAlert({ ...alert, isOpen: false });
-            }
+            text: 'Are you sure you want to move this item to history?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3b82f6',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, move it',
+            cancelButtonText: 'Cancel'
         });
+        
+        if (result.isConfirmed) {
+            handleArchive(appId, true);
+        }
     };
 
     const fetchData = async () => {
@@ -124,12 +127,11 @@ const ManagerDashboard = () => {
             );
             
             if (response.data.error) {
-                setAlert({
-                    isOpen: true,
+                Swal.fire({
                     title: 'Error',
-                    message: response.data.error,
-                    type: 'error',
-                    onConfirm: null
+                    text: response.data.error,
+                    icon: 'error',
+                    confirmButtonColor: '#3b82f6'
                 });
                 return;
             }
@@ -149,77 +151,96 @@ const ManagerDashboard = () => {
     };
 
     const handleDeleteHostel = async (id, name) => {
-        setAlert({
-            isOpen: true,
+        const result = await Swal.fire({
             title: 'Delete Hostel',
-            message: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
-            type: 'warning',
-            onConfirm: async () => {
-                try {
-                    await axios.delete(`${API_URL}/api/hostels/${id}`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    fetchData();
-                    setAlert({ ...alert, isOpen: false });
-                } catch (err) {
-                    console.error('Error deleting hostel:', err);
-                    setAlert({
-                        isOpen: true,
-                        title: 'Error',
-                        message: 'Failed to delete hostel',
-                        type: 'error',
-                        onConfirm: null
-                    });
-                }
-            }
+            text: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, delete it',
+            cancelButtonText: 'Cancel'
         });
+        
+        if (result.isConfirmed) {
+            try {
+                await axios.delete(`${API_URL}/api/hostels/${id}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                fetchData();
+                Swal.fire({
+                    title: 'Deleted!',
+                    text: 'Hostel has been deleted.',
+                    icon: 'success',
+                    confirmButtonColor: '#3b82f6',
+                    timer: 2000
+                });
+            } catch (err) {
+                console.error('Error deleting hostel:', err);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Failed to delete hostel',
+                    icon: 'error',
+                    confirmButtonColor: '#3b82f6'
+                });
+            }
+        }
     };
 
     const handleBulkAction = async (action) => {
         if (selectedApps.length === 0) return;
         const actionText = action === 'approve_for_payment' ? 'Approve for Payment' : 'Reject';
         
-        setAlert({
-            isOpen: true,
+        const result = await Swal.fire({
             title: `${actionText} Applications`,
-            message: `${actionText} ${selectedApps.length} application(s)?`,
-            type: 'confirm',
-            onConfirm: async () => {
-                try {
-                    const results = await Promise.allSettled(selectedApps.map(id => 
-                        axios.patch(`${API_URL}/api/applications/${id}/status`, { action }, {
-                            headers: { Authorization: `Bearer ${token}` }
-                        })
-                    ));
-                    
-                    const failed = results.filter(r => r.status === 'rejected');
-                    if (failed.length > 0) {
-                        const errors = failed.map(f => f.reason?.response?.data?.error || 'Unknown error').join(', ');
-                        setAlert({
-                            isOpen: true,
-                            title: 'Some Actions Failed',
-                            message: errors,
-                            type: 'error',
-                            onConfirm: null
-                        });
-                    } else {
-                        setAlert({ ...alert, isOpen: false });
-                    }
-                    
-                    setSelectedApps([]);
-                    fetchData();
-                } catch (err) {
-                    console.error('Bulk action error:', err);
-                    setAlert({
-                        isOpen: true,
-                        title: 'Error',
-                        message: 'Some actions failed',
-                        type: 'error',
-                        onConfirm: null
+            text: `${actionText} ${selectedApps.length} application(s)?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3b82f6',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, proceed',
+            cancelButtonText: 'Cancel'
+        });
+        
+        if (result.isConfirmed) {
+            try {
+                const results = await Promise.allSettled(selectedApps.map(id => 
+                    axios.patch(`${API_URL}/api/applications/${id}/status`, { action }, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    })
+                ));
+                
+                const failed = results.filter(r => r.status === 'rejected');
+                if (failed.length > 0) {
+                    const errors = failed.map(f => f.reason?.response?.data?.error || 'Unknown error').join(', ');
+                    Swal.fire({
+                        title: 'Some Actions Failed',
+                        text: errors,
+                        icon: 'error',
+                        confirmButtonColor: '#3b82f6'
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'All applications updated successfully',
+                        icon: 'success',
+                        confirmButtonColor: '#3b82f6',
+                        timer: 2000
                     });
                 }
+                
+                setSelectedApps([]);
+                fetchData();
+            } catch (err) {
+                console.error('Bulk action error:', err);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Some actions failed',
+                    icon: 'error',
+                    confirmButtonColor: '#3b82f6'
+                });
             }
-        });
+        }
     };
 
     const filteredApplications = useMemo(() => {
@@ -625,17 +646,20 @@ const ManagerDashboard = () => {
                                                         )}
                                                         {viewMode === 'active' && (app.status === 'approved' || app.status === 'rejected') && (
                                                             <button 
-                                                                onClick={() => {
-                                                                    setAlert({
-                                                                        isOpen: true,
+                                                                onClick={async () => {
+                                                                    const result = await Swal.fire({
                                                                         title: 'Move to History',
-                                                                        message: 'Are you sure you want to move this item to history?',
-                                                                        type: 'confirm',
-                                                                        onConfirm: () => {
-                                                                            handleArchive(app._id, true);
-                                                                            setAlert({ ...alert, isOpen: false });
-                                                                        }
+                                                                        text: 'Are you sure you want to move this item to history?',
+                                                                        icon: 'question',
+                                                                        showCancelButton: true,
+                                                                        confirmButtonColor: '#3b82f6',
+                                                                        cancelButtonColor: '#6b7280',
+                                                                        confirmButtonText: 'Yes, move it',
+                                                                        cancelButtonText: 'Cancel'
                                                                     });
+                                                                    if (result.isConfirmed) {
+                                                                        handleArchive(app._id, true);
+                                                                    }
                                                                 }}
                                                                 className="text-gray-600 hover:bg-gray-50 px-3 py-1 rounded text-xs font-medium" 
                                                                 title="Move to History">
@@ -926,16 +950,6 @@ const ManagerDashboard = () => {
                 )}
                 </>
             )}
-            
-            {/* Alert Modal */}
-            <Alert
-                isOpen={alert.isOpen}
-                onClose={() => setAlert({ ...alert, isOpen: false })}
-                onConfirm={alert.onConfirm}
-                title={alert.title}
-                message={alert.message}
-                type={alert.type}
-            />
             
             {/* Context Menu */}
             {contextMenu && (
