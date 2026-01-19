@@ -42,7 +42,7 @@ const StudentDashboard = () => {
     useEffect(() => {
         fetchApps();
         
-        const interval = setInterval(fetchApps, 30000);
+        const interval = setInterval(fetchApps, 5000);
         
         const handleClick = () => {
             setContextMenu(null);

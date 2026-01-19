@@ -89,7 +89,7 @@ const ManagerDashboard = () => {
         
         const interval = setInterval(() => {
             if (token) fetchData();
-        }, 30000);
+        }, 5000);
         
         const handleClick = () => {
             setContextMenu(null);
