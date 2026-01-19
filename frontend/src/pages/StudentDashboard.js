@@ -49,8 +49,6 @@ const StudentDashboard = () => {
     useEffect(() => {
         fetchApps();
         
-        const interval = setInterval(fetchApps, 5000);
-        
         const handleClick = () => {
             setContextMenu(null);
             setNewUpdates(0);
@@ -58,7 +56,6 @@ const StudentDashboard = () => {
         document.addEventListener('click', handleClick);
         
         return () => {
-            clearInterval(interval);
             document.removeEventListener('click', handleClick);
         };
     // eslint-disable-next-line react-hooks/exhaustive-deps

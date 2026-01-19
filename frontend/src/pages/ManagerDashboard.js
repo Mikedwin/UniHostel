@@ -87,10 +87,6 @@ const ManagerDashboard = () => {
             fetchData();
         }
         
-        const interval = setInterval(() => {
-            if (token) fetchData();
-        }, 5000);
-        
         const handleClick = () => {
             setContextMenu(null);
             setNewUpdates(0);
@@ -98,7 +94,6 @@ const ManagerDashboard = () => {
         document.addEventListener('click', handleClick);
         
         return () => {
-            clearInterval(interval);
             document.removeEventListener('click', handleClick);
         };
     // eslint-disable-next-line react-hooks/exhaustive-deps
