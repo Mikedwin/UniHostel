@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Clock, CheckCircle, XCircle, X, CreditCard, Key } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, X, CreditCard, Key, Archive, RotateCcw } from 'lucide-react';
 import API_URL from '../config';
 
 const StudentDashboard = () => {
@@ -9,6 +9,12 @@ const StudentDashboard = () => {
     const { token } = useAuth();
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState('active'); // 'active' or 'history'
+    const [toast, setToast] = useState(null);
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
 
     const fetchApps = async () => {
         try {
@@ -30,14 +36,32 @@ const StudentDashboard = () => {
     }, [token, viewMode]);
 
     const handleCancelApplication = async (appId) => {
-        if (window.confirm('Move this application to history?')) {
+        if (window.confirm('Are you sure you want to move this application to history?')) {
             try {
                 await axios.delete(`${API_URL}/api/applications/${appId}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
+                showToast('Moved to history successfully');
                 fetchApps();
             } catch (err) {
                 console.error('Error cancelling application:', err);
+                showToast('Failed to move to history', 'error');
+            }
+        }
+    };
+
+    const handleArchive = async (appId) => {
+        if (window.confirm('Are you sure you want to move this item to history?')) {
+            try {
+                await axios.patch(`${API_URL}/api/applications/${appId}/archive`, 
+                    { archive: true },
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                showToast('Moved to history successfully');
+                fetchApps();
+            } catch (err) {
+                console.error('Error archiving application:', err);
+                showToast('Failed to move to history', 'error');
             }
         }
     };
@@ -48,9 +72,11 @@ const StudentDashboard = () => {
                 { archive: false },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
+            showToast('Restored successfully');
             fetchApps();
         } catch (err) {
             console.error('Error restoring application:', err);
+            showToast('Failed to restore', 'error');
         }
     };
 
@@ -73,6 +99,11 @@ const StudentDashboard = () => {
             const details = err.response?.data?.details ? `\n\nDetails: ${JSON.stringify(err.response.data.details)}` : '';
             alert(errorMsg + details);
         }
+    };
+
+    const canMoveToHistory = (app) => {
+        // Students can archive: rejected, approved (completed), cancelled
+        return app.status === 'rejected' || app.status === 'approved';
     };
 
     const getStatusStyle = (status) => {
@@ -106,6 +137,16 @@ const StudentDashboard = () => {
 
     return (
         <div className="max-w-7xl mx-auto px-4 py-8">
+            {/* Toast Notification */}
+            {toast && (
+                <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
+                    toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
+                } text-white flex items-center gap-2 animate-fade-in`}>
+                    {toast.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+                    {toast.message}
+                </div>
+            )}
+            
             <div className="flex justify-between items-center mb-8">
                 <div>
                     <h1 className="text-2xl font-bold">My Applications</h1>
@@ -175,9 +216,18 @@ const StudentDashboard = () => {
                                         {viewMode === 'history' ? (
                                             <button 
                                                 onClick={() => handleRestore(app._id)}
-                                                className="text-blue-600 hover:bg-blue-50 px-3 py-1 rounded text-xs" 
+                                                className="flex items-center gap-1 text-blue-600 hover:bg-blue-50 px-3 py-1 rounded text-xs font-medium" 
                                                 title="Restore to Active">
+                                                <RotateCcw className="w-3 h-3" />
                                                 Restore
+                                            </button>
+                                        ) : canMoveToHistory(app) ? (
+                                            <button 
+                                                onClick={() => handleArchive(app._id)}
+                                                className="flex items-center gap-1 text-gray-600 hover:bg-gray-50 px-3 py-1 rounded text-xs font-medium" 
+                                                title="Move to History">
+                                                <Archive className="w-3 h-3" />
+                                                Move to History
                                             </button>
                                         ) : app.status === 'approved_for_payment' ? (
                                             <button
@@ -190,10 +240,11 @@ const StudentDashboard = () => {
                                         ) : app.status === 'pending' ? (
                                             <button 
                                                 onClick={() => handleCancelApplication(app._id)}
-                                                className="text-red-600 hover:bg-red-50 p-2 rounded-full" 
+                                                className="flex items-center gap-1 text-red-600 hover:bg-red-50 px-3 py-1 rounded text-xs font-medium" 
                                                 title="Cancel Application"
                                             >
-                                                <X className="w-4 h-4" />
+                                                <X className="w-3 h-3" />
+                                                Cancel
                                             </button>
                                         ) : app.status === 'paid_awaiting_final' ? (
                                             <span className="text-orange-600 text-xs font-medium">Awaiting Final Approval</span>

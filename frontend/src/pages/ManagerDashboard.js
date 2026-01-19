@@ -22,6 +22,12 @@ const ManagerDashboard = () => {
     const [selectedApp, setSelectedApp] = useState(null);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [selectedApps, setSelectedApps] = useState([]);
+    const [toast, setToast] = useState(null);
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
 
     const fetchData = async () => {
         setLoading(true);
@@ -69,6 +75,20 @@ const ManagerDashboard = () => {
         }
     };
 
+    const handleArchive = async (id, archive) => {
+        try {
+            await axios.patch(`${API_URL}/api/applications/${id}/archive`, 
+                { archive }, 
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            showToast(archive ? 'Moved to history successfully' : 'Restored successfully');
+            fetchData();
+        } catch (err) {
+            console.error(err);
+            showToast('Operation failed', 'error');
+        }
+    };
+
     const handleStatusUpdate = async (id, action) => {
         try {
             const response = await axios.patch(`${API_URL}/api/applications/${id}/status`, 
@@ -82,17 +102,16 @@ const ManagerDashboard = () => {
             }
             
             if (action === 'final_approve' && response.data.accessCode) {
-                alert(`Application approved! Access Code: ${response.data.accessCode}`);
+                showToast(`Application approved! Access Code: ${response.data.accessCode}`);
+            } else {
+                showToast('Application updated successfully');
             }
             
             fetchData();
         } catch (err) {
             console.error(err);
-            if (err.response?.data?.error) {
-                alert(err.response.data.error);
-            } else {
-                alert('Failed to update application status');
-            }
+            const errorMsg = err.response?.data?.error || 'Failed to update application status';
+            showToast(errorMsg, 'error');
         }
     };
 
@@ -163,6 +182,16 @@ const ManagerDashboard = () => {
 
     return (
         <div className="max-w-7xl mx-auto px-4 py-8">
+            {/* Toast Notification */}
+            {toast && (
+                <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
+                    toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
+                } text-white flex items-center gap-2 animate-fade-in`}>
+                    {toast.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+                    {toast.message}
+                </div>
+            )}
+            
             {/* Pending Verification Banner */}
             {userInfo && !userInfo.isVerified && userInfo.accountStatus === 'pending_verification' && (
                 <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
@@ -518,10 +547,14 @@ const ManagerDashboard = () => {
                                                         )}
                                                         {viewMode === 'active' && (app.status === 'approved' || app.status === 'rejected') && (
                                                             <button 
-                                                                onClick={() => handleArchive(app._id, true)}
-                                                                className="text-gray-600 hover:bg-gray-50 px-3 py-1 rounded text-xs" 
+                                                                onClick={() => {
+                                                                    if (window.confirm('Are you sure you want to move this item to history?')) {
+                                                                        handleArchive(app._id, true);
+                                                                    }
+                                                                }}
+                                                                className="text-gray-600 hover:bg-gray-50 px-3 py-1 rounded text-xs font-medium" 
                                                                 title="Move to History">
-                                                                Archive
+                                                                Move to History
                                                             </button>
                                                         )}
                                                         {viewMode === 'history' && (
