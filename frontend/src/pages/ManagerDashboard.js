@@ -14,6 +14,7 @@ const ManagerDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('dashboard');
+    const [viewMode, setViewMode] = useState('active'); // 'active' or 'history'
     
     // Filter states
     const [statusFilter, setStatusFilter] = useState('all');
@@ -26,8 +27,9 @@ const ManagerDashboard = () => {
         setLoading(true);
         setError(null);
         try {
+            const archived = viewMode === 'history' ? 'true' : 'false';
             const [appRes, hostRes] = await Promise.all([
-                axios.get(`${API_URL}/api/applications/manager`, { 
+                axios.get(`${API_URL}/api/applications/manager?archived=${archived}`, { 
                     headers: { Authorization: `Bearer ${token}` },
                     timeout: 10000
                 }),
@@ -52,7 +54,20 @@ const ManagerDashboard = () => {
             fetchData();
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [token]);
+    }, [token, viewMode]);
+
+    const handleArchive = async (id, archive) => {
+        try {
+            await axios.patch(`${API_URL}/api/applications/${id}/archive`, 
+                { archive }, 
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            fetchData();
+        } catch (err) {
+            console.error(err);
+            alert('Failed to archive application');
+        }
+    };
 
     const handleStatusUpdate = async (id, action) => {
         try {
@@ -313,7 +328,27 @@ const ManagerDashboard = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-10 gap-8">
                     <div className="lg:col-span-7">
                     <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-lg font-bold">Incoming Applications</h2>
+                        <div>
+                            <h2 className="text-lg font-bold">Incoming Applications</h2>
+                            <div className="flex gap-2 mt-2">
+                                <button
+                                    onClick={() => setViewMode('active')}
+                                    className={`px-3 py-1 rounded text-sm font-medium ${
+                                        viewMode === 'active' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    }`}
+                                >
+                                    Active
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('history')}
+                                    className={`px-3 py-1 rounded text-sm font-medium ${
+                                        viewMode === 'history' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    }`}
+                                >
+                                    History
+                                </button>
+                            </div>
+                        </div>
                         {stats.pending > 0 && (
                             <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded-full">
                                 {stats.pending} Pending
@@ -479,6 +514,22 @@ const ManagerDashboard = () => {
                                                                 className="text-green-600 hover:bg-green-50 px-3 py-1 rounded text-sm font-medium" 
                                                                 title="Final Approve">
                                                                 Final Approve
+                                                            </button>
+                                                        )}
+                                                        {viewMode === 'active' && (app.status === 'approved' || app.status === 'rejected') && (
+                                                            <button 
+                                                                onClick={() => handleArchive(app._id, true)}
+                                                                className="text-gray-600 hover:bg-gray-50 px-3 py-1 rounded text-xs" 
+                                                                title="Move to History">
+                                                                Archive
+                                                            </button>
+                                                        )}
+                                                        {viewMode === 'history' && (
+                                                            <button 
+                                                                onClick={() => handleArchive(app._id, false)}
+                                                                className="text-blue-600 hover:bg-blue-50 px-3 py-1 rounded text-xs" 
+                                                                title="Restore to Active">
+                                                                Restore
                                                             </button>
                                                         )}
                                                     </div>

@@ -333,11 +333,19 @@ app.get('/api/applications/student', auth, checkRole('student'), async (req, res
 app.get('/api/applications/manager', auth, checkRole('manager'), async (req, res) => {
   try {
     console.log('Fetching applications for manager:', req.user.id);
+    const { archived } = req.query;
     const managedHostels = await Hostel.find({ managerId: req.user.id }).select('_id').lean();
     const hostelIds = managedHostels.map(h => h._id);
     console.log(`Manager has ${hostelIds.length} hostels`);
 
-    const apps = await Application.find({ hostelId: { $in: hostelIds } })
+    const query = { hostelId: { $in: hostelIds } };
+    if (archived === 'true') {
+      query.isArchived = true;
+    } else {
+      query.isArchived = { $ne: true };
+    }
+
+    const apps = await Application.find(query)
         .populate('hostelId', 'name location')
         .populate('studentId', 'name email')
         .sort({ createdAt: -1 })
@@ -478,6 +486,32 @@ app.delete('/api/applications/:id', auth, checkRole('student'), async (req, res)
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+});
+
+// Archive/Unarchive application (Manager only)
+app.patch('/api/applications/:id/archive', auth, checkRole('manager'), async (req, res) => {
+  try {
+    const { archive } = req.body;
+    const app = await Application.findById(req.params.id).populate('hostelId');
+    
+    if (!app) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+    
+    const hostel = await Hostel.findById(app.hostelId._id);
+    if (hostel.managerId.toString() !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+    
+    app.isArchived = archive;
+    app.archivedAt = archive ? new Date() : null;
+    app.archivedBy = archive ? req.user.id : null;
+    await app.save();
+    
+    res.json({ message: archive ? 'Application archived' : 'Application restored', application: app });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 const PORT = process.env.PORT || 5000;

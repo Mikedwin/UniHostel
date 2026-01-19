@@ -54,12 +54,18 @@ const applicationSchema = new mongoose.Schema({
   // Access code (issued after final approval)
   accessCode: { type: String, unique: true, sparse: true },
   accessCodeIssuedAt: Date,
-  finalApprovedAt: Date
+  finalApprovedAt: Date,
+  
+  // Archive management
+  isArchived: { type: Boolean, default: false, index: true },
+  archivedAt: Date,
+  archivedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 });
 
 applicationSchema.index({ hostelId: 1, createdAt: -1 });
 applicationSchema.index({ studentId: 1, createdAt: -1 });
 applicationSchema.index({ hasDispute: 1, disputeStatus: 1 });
 applicationSchema.index({ status: 1, paymentStatus: 1 });
+applicationSchema.index({ isArchived: 1, hostelId: 1 });
 
 module.exports = mongoose.model('Application', applicationSchema);
