@@ -54,16 +54,20 @@ const ManagerDashboard = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token]);
 
-    const handleStatusUpdate = async (id, status) => {
+    const handleStatusUpdate = async (id, action) => {
         try {
-            const response = await axios.patch(`${API_URL}/api/applications/${id}`, { status }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await axios.patch(`${API_URL}/api/applications/${id}/status`, 
+                { action }, 
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
             
-            // Check if approval failed due to capacity
             if (response.data.error) {
                 alert(response.data.error);
                 return;
+            }
+            
+            if (action === 'final_approve' && response.data.accessCode) {
+                alert(`Application approved! Access Code: ${response.data.accessCode}`);
             }
             
             fetchData();
@@ -93,11 +97,12 @@ const ManagerDashboard = () => {
 
     const handleBulkAction = async (action) => {
         if (selectedApps.length === 0) return;
-        if (!window.confirm(`${action === 'approved' ? 'Approve' : 'Reject'} ${selectedApps.length} application(s)?`)) return;
+        const actionText = action === 'approve_for_payment' ? 'Approve for Payment' : 'Reject';
+        if (!window.confirm(`${actionText} ${selectedApps.length} application(s)?`)) return;
         
         try {
             const results = await Promise.allSettled(selectedApps.map(id => 
-                axios.patch(`${API_URL}/api/applications/${id}`, { status: action }, {
+                axios.patch(`${API_URL}/api/applications/${id}/status`, { action }, {
                     headers: { Authorization: `Bearer ${token}` }
                 })
             ));
@@ -336,6 +341,8 @@ const ManagerDashboard = () => {
                             >
                                 <option value="all">All Status</option>
                                 <option value="pending">Pending</option>
+                                <option value="approved_for_payment">Approved for Payment</option>
+                                <option value="paid_awaiting_final">Paid - Awaiting Final</option>
                                 <option value="approved">Approved</option>
                                 <option value="rejected">Rejected</option>
                             </select>
@@ -344,13 +351,13 @@ const ManagerDashboard = () => {
                             <div className="mt-4 flex items-center gap-3">
                                 <span className="text-sm text-gray-600">{selectedApps.length} selected</span>
                                 <button
-                                    onClick={() => handleBulkAction('approved')}
-                                    className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+                                    onClick={() => handleBulkAction('approve_for_payment')}
+                                    className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
                                 >
-                                    Approve All
+                                    Approve for Payment
                                 </button>
                                 <button
-                                    onClick={() => handleBulkAction('rejected')}
+                                    onClick={() => handleBulkAction('reject')}
                                     className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
                                 >
                                     Reject All
@@ -435,9 +442,14 @@ const ManagerDashboard = () => {
                                                 <td className="px-4 py-3 whitespace-nowrap">
                                                     <span className={`px-2 py-1 text-xs font-bold rounded-full uppercase ${
                                                         app.status === 'approved' ? 'bg-green-100 text-green-700' : 
-                                                        app.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+                                                        app.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                                        app.status === 'approved_for_payment' ? 'bg-blue-100 text-blue-700' :
+                                                        app.status === 'paid_awaiting_final' ? 'bg-orange-100 text-orange-700' :
+                                                        'bg-yellow-100 text-yellow-700'
                                                     }`}>
-                                                        {app.status}
+                                                        {app.status === 'approved_for_payment' ? 'APPROVED - AWAITING PAYMENT' :
+                                                         app.status === 'paid_awaiting_final' ? 'PAID - AWAITING FINAL' :
+                                                         app.status}
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-3 whitespace-nowrap text-sm">
@@ -450,16 +462,24 @@ const ManagerDashboard = () => {
                                                         {app.status === 'pending' && (
                                                             <>
                                                                 <button 
-                                                                    onClick={() => handleStatusUpdate(app._id, 'approved')}
-                                                                    className="text-green-600 hover:bg-green-50 p-1 rounded" title="Approve">
+                                                                    onClick={() => handleStatusUpdate(app._id, 'approve_for_payment')}
+                                                                    className="text-blue-600 hover:bg-blue-50 p-1 rounded" title="Approve for Payment">
                                                                     <Check className="w-5 h-5" />
                                                                 </button>
                                                                 <button 
-                                                                    onClick={() => handleStatusUpdate(app._id, 'rejected')}
+                                                                    onClick={() => handleStatusUpdate(app._id, 'reject')}
                                                                     className="text-red-600 hover:bg-red-50 p-1 rounded" title="Reject">
                                                                     <X className="w-5 h-5" />
                                                                 </button>
                                                             </>
+                                                        )}
+                                                        {app.status === 'paid_awaiting_final' && (
+                                                            <button 
+                                                                onClick={() => handleStatusUpdate(app._id, 'final_approve')}
+                                                                className="text-green-600 hover:bg-green-50 px-3 py-1 rounded text-sm font-medium" 
+                                                                title="Final Approve">
+                                                                Final Approve
+                                                            </button>
                                                         )}
                                                     </div>
                                                 </td>
@@ -648,11 +668,22 @@ const ManagerDashboard = () => {
                                             <p className="text-sm text-gray-600">Status</p>
                                             <span className={`inline-block px-2 py-1 text-xs font-bold rounded-full uppercase ${
                                                 selectedApp.status === 'approved' ? 'bg-green-100 text-green-700' : 
-                                                selectedApp.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+                                                selectedApp.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                                selectedApp.status === 'approved_for_payment' ? 'bg-blue-100 text-blue-700' :
+                                                selectedApp.status === 'paid_awaiting_final' ? 'bg-orange-100 text-orange-700' :
+                                                'bg-yellow-100 text-yellow-700'
                                             }`}>
-                                                {selectedApp.status}
+                                                {selectedApp.status === 'approved_for_payment' ? 'APPROVED - AWAITING PAYMENT' :
+                                                 selectedApp.status === 'paid_awaiting_final' ? 'PAID - AWAITING FINAL' :
+                                                 selectedApp.status}
                                             </span>
                                         </div>
+                                        {selectedApp.accessCode && (
+                                            <div>
+                                                <p className="text-sm text-gray-600">Access Code</p>
+                                                <code className="bg-gray-100 px-3 py-2 rounded font-mono text-sm">{selectedApp.accessCode}</code>
+                                            </div>
+                                        )}
                                         <div>
                                             <p className="text-sm text-gray-600">Hostel</p>
                                             <p className="font-semibold">{selectedApp.hostelId?.name}</p>
@@ -686,21 +717,34 @@ const ManagerDashboard = () => {
                                         <div className="flex gap-3 pt-4 border-t">
                                             <button
                                                 onClick={() => {
-                                                    handleStatusUpdate(selectedApp._id, 'approved');
+                                                    handleStatusUpdate(selectedApp._id, 'approve_for_payment');
                                                     setShowDetailsModal(false);
                                                 }}
-                                                className="flex-1 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                                                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
                                             >
-                                                Approve Application
+                                                Approve for Payment
                                             </button>
                                             <button
                                                 onClick={() => {
-                                                    handleStatusUpdate(selectedApp._id, 'rejected');
+                                                    handleStatusUpdate(selectedApp._id, 'reject');
                                                     setShowDetailsModal(false);
                                                 }}
                                                 className="flex-1 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
                                             >
                                                 Reject Application
+                                            </button>
+                                        </div>
+                                    )}
+                                    {selectedApp.status === 'paid_awaiting_final' && (
+                                        <div className="pt-4 border-t">
+                                            <button
+                                                onClick={() => {
+                                                    handleStatusUpdate(selectedApp._id, 'final_approve');
+                                                    setShowDetailsModal(false);
+                                                }}
+                                                className="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                                            >
+                                                Final Approve & Issue Access Code
                                             </button>
                                         </div>
                                     )}

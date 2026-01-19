@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Clock, CheckCircle, XCircle, X } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, X, CreditCard, Key } from 'lucide-react';
 import API_URL from '../config';
 
 const StudentDashboard = () => {
@@ -42,11 +42,39 @@ const StudentDashboard = () => {
         }
     };
 
+    const handleProceedToPayment = async (applicationId) => {
+        try {
+            const response = await axios.post(`${API_URL}/api/payment/initialize`, 
+                { applicationId },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            
+            const { authorizationUrl } = response.data;
+            window.location.href = authorizationUrl;
+        } catch (err) {
+            console.error(err);
+            alert(err.response?.data?.message || 'Payment initialization failed');
+        }
+    };
+
     const getStatusStyle = (status) => {
         switch(status) {
             case 'approved': return 'bg-green-100 text-green-700';
             case 'rejected': return 'bg-red-100 text-red-700';
+            case 'approved_for_payment': return 'bg-blue-100 text-blue-700';
+            case 'paid_awaiting_final': return 'bg-orange-100 text-orange-700';
             default: return 'bg-yellow-100 text-yellow-700';
+        }
+    };
+
+    const getStatusText = (status) => {
+        switch(status) {
+            case 'approved': return 'APPROVED';
+            case 'rejected': return 'REJECTED';
+            case 'approved_for_payment': return 'APPROVED - PAY NOW';
+            case 'paid_awaiting_final': return 'PAID - AWAITING FINAL';
+            case 'pending': return 'PENDING';
+            default: return status.toUpperCase();
         }
     };
 
@@ -75,7 +103,7 @@ const StudentDashboard = () => {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hostel</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Semester</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Applied Date</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Access Code</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
@@ -90,14 +118,29 @@ const StudentDashboard = () => {
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full items-center ${getStatusStyle(app.status)}`}>
                                             {getStatusIcon(app.status)}
-                                            {app.status.toUpperCase()}
+                                            {getStatusText(app.status)}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {new Date(app.createdAt).toLocaleDateString()}
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                        {app.accessCode ? (
+                                            <div className="flex items-center gap-2">
+                                                <Key className="w-4 h-4 text-green-600" />
+                                                <code className="bg-gray-100 px-2 py-1 rounded font-mono text-xs">{app.accessCode}</code>
+                                            </div>
+                                        ) : (
+                                            <span className="text-gray-400">-</span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                        {app.status === 'pending' ? (
+                                        {app.status === 'approved_for_payment' ? (
+                                            <button
+                                                onClick={() => handleProceedToPayment(app._id)}
+                                                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2"
+                                            >
+                                                <CreditCard className="w-4 h-4" />
+                                                Proceed to Payment
+                                            </button>
+                                        ) : app.status === 'pending' ? (
                                             <button 
                                                 onClick={() => handleCancelApplication(app._id)}
                                                 className="text-red-600 hover:bg-red-50 p-2 rounded-full" 
