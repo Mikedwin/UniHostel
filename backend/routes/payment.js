@@ -3,6 +3,7 @@ const router = express.Router();
 const axios = require('axios');
 const Application = require('../models/Application');
 const Hostel = require('../models/Hostel');
+const User = require('../models/User');
 const { auth } = require('../middleware/auth');
 
 // Step 4: Initialize payment (only for approved_for_payment applications)
@@ -10,6 +11,9 @@ router.post('/initialize', auth, async (req, res) => {
   try {
     console.log('Payment initialization request:', { applicationId: req.body.applicationId, userId: req.user.id });
     const { applicationId } = req.body;
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
     const application = await Application.findById(applicationId).populate('hostelId');
     if (!application) {
@@ -33,11 +37,11 @@ router.post('/initialize', auth, async (req, res) => {
     console.log('Payment details:', { totalAmount, hostelFee, adminCommission });
 
     // Initialize Paystack payment
-    console.log('Calling Paystack API...');
+    console.log('Calling Paystack API with email:', user.email);
     const paystackResponse = await axios.post(
       'https://api.paystack.co/transaction/initialize',
       {
-        email: req.user.email,
+        email: user.email,
         amount: totalAmount * 100, // Paystack uses kobo (pesewas)
         reference: `UNI-${application._id}`,
         callback_url: `${process.env.FRONTEND_URL}/payment/verify`,
