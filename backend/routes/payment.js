@@ -45,6 +45,7 @@ router.post('/initialize', auth, async (req, res) => {
         amount: totalAmount * 100, // Paystack uses kobo (pesewas)
         reference: `UNI-${application._id}-${Date.now()}`,
         callback_url: `${process.env.FRONTEND_URL}/payment/verify`,
+        channels: ['card', 'mobile_money'],
         metadata: {
           applicationId: application._id.toString(),
           hostelName: hostel.name,
