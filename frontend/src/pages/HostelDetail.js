@@ -4,6 +4,7 @@ import axios from 'axios';
 import { MapPin, CheckCircle, MessageSquare, Wifi, Droplet, Zap, Shield, Car, Wind, Utensils, Tv, Users, Clock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import API_URL from '../config';
+import Swal from 'sweetalert2';
 
 const HostelDetail = () => {
   const { id } = useParams();
@@ -43,7 +44,6 @@ const HostelDetail = () => {
     if (!user) return navigate('/login');
     
     try {
-      // Step 1: Submit application (no payment yet)
       await axios.post(`${API_URL}/api/applications`, {
         hostelId: id,
         ...appData
@@ -51,11 +51,23 @@ const HostelDetail = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      alert('Application submitted successfully! Wait for manager approval before payment.');
+      await Swal.fire({
+        title: 'Application Submitted!',
+        text: 'Wait for manager approval before payment.',
+        icon: 'success',
+        confirmButtonColor: '#3b82f6',
+        confirmButtonText: 'Go to Dashboard'
+      });
+      
       navigate('/student-dashboard');
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || 'Application submission failed');
+      Swal.fire({
+        title: 'Application Failed',
+        text: err.response?.data?.message || 'Application submission failed',
+        icon: 'error',
+        confirmButtonColor: '#3b82f6'
+      });
     }
   };
 
