@@ -10,6 +10,7 @@ const Hostel = require('./models/Hostel');
 const Application = require('./models/Application');
 const { auth, checkRole } = require('./middleware/auth');
 const adminRoutes = require('./routes/admin');
+const paymentRoutes = require('./routes/payment');
 
 const app = express();
 app.use(express.json({ limit: '5gb' }));
@@ -50,6 +51,9 @@ app.get('/api/health', (req, res) => {
 
 // Admin routes
 app.use('/api/admin', adminRoutes);
+
+// Payment routes
+app.use('/api/payment', paymentRoutes);
 
 // --- AUTH ROUTES ---
 app.post('/api/auth/register', async (req, res) => {

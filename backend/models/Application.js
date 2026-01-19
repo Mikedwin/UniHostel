@@ -34,9 +34,13 @@ const applicationSchema = new mongoose.Schema({
     visibleToManager: { type: Boolean, default: false }
   }],
   
-  // Payment tracking (for future integration)
+  // Payment tracking
   paymentStatus: { type: String, enum: ['pending', 'paid', 'refunded', 'failed'], default: 'pending' },
-  paymentAmount: Number,
+  hostelFee: Number,
+  adminCommission: Number,
+  totalAmount: Number,
+  paymentReference: String,
+  paidAt: Date,
   refundStatus: { type: String, enum: ['not_applicable', 'pending', 'completed', 'failed'], default: 'not_applicable' },
   refundAmount: Number,
   refundProcessedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

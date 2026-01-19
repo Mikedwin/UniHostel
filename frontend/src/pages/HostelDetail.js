@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { MapPin, CheckCircle, MessageSquare, Wifi, Droplet, Zap, Shield, Car, Wind, Utensils, Tv, Users, Clock } from 'lucide-react';
+import { MapPin, CheckCircle, MessageSquare, Wifi, Droplet, Zap, Shield, Car, Wind, Utensils, Tv, Users, Clock, CreditCard } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import API_URL from '../config';
+import API_URL, { PAYSTACK_PUBLIC_KEY } from '../config';
 
 const HostelDetail = () => {
   const { id } = useParams();
@@ -15,6 +15,8 @@ const HostelDetail = () => {
   const [appData, setAppData] = useState({ roomType: '', semester: 'First Semester', studentName: '', contactNumber: '' });
   const [success, setSuccess] = useState(false);
   const [applicationStats, setApplicationStats] = useState({});
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState(null);
 
   useEffect(() => {
     const fetchHostel = async () => {
@@ -42,17 +44,37 @@ const HostelDetail = () => {
   const handleApply = async (e) => {
     e.preventDefault();
     if (!user) return navigate('/login');
+    
+    setPaymentLoading(true);
     try {
-      await axios.post(`${API_URL}/api/applications`, {
+      // Initialize payment
+      const response = await axios.post(`${API_URL}/api/payment/initialize`, {
         hostelId: id,
         ...appData
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setSuccess(true);
+
+      const { authorizationUrl, totalAmount, hostelFee, adminCommission } = response.data;
+      
+      // Store payment info for display
+      sessionStorage.setItem('paymentInfo', JSON.stringify({ totalAmount, hostelFee, adminCommission }));
+      
+      // Redirect to Paystack payment page
+      window.location.href = authorizationUrl;
     } catch (err) {
       console.error(err);
+      alert(err.response?.data?.message || 'Payment initialization failed');
+      setPaymentLoading(false);
     }
+  };
+
+  // Calculate payment breakdown
+  const getPaymentBreakdown = (roomPrice) => {
+    const commissionPercent = 10; // Should match backend ADMIN_COMMISSION_PERCENT
+    const adminCommission = Math.round(roomPrice * (commissionPercent / 100));
+    const totalAmount = roomPrice + adminCommission;
+    return { hostelFee: roomPrice, adminCommission, totalAmount };
   };
 
   // Facility icon mapping
@@ -168,6 +190,9 @@ const HostelDetail = () => {
                         <div className="text-primary-600 font-bold text-2xl mb-2">
                           GH₵{room.price} <span className="text-sm text-gray-500 font-normal">/ semester</span>
                         </div>
+                        <div className="text-xs text-gray-600 mb-2">
+                          + GH₵{getPaymentBreakdown(room.price).adminCommission} platform fee = <span className="font-semibold">GH₵{getPaymentBreakdown(room.price).totalAmount} total</span>
+                        </div>
                         
                         {/* Occupancy Progress Bar */}
                         <div className="mb-3">
@@ -220,10 +245,14 @@ const HostelDetail = () => {
                         )}
                         {room.available && user?.role === 'student' ? (
                           <button
-                            onClick={() => setAppData({...appData, roomType: room.type})}
-                            className="w-full bg-primary-600 text-white py-4 rounded-md hover:bg-primary-700 transition-colors font-medium"
+                            onClick={() => {
+                              setAppData({...appData, roomType: room.type});
+                              setSelectedRoom(room);
+                            }}
+                            className="w-full bg-primary-600 text-white py-4 rounded-md hover:bg-primary-700 transition-colors font-medium flex items-center justify-center"
                           >
-                            Apply for this Room
+                            <CreditCard className="w-4 h-4 mr-2" />
+                            Pay & Apply
                           </button>
                         ) : !room.available ? (
                           <button
@@ -277,6 +306,9 @@ const HostelDetail = () => {
                           </div>
                           <div className="text-primary-600 font-bold text-2xl mb-3">
                             GH₵{room.price} <span className="text-sm text-gray-500 font-normal">/ semester</span>
+                          </div>
+                          <div className="text-xs text-gray-600 mb-3">
+                            + GH₵{getPaymentBreakdown(room.price).adminCommission} platform fee = <span className="font-semibold">GH₵{getPaymentBreakdown(room.price).totalAmount} total</span>
                           </div>
                           
                           {/* Occupancy Progress Bar */}
@@ -333,10 +365,14 @@ const HostelDetail = () => {
                           )}
                           {room.available && user?.role === 'student' ? (
                             <button
-                              onClick={() => setAppData({...appData, roomType: room.type})}
-                              className="w-full bg-primary-600 text-white py-4 rounded-md hover:bg-primary-700 transition-colors font-medium"
+                              onClick={() => {
+                                setAppData({...appData, roomType: room.type});
+                                setSelectedRoom(room);
+                              }}
+                              className="w-full bg-primary-600 text-white py-4 rounded-md hover:bg-primary-700 transition-colors font-medium flex items-center justify-center"
                             >
-                              Apply for this Room
+                              <CreditCard className="w-4 h-4 mr-2" />
+                              Pay & Apply
                             </button>
                           ) : !room.available ? (
                             <button
@@ -392,6 +428,25 @@ const HostelDetail = () => {
                   
                   return (
                     <form onSubmit={handleApply} className="space-y-4">
+                      {/* Payment Breakdown */}
+                      <div className="bg-blue-50 p-4 rounded-md mb-4">
+                        <p className="text-sm font-semibold text-gray-700 mb-2">Payment Breakdown</p>
+                        <div className="space-y-1 text-sm">
+                          <div className="flex justify-between">
+                            <span>Hostel Fee:</span>
+                            <span className="font-medium">GH₵{selectedRoom?.price || 0}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Platform Fee (10%):</span>
+                            <span className="font-medium">GH₵{getPaymentBreakdown(selectedRoom?.price || 0).adminCommission}</span>
+                          </div>
+                          <div className="flex justify-between pt-2 border-t border-blue-200">
+                            <span className="font-bold">Total Amount:</span>
+                            <span className="font-bold text-primary-600">GH₵{getPaymentBreakdown(selectedRoom?.price || 0).totalAmount}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Your Name *</label>
                         <input 
@@ -427,10 +482,17 @@ const HostelDetail = () => {
                       </div>
                       <button 
                         type="submit" 
-                        className="w-full bg-primary-600 text-white py-3 rounded-md font-bold hover:bg-primary-700 transition-colors flex items-center justify-center"
+                        disabled={paymentLoading}
+                        className="w-full bg-primary-600 text-white py-3 rounded-md font-bold hover:bg-primary-700 transition-colors flex items-center justify-center disabled:bg-gray-400"
                       >
-                        <MessageSquare className="w-4 h-4 mr-2" />
-                        Submit Application
+                        {paymentLoading ? (
+                          <span>Processing...</span>
+                        ) : (
+                          <>
+                            <CreditCard className="w-4 h-4 mr-2" />
+                            Pay GH₵{getPaymentBreakdown(selectedRoom?.price || 0).totalAmount} & Apply
+                          </>
+                        )}
                       </button>
                     </form>
                   );

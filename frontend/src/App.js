@@ -15,6 +15,7 @@ import ManagerDashboard from './pages/ManagerDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import AddHostel from './pages/AddHostel';
 import EditHostel from './pages/EditHostel';
+import PaymentVerify from './pages/PaymentVerify';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function AppContent() {
@@ -38,6 +39,13 @@ function AppContent() {
         <Route path="/manager-login" element={<ManagerLogin />} />
         <Route path="/student-register" element={<StudentRegister />} />
         <Route path="/manager-register" element={<ManagerRegister />} />
+        
+        {/* Payment Verification */}
+        <Route path="/payment/verify" element={
+          <ProtectedRoute role="student">
+            <PaymentVerify />
+          </ProtectedRoute>
+        } />
         
         {/* Protected Routes */}
         <Route path="/student-dashboard" element={
