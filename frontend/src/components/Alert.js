@@ -18,7 +18,7 @@ const Alert = ({ isOpen, onClose, onConfirm, title, message, type = 'confirm' })
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fade-in">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4 animate-fade-in">
             <div className="bg-white rounded-lg max-w-md w-full shadow-2xl transform transition-all animate-scale-in">
                 <div className="p-6">
                     <div className="flex justify-end mb-2">
@@ -42,7 +42,7 @@ const Alert = ({ isOpen, onClose, onConfirm, title, message, type = 'confirm' })
                                 </button>
                                 <button
                                     onClick={onConfirm}
-                                    className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 font-medium"
+                                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium"
                                 >
                                     Confirm
                                 </button>
@@ -50,7 +50,7 @@ const Alert = ({ isOpen, onClose, onConfirm, title, message, type = 'confirm' })
                         ) : (
                             <button
                                 onClick={onClose}
-                                className="w-full px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 font-medium"
+                                className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium"
                             >
                                 OK
                             </button>
