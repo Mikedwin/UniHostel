@@ -396,6 +396,7 @@ const HostelDetail = () => {
                 </div>
                 
                 {(() => {
+                  // eslint-disable-next-line no-unused-vars
                   const selectedRoom = hostel.roomTypes?.find(r => r.type === appData.roomType);
                   const isRoomFull = selectedRoom && (selectedRoom.occupiedCapacity >= selectedRoom.totalCapacity);
                   
