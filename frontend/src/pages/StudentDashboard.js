@@ -25,10 +25,17 @@ const StudentDashboard = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             
-            if (applications.length > 0 && res.data.length > applications.length) {
-                const newCount = res.data.length - applications.length;
-                setNewUpdates(newCount);
-                showToast(`${newCount} new update${newCount > 1 ? 's' : ''}!`);
+            // Check for changes (new apps or status updates)
+            if (applications.length > 0) {
+                const hasChanges = res.data.some((newApp, index) => {
+                    const oldApp = applications.find(a => a._id === newApp._id);
+                    return !oldApp || oldApp.status !== newApp.status;
+                });
+                
+                if (hasChanges || res.data.length !== applications.length) {
+                    setNewUpdates(prev => prev + 1);
+                    showToast('Status updated!');
+                }
             }
             
             setApplications(res.data);
