@@ -372,14 +372,14 @@ const HostelDetail = () => {
                 </div>
                 
                 {(() => {
-                  const selectedRoom = hostel.roomTypes?.find(r => r.type === appData.roomType);
-                  const isRoomFull = selectedRoom && (selectedRoom.occupiedCapacity >= selectedRoom.totalCapacity);
+                  const room = hostel.roomTypes?.find(r => r.type === appData.roomType);
+                  const isRoomFull = room && (room.occupiedCapacity >= room.totalCapacity);
                   
                   if (isRoomFull) {
                     return (
                       <div className="bg-red-100 text-red-700 p-4 rounded-md text-center mb-6">
                         <p className="font-medium">This room is fully booked!</p>
-                        <p className="text-sm">All {selectedRoom.totalCapacity} slots have been approved. Please select another room type.</p>
+                        <p className="text-sm">All {room.totalCapacity} slots have been approved. Please select another room type.</p>
                       </div>
                     );
                   }
