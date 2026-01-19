@@ -8,37 +8,49 @@ const StudentDashboard = () => {
     const [applications, setApplications] = useState([]);
     const { token } = useAuth();
     const [loading, setLoading] = useState(true);
+    const [viewMode, setViewMode] = useState('active'); // 'active' or 'history'
+
+    const fetchApps = async () => {
+        try {
+            const archived = viewMode === 'history' ? 'true' : 'false';
+            const res = await axios.get(`${API_URL}/api/applications/student?archived=${archived}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setApplications(res.data);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchApps = async () => {
-            try {
-                const res = await axios.get(`${API_URL}/api/applications/student`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                setApplications(res.data);
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchApps();
-    }, [token]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [token, viewMode]);
 
     const handleCancelApplication = async (appId) => {
-        if (window.confirm('Are you sure you want to cancel this application?')) {
+        if (window.confirm('Move this application to history?')) {
             try {
                 await axios.delete(`${API_URL}/api/applications/${appId}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                // Refresh the list
-                const res = await axios.get(`${API_URL}/api/applications/student`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                setApplications(res.data);
+                fetchApps();
             } catch (err) {
                 console.error('Error cancelling application:', err);
             }
+        }
+    };
+
+    const handleRestore = async (appId) => {
+        try {
+            await axios.patch(`${API_URL}/api/applications/${appId}/archive`, 
+                { archive: false },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            fetchApps();
+        } catch (err) {
+            console.error('Error restoring application:', err);
         }
     };
 
@@ -94,7 +106,29 @@ const StudentDashboard = () => {
 
     return (
         <div className="max-w-7xl mx-auto px-4 py-8">
-            <h1 className="text-2xl font-bold mb-8">My Applications</h1>
+            <div className="flex justify-between items-center mb-8">
+                <div>
+                    <h1 className="text-2xl font-bold">My Applications</h1>
+                    <div className="flex gap-2 mt-2">
+                        <button
+                            onClick={() => setViewMode('active')}
+                            className={`px-3 py-1 rounded text-sm font-medium ${
+                                viewMode === 'active' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            Active
+                        </button>
+                        <button
+                            onClick={() => setViewMode('history')}
+                            className={`px-3 py-1 rounded text-sm font-medium ${
+                                viewMode === 'history' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            History
+                        </button>
+                    </div>
+                </div>
+            </div>
             {loading ? (
                 <p>Loading...</p>
             ) : applications.length === 0 ? (
@@ -138,7 +172,14 @@ const StudentDashboard = () => {
                                         )}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                        {app.status === 'approved_for_payment' ? (
+                                        {viewMode === 'history' ? (
+                                            <button 
+                                                onClick={() => handleRestore(app._id)}
+                                                className="text-blue-600 hover:bg-blue-50 px-3 py-1 rounded text-xs" 
+                                                title="Restore to Active">
+                                                Restore
+                                            </button>
+                                        ) : app.status === 'approved_for_payment' ? (
                                             <button
                                                 onClick={() => handleProceedToPayment(app._id)}
                                                 className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2 font-semibold"

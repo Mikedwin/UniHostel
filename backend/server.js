@@ -364,7 +364,16 @@ app.post('/api/applications', auth, checkRole('student'), async (req, res) => {
 
 app.get('/api/applications/student', auth, checkRole('student'), async (req, res) => {
   try {
-    const apps = await Application.find({ studentId: req.user.id })
+    const { archived } = req.query;
+    const query = { studentId: req.user.id };
+    
+    if (archived === 'true') {
+      query.isArchived = true;
+    } else {
+      query.isArchived = { $ne: true };
+    }
+    
+    const apps = await Application.find(query)
       .select('-__v -adminNotes')
       .populate('hostelId', 'name location')
       .sort({ createdAt: -1 })
@@ -527,15 +536,20 @@ app.delete('/api/applications/:id', auth, checkRole('student'), async (req, res)
             return res.status(403).json({ message: 'Not authorized to cancel this application' });
         }
         
-        await Application.findByIdAndDelete(req.params.id);
-        res.json({ message: 'Application cancelled successfully' });
+        // Archive instead of delete
+        app.isArchived = true;
+        app.archivedAt = new Date();
+        app.archivedBy = req.user.id;
+        await app.save();
+        
+        res.json({ message: 'Application moved to history' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// Archive/Unarchive application (Manager only)
-app.patch('/api/applications/:id/archive', auth, checkRole('manager'), async (req, res) => {
+// Archive/Unarchive application (Manager or Student)
+app.patch('/api/applications/:id/archive', auth, async (req, res) => {
   try {
     const { archive } = req.body;
     const app = await Application.findById(req.params.id).populate('hostelId');
@@ -544,8 +558,16 @@ app.patch('/api/applications/:id/archive', auth, checkRole('manager'), async (re
       return res.status(404).json({ error: 'Application not found' });
     }
     
-    const hostel = await Hostel.findById(app.hostelId._id);
-    if (hostel.managerId.toString() !== req.user.id) {
+    // Check authorization - either manager of the hostel or the student
+    const isManager = req.user.role === 'manager';
+    const isStudent = req.user.role === 'student' && app.studentId.toString() === req.user.id;
+    
+    if (isManager) {
+      const hostel = await Hostel.findById(app.hostelId._id);
+      if (hostel.managerId.toString() !== req.user.id) {
+        return res.status(403).json({ error: 'Not authorized' });
+      }
+    } else if (!isStudent) {
       return res.status(403).json({ error: 'Not authorized' });
     }
     
