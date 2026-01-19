@@ -56,8 +56,10 @@ const StudentDashboard = () => {
         } catch (err) {
             console.error('Payment error:', err);
             console.error('Error response:', err.response?.data);
+            console.error('Error details:', JSON.stringify(err.response?.data?.details, null, 2));
             const errorMsg = err.response?.data?.message || err.response?.data?.error || 'Payment initialization failed';
-            alert(errorMsg);
+            const details = err.response?.data?.details ? `\n\nDetails: ${JSON.stringify(err.response.data.details)}` : '';
+            alert(errorMsg + details);
         }
     };
 
