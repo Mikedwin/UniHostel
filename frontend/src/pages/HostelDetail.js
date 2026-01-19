@@ -389,9 +389,22 @@ const HostelDetail = () => {
                   
                   if (isRoomFull) {
                     return (
-                      <div className="bg-red-100 text-red-700 p-4 rounded-md text-center mb-6">
-                        <p className="font-medium">This room is fully booked!</p>
-                        <p className="text-sm">All {room.totalCapacity} slots have been approved. Please select another room type.</p>
+                      <div className="space-y-4">
+                        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg text-center">
+                          <div className="flex justify-center mb-2">
+                            <svg className="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                          </div>
+                          <p className="font-bold text-lg mb-1">Room Fully Booked!</p>
+                          <p className="text-sm">All {room.totalCapacity} slots have been approved.</p>
+                        </div>
+                        <button
+                          onClick={() => setAppData({...appData, roomType: ''})}
+                          className="w-full bg-blue-600 text-white py-3 rounded-md font-medium hover:bg-blue-700 transition-colors"
+                        >
+                          Select Another Room
+                        </button>
                       </div>
                     );
                   }
