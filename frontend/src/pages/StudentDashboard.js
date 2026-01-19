@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { Clock, CheckCircle, XCircle, X, CreditCard, Key, Archive, RotateCcw, Trash2 } from 'lucide-react';
 import API_URL from '../config';
+import Alert from '../components/Alert';
 
 const StudentDashboard = () => {
     const [applications, setApplications] = useState([]);
@@ -12,6 +13,7 @@ const StudentDashboard = () => {
     const [toast, setToast] = useState(null);
     const [contextMenu, setContextMenu] = useState(null);
     const [newUpdates, setNewUpdates] = useState(0);
+    const [alert, setAlert] = useState({ isOpen: false, title: '', message: '', type: 'confirm', onConfirm: null });
 
     const showToast = (message, type = 'success') => {
         setToast({ message, type });
@@ -59,40 +61,61 @@ const StudentDashboard = () => {
 
     const handleDeleteFromContext = (appId) => {
         setContextMenu(null);
-        if (window.confirm('Are you sure you want to move this application to history?')) {
-            handleArchive(appId);
-        }
+        setAlert({
+            isOpen: true,
+            title: 'Move to History',
+            message: 'Are you sure you want to move this application to history?',
+            type: 'confirm',
+            onConfirm: () => {
+                handleArchive(appId);
+                setAlert({ ...alert, isOpen: false });
+            }
+        });
     };
 
     const handleCancelApplication = async (appId) => {
-        if (window.confirm('Are you sure you want to move this application to history?')) {
-            try {
-                await axios.delete(`${API_URL}/api/applications/${appId}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                showToast('Moved to history successfully');
-                fetchApps();
-            } catch (err) {
-                console.error('Error cancelling application:', err);
-                showToast('Failed to move to history', 'error');
+        setAlert({
+            isOpen: true,
+            title: 'Cancel Application',
+            message: 'Are you sure you want to move this application to history?',
+            type: 'confirm',
+            onConfirm: async () => {
+                try {
+                    await axios.delete(`${API_URL}/api/applications/${appId}`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    showToast('Moved to history successfully');
+                    fetchApps();
+                    setAlert({ ...alert, isOpen: false });
+                } catch (err) {
+                    console.error('Error cancelling application:', err);
+                    showToast('Failed to move to history', 'error');
+                }
             }
-        }
+        });
     };
 
     const handleArchive = async (appId) => {
-        if (window.confirm('Are you sure you want to move this item to history?')) {
-            try {
-                await axios.patch(`${API_URL}/api/applications/${appId}/archive`, 
-                    { archive: true },
-                    { headers: { Authorization: `Bearer ${token}` } }
-                );
-                showToast('Moved to history successfully');
-                fetchApps();
-            } catch (err) {
-                console.error('Error archiving application:', err);
-                showToast('Failed to move to history', 'error');
+        setAlert({
+            isOpen: true,
+            title: 'Move to History',
+            message: 'Are you sure you want to move this item to history?',
+            type: 'confirm',
+            onConfirm: async () => {
+                try {
+                    await axios.patch(`${API_URL}/api/applications/${appId}/archive`, 
+                        { archive: true },
+                        { headers: { Authorization: `Bearer ${token}` } }
+                    );
+                    showToast('Moved to history successfully');
+                    fetchApps();
+                    setAlert({ ...alert, isOpen: false });
+                } catch (err) {
+                    console.error('Error archiving application:', err);
+                    showToast('Failed to move to history', 'error');
+                }
             }
-        }
+        });
     };
 
     const handleRestore = async (appId) => {
@@ -125,8 +148,14 @@ const StudentDashboard = () => {
             console.error('Error response:', err.response?.data);
             console.error('Error details:', JSON.stringify(err.response?.data?.details, null, 2));
             const errorMsg = err.response?.data?.message || err.response?.data?.error || 'Payment initialization failed';
-            const details = err.response?.data?.details ? `\n\nDetails: ${JSON.stringify(err.response.data.details)}` : '';
-            alert(errorMsg + details);
+            const details = err.response?.data?.details ? ` ${JSON.stringify(err.response.data.details)}` : '';
+            setAlert({
+                isOpen: true,
+                title: 'Payment Error',
+                message: errorMsg + details,
+                type: 'error',
+                onConfirm: null
+            });
         }
     };
 
@@ -300,6 +329,16 @@ const StudentDashboard = () => {
                     </table>
                 </div>
             )}
+            
+            {/* Alert Modal */}
+            <Alert
+                isOpen={alert.isOpen}
+                onClose={() => setAlert({ ...alert, isOpen: false })}
+                onConfirm={alert.onConfirm}
+                title={alert.title}
+                message={alert.message}
+                type={alert.type}
+            />
             
             {/* Context Menu */}
             {contextMenu && (

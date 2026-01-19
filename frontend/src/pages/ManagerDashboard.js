@@ -5,6 +5,7 @@ import { Check, X, Plus, Edit, Trash2, Search, Eye, TrendingUp, Users, Home, Clo
 import { Link } from 'react-router-dom';
 import API_URL from '../config';
 import ManagerAnalytics from '../components/manager/ManagerAnalytics';
+import Alert from '../components/Alert';
 
 const ManagerDashboard = () => {
     const [applications, setApplications] = useState([]);
@@ -25,6 +26,7 @@ const ManagerDashboard = () => {
     const [toast, setToast] = useState(null);
     const [contextMenu, setContextMenu] = useState(null);
     const [newUpdates, setNewUpdates] = useState(0);
+    const [alert, setAlert] = useState({ isOpen: false, title: '', message: '', type: 'confirm', onConfirm: null });
 
     const showToast = (message, type = 'success') => {
         setToast({ message, type });
@@ -44,9 +46,16 @@ const ManagerDashboard = () => {
 
     const handleArchiveFromContext = (appId) => {
         setContextMenu(null);
-        if (window.confirm('Are you sure you want to move this item to history?')) {
-            handleArchive(appId, true);
-        }
+        setAlert({
+            isOpen: true,
+            title: 'Move to History',
+            message: 'Are you sure you want to move this item to history?',
+            type: 'confirm',
+            onConfirm: () => {
+                handleArchive(appId, true);
+                setAlert({ ...alert, isOpen: false });
+            }
+        });
     };
 
     const fetchData = async () => {
@@ -115,7 +124,13 @@ const ManagerDashboard = () => {
             );
             
             if (response.data.error) {
-                alert(response.data.error);
+                setAlert({
+                    isOpen: true,
+                    title: 'Error',
+                    message: response.data.error,
+                    type: 'error',
+                    onConfirm: null
+                });
                 return;
             }
             
@@ -134,43 +149,77 @@ const ManagerDashboard = () => {
     };
 
     const handleDeleteHostel = async (id, name) => {
-        if (window.confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
-            try {
-                await axios.delete(`${API_URL}/api/hostels/${id}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                fetchData();
-            } catch (err) {
-                console.error('Error deleting hostel:', err);
-                alert('Failed to delete hostel');
+        setAlert({
+            isOpen: true,
+            title: 'Delete Hostel',
+            message: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+            type: 'warning',
+            onConfirm: async () => {
+                try {
+                    await axios.delete(`${API_URL}/api/hostels/${id}`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    fetchData();
+                    setAlert({ ...alert, isOpen: false });
+                } catch (err) {
+                    console.error('Error deleting hostel:', err);
+                    setAlert({
+                        isOpen: true,
+                        title: 'Error',
+                        message: 'Failed to delete hostel',
+                        type: 'error',
+                        onConfirm: null
+                    });
+                }
             }
-        }
+        });
     };
 
     const handleBulkAction = async (action) => {
         if (selectedApps.length === 0) return;
         const actionText = action === 'approve_for_payment' ? 'Approve for Payment' : 'Reject';
-        if (!window.confirm(`${actionText} ${selectedApps.length} application(s)?`)) return;
         
-        try {
-            const results = await Promise.allSettled(selectedApps.map(id => 
-                axios.patch(`${API_URL}/api/applications/${id}/status`, { action }, {
-                    headers: { Authorization: `Bearer ${token}` }
-                })
-            ));
-            
-            const failed = results.filter(r => r.status === 'rejected');
-            if (failed.length > 0) {
-                const errors = failed.map(f => f.reason?.response?.data?.error || 'Unknown error').join('\n');
-                alert(`Some actions failed:\n${errors}`);
+        setAlert({
+            isOpen: true,
+            title: `${actionText} Applications`,
+            message: `${actionText} ${selectedApps.length} application(s)?`,
+            type: 'confirm',
+            onConfirm: async () => {
+                try {
+                    const results = await Promise.allSettled(selectedApps.map(id => 
+                        axios.patch(`${API_URL}/api/applications/${id}/status`, { action }, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        })
+                    ));
+                    
+                    const failed = results.filter(r => r.status === 'rejected');
+                    if (failed.length > 0) {
+                        const errors = failed.map(f => f.reason?.response?.data?.error || 'Unknown error').join(', ');
+                        setAlert({
+                            isOpen: true,
+                            title: 'Some Actions Failed',
+                            message: errors,
+                            type: 'error',
+                            onConfirm: null
+                        });
+                    } else {
+                        setAlert({ ...alert, isOpen: false });
+                    }
+                    
+                    setSelectedApps([]);
+                    fetchData();
+                } catch (err) {
+                    console.error('Bulk action error:', err);
+                    setAlert({
+                        isOpen: true,
+                        title: 'Error',
+                        message: 'Some actions failed',
+                        type: 'error',
+                        onConfirm: null
+                    });
+                }
             }
-            
-            setSelectedApps([]);
-            fetchData();
-        } catch (err) {
-            console.error('Bulk action error:', err);
-            alert('Some actions failed');
-        }
+        });
     };
 
     const filteredApplications = useMemo(() => {
@@ -577,9 +626,16 @@ const ManagerDashboard = () => {
                                                         {viewMode === 'active' && (app.status === 'approved' || app.status === 'rejected') && (
                                                             <button 
                                                                 onClick={() => {
-                                                                    if (window.confirm('Are you sure you want to move this item to history?')) {
-                                                                        handleArchive(app._id, true);
-                                                                    }
+                                                                    setAlert({
+                                                                        isOpen: true,
+                                                                        title: 'Move to History',
+                                                                        message: 'Are you sure you want to move this item to history?',
+                                                                        type: 'confirm',
+                                                                        onConfirm: () => {
+                                                                            handleArchive(app._id, true);
+                                                                            setAlert({ ...alert, isOpen: false });
+                                                                        }
+                                                                    });
                                                                 }}
                                                                 className="text-gray-600 hover:bg-gray-50 px-3 py-1 rounded text-xs font-medium" 
                                                                 title="Move to History">
@@ -870,6 +926,16 @@ const ManagerDashboard = () => {
                 )}
                 </>
             )}
+            
+            {/* Alert Modal */}
+            <Alert
+                isOpen={alert.isOpen}
+                onClose={() => setAlert({ ...alert, isOpen: false })}
+                onConfirm={alert.onConfirm}
+                title={alert.title}
+                message={alert.message}
+                type={alert.type}
+            />
             
             {/* Context Menu */}
             {contextMenu && (
