@@ -15,7 +15,6 @@ const HostelDetail = () => {
   const [appData, setAppData] = useState({ roomType: '', semester: 'First Semester', studentName: '', contactNumber: '' });
   const [applicationStats, setApplicationStats] = useState({});
   const [paymentLoading, setPaymentLoading] = useState(false);
-  const [selectedRoom, setSelectedRoom] = useState(null);
 
   useEffect(() => {
     const fetchHostel = async () => {
@@ -244,10 +243,7 @@ const HostelDetail = () => {
                         )}
                         {room.available && user?.role === 'student' ? (
                           <button
-                            onClick={() => {
-                              setAppData({...appData, roomType: room.type});
-                              setSelectedRoom(room);
-                            }}
+                            onClick={() => setAppData({...appData, roomType: room.type})}
                             className="w-full bg-primary-600 text-white py-4 rounded-md hover:bg-primary-700 transition-colors font-medium flex items-center justify-center"
                           >
                             <CreditCard className="w-4 h-4 mr-2" />
@@ -364,10 +360,7 @@ const HostelDetail = () => {
                           )}
                           {room.available && user?.role === 'student' ? (
                             <button
-                              onClick={() => {
-                                setAppData({...appData, roomType: room.type});
-                                setSelectedRoom(room);
-                              }}
+                              onClick={() => setAppData({...appData, roomType: room.type})}
                               className="w-full bg-primary-600 text-white py-4 rounded-md hover:bg-primary-700 transition-colors font-medium flex items-center justify-center"
                             >
                               <CreditCard className="w-4 h-4 mr-2" />

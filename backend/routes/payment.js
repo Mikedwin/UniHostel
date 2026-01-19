@@ -3,7 +3,7 @@ const router = express.Router();
 const axios = require('axios');
 const Application = require('../models/Application');
 const Hostel = require('../models/Hostel');
-const auth = require('../middleware/auth');
+const { auth } = require('../middleware/auth');
 
 // Initialize payment
 router.post('/initialize', auth, async (req, res) => {
