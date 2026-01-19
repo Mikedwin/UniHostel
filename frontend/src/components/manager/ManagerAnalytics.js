@@ -13,9 +13,12 @@ const ManagerAnalytics = ({ applications, hostels }) => {
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - days);
         
+        // Filter out archived applications for analytics
+        const activeApps = applications.filter(app => !app.isArchived);
+        
         return {
-            applications: applications.filter(app => new Date(app.createdAt) >= cutoffDate),
-            allApplications: applications
+            applications: activeApps.filter(app => new Date(app.createdAt) >= cutoffDate),
+            allApplications: activeApps
         };
     }, [applications, dateRange]);
 
@@ -47,14 +50,18 @@ const ManagerAnalytics = ({ applications, hostels }) => {
 
     const statusDistribution = useMemo(() => {
         const pending = filteredData.allApplications.filter(a => a.status === 'pending').length;
+        const approvedForPayment = filteredData.allApplications.filter(a => a.status === 'approved_for_payment').length;
+        const paidAwaiting = filteredData.allApplications.filter(a => a.status === 'paid_awaiting_final').length;
         const approved = filteredData.allApplications.filter(a => a.status === 'approved').length;
         const rejected = filteredData.allApplications.filter(a => a.status === 'rejected').length;
         
         return [
             { name: 'Pending', value: pending, color: '#F59E0B' },
+            { name: 'Approved for Payment', value: approvedForPayment, color: '#3B82F6' },
+            { name: 'Paid Awaiting', value: paidAwaiting, color: '#F97316' },
             { name: 'Approved', value: approved, color: '#10B981' },
             { name: 'Rejected', value: rejected, color: '#EF4444' }
-        ];
+        ].filter(item => item.value > 0);
     }, [filteredData]);
 
     const hostelPerformance = useMemo(() => {
