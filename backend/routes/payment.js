@@ -8,11 +8,16 @@ const { auth } = require('../middleware/auth');
 // Step 4: Initialize payment (only for approved_for_payment applications)
 router.post('/initialize', auth, async (req, res) => {
   try {
+    console.log('Payment initialization request:', { applicationId: req.body.applicationId, userId: req.user.id });
     const { applicationId } = req.body;
 
     const application = await Application.findById(applicationId).populate('hostelId');
-    if (!application) return res.status(404).json({ message: 'Application not found' });
+    if (!application) {
+      console.log('Application not found:', applicationId);
+      return res.status(404).json({ message: 'Application not found' });
+    }
     
+    console.log('Application status:', application.status);
     // Check if application is approved for payment
     if (application.status !== 'approved_for_payment') {
       return res.status(400).json({ message: 'Application must be approved by manager before payment' });
@@ -25,8 +30,10 @@ router.post('/initialize', auth, async (req, res) => {
 
     const hostel = application.hostelId;
     const { totalAmount, hostelFee, adminCommission } = application;
+    console.log('Payment details:', { totalAmount, hostelFee, adminCommission });
 
     // Initialize Paystack payment
+    console.log('Calling Paystack API...');
     const paystackResponse = await axios.post(
       'https://api.paystack.co/transaction/initialize',
       {
@@ -50,6 +57,7 @@ router.post('/initialize', auth, async (req, res) => {
         }
       }
     );
+    console.log('Paystack response received:', paystackResponse.data);
 
     // Update application with payment reference
     application.paymentReference = paystackResponse.data.data.reference;
@@ -64,8 +72,17 @@ router.post('/initialize', auth, async (req, res) => {
       adminCommission
     });
   } catch (error) {
-    console.error('Payment initialization error:', error.response?.data || error.message);
-    res.status(500).json({ message: 'Payment initialization failed', error: error.message });
+    console.error('Payment initialization error:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      stack: error.stack
+    });
+    res.status(500).json({ 
+      message: 'Payment initialization failed', 
+      error: error.message,
+      details: error.response?.data 
+    });
   }
 });
 
