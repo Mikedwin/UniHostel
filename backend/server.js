@@ -31,8 +31,9 @@ const connectDB = async () => {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       maxPoolSize: 10,
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
+      serverSelectionTimeoutMS: 3000,
+      socketTimeoutMS: 30000,
+      family: 4
     });
     console.log('MongoDB Connected');
   } catch (err) {
@@ -170,11 +171,22 @@ app.get('/api/hostels', async (req, res) => {
     }
 
     const hostels = await Hostel.find(query)
-      .select('-__v')
+      .select('name location description roomTypes facilities isAvailable managerId createdAt hostelViewImage')
       .populate('managerId', 'name email')
       .sort({ createdAt: -1 })
+      .limit(50)
       .lean();
-    res.json(hostels);
+    
+    // Remove large images from list view
+    const lightHostels = hostels.map(h => ({
+      ...h,
+      roomImages: undefined,
+      bathroomImages: undefined,
+      kitchenImages: undefined,
+      compoundImages: undefined
+    }));
+    
+    res.json(lightHostels);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -219,11 +231,21 @@ app.get('/api/hostels/my-listings', auth, checkRole('manager'), async (req, res)
   try {
     console.log('Fetching hostels for manager:', req.user.id);
     const hostels = await Hostel.find({ managerId: req.user.id })
-      .select('-__v')
+      .select('name location description roomTypes facilities isAvailable createdAt hostelViewImage')
       .sort({ createdAt: -1 })
       .lean();
+    
+    // Remove large images
+    const lightHostels = hostels.map(h => ({
+      ...h,
+      roomImages: undefined,
+      bathroomImages: undefined,
+      kitchenImages: undefined,
+      compoundImages: undefined
+    }));
+    
     console.log(`Found ${hostels.length} hostels for manager ${req.user.id}`);
-    res.json(hostels);
+    res.json(lightHostels);
   } catch (err) {
     console.error('Error fetching manager hostels:', err);
     res.status(500).json({ error: err.message });
@@ -233,7 +255,6 @@ app.get('/api/hostels/my-listings', auth, checkRole('manager'), async (req, res)
 app.get('/api/hostels/:id', async (req, res) => {
   try {
     const hostel = await Hostel.findById(req.params.id)
-      .select('-__v')
       .populate('managerId', 'name email')
       .lean();
     res.json(hostel);
