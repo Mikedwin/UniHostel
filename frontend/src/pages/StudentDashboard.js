@@ -95,7 +95,7 @@ const StudentDashboard = () => {
         });
     };
 
-    const handleArchive = async (appId) => {
+    const handleArchiveClick = (appId) => {
         setAlert({
             isOpen: true,
             title: 'Move to History',
@@ -116,6 +116,20 @@ const StudentDashboard = () => {
                 }
             }
         });
+    };
+
+    const handleArchive = async (appId) => {
+        try {
+            await axios.patch(`${API_URL}/api/applications/${appId}/archive`, 
+                { archive: true },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            showToast('Moved to history successfully');
+            fetchApps();
+        } catch (err) {
+            console.error('Error archiving application:', err);
+            showToast('Failed to move to history', 'error');
+        }
     };
 
     const handleRestore = async (appId) => {
@@ -292,7 +306,7 @@ const StudentDashboard = () => {
                                             </button>
                                         ) : canMoveToHistory(app) ? (
                                             <button 
-                                                onClick={() => handleArchive(app._id)}
+                                                onClick={() => handleArchiveClick(app._id)}
                                                 className="flex items-center gap-1 text-gray-600 hover:bg-gray-50 px-3 py-1 rounded text-xs font-medium" 
                                                 title="Move to History">
                                                 <Archive className="w-3 h-3" />
