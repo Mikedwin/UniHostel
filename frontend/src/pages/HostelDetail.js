@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { MapPin, CheckCircle, MessageSquare, Wifi, Droplet, Zap, Shield, Car, Wind, Utensils, Tv, Users, Clock, CreditCard } from 'lucide-react';
+import { MapPin, CheckCircle, Wifi, Droplet, Zap, Shield, Car, Wind, Utensils, Tv, Users, Clock, CreditCard } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import API_URL, { PAYSTACK_PUBLIC_KEY } from '../config';
+import API_URL from '../config';
 
 const HostelDetail = () => {
   const { id } = useParams();
@@ -13,7 +13,6 @@ const HostelDetail = () => {
   const [hostel, setHostel] = useState(null);
   const [loading, setLoading] = useState(true);
   const [appData, setAppData] = useState({ roomType: '', semester: 'First Semester', studentName: '', contactNumber: '' });
-  const [success, setSuccess] = useState(false);
   const [applicationStats, setApplicationStats] = useState({});
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
@@ -412,16 +411,6 @@ const HostelDetail = () => {
                       <div className="bg-red-100 text-red-700 p-4 rounded-md text-center mb-6">
                         <p className="font-medium">This room is fully booked!</p>
                         <p className="text-sm">All {selectedRoom.totalCapacity} slots have been approved. Please select another room type.</p>
-                      </div>
-                    );
-                  }
-                  
-                  if (success) {
-                    return (
-                      <div className="bg-green-100 text-green-700 p-4 rounded-md text-center mb-6">
-                        <CheckCircle className="w-6 h-6 mx-auto mb-2" />
-                        <p className="font-medium">Application submitted successfully!</p>
-                        <p className="text-sm">Check your dashboard for updates.</p>
                       </div>
                     );
                   }
