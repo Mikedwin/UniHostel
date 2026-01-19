@@ -11,6 +11,7 @@ const StudentDashboard = () => {
     const [viewMode, setViewMode] = useState('active'); // 'active' or 'history'
     const [toast, setToast] = useState(null);
     const [contextMenu, setContextMenu] = useState(null);
+    const [newUpdates, setNewUpdates] = useState(0);
 
     const showToast = (message, type = 'success') => {
         setToast({ message, type });
@@ -23,6 +24,13 @@ const StudentDashboard = () => {
             const res = await axios.get(`${API_URL}/api/applications/student?archived=${archived}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+            
+            if (applications.length > 0 && res.data.length > applications.length) {
+                const newCount = res.data.length - applications.length;
+                setNewUpdates(newCount);
+                showToast(`${newCount} new update${newCount > 1 ? 's' : ''}!`);
+            }
+            
             setApplications(res.data);
         } catch (err) {
             console.error(err);
@@ -34,10 +42,18 @@ const StudentDashboard = () => {
     useEffect(() => {
         fetchApps();
         
-        // Close context menu on click outside
-        const handleClick = () => setContextMenu(null);
+        const interval = setInterval(fetchApps, 30000);
+        
+        const handleClick = () => {
+            setContextMenu(null);
+            setNewUpdates(0);
+        };
         document.addEventListener('click', handleClick);
-        return () => document.removeEventListener('click', handleClick);
+        
+        return () => {
+            clearInterval(interval);
+            document.removeEventListener('click', handleClick);
+        };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token, viewMode]);
 
@@ -171,7 +187,14 @@ const StudentDashboard = () => {
             
             <div className="flex justify-between items-center mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold">My Applications</h1>
+                    <h1 className="text-2xl font-bold flex items-center gap-2">
+                        My Applications
+                        {newUpdates > 0 && (
+                            <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">
+                                {newUpdates} new
+                            </span>
+                        )}
+                    </h1>
                     <div className="flex gap-2 mt-2">
                         <button
                             onClick={() => setViewMode('active')}

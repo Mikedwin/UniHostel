@@ -24,6 +24,7 @@ const ManagerDashboard = () => {
     const [selectedApps, setSelectedApps] = useState([]);
     const [toast, setToast] = useState(null);
     const [contextMenu, setContextMenu] = useState(null);
+    const [newUpdates, setNewUpdates] = useState(0);
 
     const showToast = (message, type = 'success') => {
         setToast({ message, type });
@@ -63,6 +64,13 @@ const ManagerDashboard = () => {
                     timeout: 10000
                 })
             ]);
+            
+            if (applications.length > 0 && appRes.data.length > applications.length) {
+                const newCount = appRes.data.length - applications.length;
+                setNewUpdates(newCount);
+                showToast(`${newCount} new application${newCount > 1 ? 's' : ''}!`);
+            }
+            
             setApplications(appRes.data || []);
             setHostels(hostRes.data || []);
             setUserInfo(user);
@@ -79,10 +87,20 @@ const ManagerDashboard = () => {
             fetchData();
         }
         
-        // Close context menu on click outside
-        const handleClick = () => setContextMenu(null);
+        const interval = setInterval(() => {
+            if (token) fetchData();
+        }, 30000);
+        
+        const handleClick = () => {
+            setContextMenu(null);
+            setNewUpdates(0);
+        };
         document.addEventListener('click', handleClick);
-        return () => document.removeEventListener('click', handleClick);
+        
+        return () => {
+            clearInterval(interval);
+            document.removeEventListener('click', handleClick);
+        };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token, viewMode]);
 
@@ -224,7 +242,14 @@ const ManagerDashboard = () => {
 
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold">Manager Dashboard</h1>
+                    <h1 className="text-2xl font-bold flex items-center gap-2">
+                        Manager Dashboard
+                        {newUpdates > 0 && (
+                            <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">
+                                {newUpdates} new
+                            </span>
+                        )}
+                    </h1>
                     <div className="flex gap-2 mt-3">
                         <button
                             onClick={() => setActiveTab('dashboard')}
