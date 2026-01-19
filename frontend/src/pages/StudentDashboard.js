@@ -44,16 +44,20 @@ const StudentDashboard = () => {
 
     const handleProceedToPayment = async (applicationId) => {
         try {
+            console.log('Initializing payment for application:', applicationId);
             const response = await axios.post(`${API_URL}/api/payment/initialize`, 
                 { applicationId },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             
+            console.log('Payment response:', response.data);
             const { authorizationUrl } = response.data;
             window.location.href = authorizationUrl;
         } catch (err) {
-            console.error(err);
-            alert(err.response?.data?.message || 'Payment initialization failed');
+            console.error('Payment error:', err);
+            console.error('Error response:', err.response?.data);
+            const errorMsg = err.response?.data?.message || err.response?.data?.error || 'Payment initialization failed';
+            alert(errorMsg);
         }
     };
 
