@@ -13,8 +13,8 @@ const adminRoutes = require('./routes/admin');
 const paymentRoutes = require('./routes/payment');
 
 const app = express();
-app.use(express.json({ limit: '5gb' }));
-app.use(express.urlencoded({ limit: '5gb', extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://uni-hostel-two.vercel.app', process.env.FRONTEND_URL] 
@@ -25,12 +25,22 @@ app.use(cors({
 }));
 
 // Database Connection
-mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/unihostel', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-  .then(() => console.log('MongoDB Connected'))
-  .catch(err => console.log('MongoDB Error:', err));
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/unihostel', {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
+    console.log('MongoDB Connected');
+  } catch (err) {
+    console.log('MongoDB Error:', err);
+    process.exit(1);
+  }
+};
+connectDB();
 
 // Health check endpoint
 app.get('/', (req, res) => {
@@ -159,7 +169,11 @@ app.get('/api/hostels', async (req, res) => {
       ];
     }
 
-    const hostels = await Hostel.find(query).populate('managerId', 'name email').sort({ createdAt: -1 });
+    const hostels = await Hostel.find(query)
+      .select('-__v')
+      .populate('managerId', 'name email')
+      .sort({ createdAt: -1 })
+      .lean();
     res.json(hostels);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -204,7 +218,10 @@ app.post('/api/hostels', auth, checkRole('manager'), async (req, res) => {
 app.get('/api/hostels/my-listings', auth, checkRole('manager'), async (req, res) => {
   try {
     console.log('Fetching hostels for manager:', req.user.id);
-    const hostels = await Hostel.find({ managerId: req.user.id }).sort({ createdAt: -1 }).lean();
+    const hostels = await Hostel.find({ managerId: req.user.id })
+      .select('-__v')
+      .sort({ createdAt: -1 })
+      .lean();
     console.log(`Found ${hostels.length} hostels for manager ${req.user.id}`);
     res.json(hostels);
   } catch (err) {
@@ -215,7 +232,10 @@ app.get('/api/hostels/my-listings', auth, checkRole('manager'), async (req, res)
 
 app.get('/api/hostels/:id', async (req, res) => {
   try {
-    const hostel = await Hostel.findById(req.params.id).populate('managerId', 'name email');
+    const hostel = await Hostel.findById(req.params.id)
+      .select('-__v')
+      .populate('managerId', 'name email')
+      .lean();
     res.json(hostel);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -323,7 +343,11 @@ app.post('/api/applications', auth, checkRole('student'), async (req, res) => {
 
 app.get('/api/applications/student', auth, checkRole('student'), async (req, res) => {
   try {
-    const apps = await Application.find({ studentId: req.user.id }).populate('hostelId');
+    const apps = await Application.find({ studentId: req.user.id })
+      .select('-__v -adminNotes')
+      .populate('hostelId', 'name location')
+      .sort({ createdAt: -1 })
+      .lean();
     res.json(apps);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -346,6 +370,7 @@ app.get('/api/applications/manager', auth, checkRole('manager'), async (req, res
     }
 
     const apps = await Application.find(query)
+        .select('-__v -adminNotes')
         .populate('hostelId', 'name location')
         .populate('studentId', 'name email')
         .sort({ createdAt: -1 })
