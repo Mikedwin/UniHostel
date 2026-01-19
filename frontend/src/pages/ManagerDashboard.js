@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Check, X, Plus, Edit, Trash2, Search, Eye, TrendingUp, Users, Home, Clock, BarChart3 } from 'lucide-react';
+import { Check, X, Plus, Edit, Trash2, Search, Eye, TrendingUp, Users, Home, Clock, BarChart3, CheckCircle, XCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import API_URL from '../config';
 import ManagerAnalytics from '../components/manager/ManagerAnalytics';
@@ -61,19 +61,6 @@ const ManagerDashboard = () => {
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token, viewMode]);
-
-    const handleArchive = async (id, archive) => {
-        try {
-            await axios.patch(`${API_URL}/api/applications/${id}/archive`, 
-                { archive }, 
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            fetchData();
-        } catch (err) {
-            console.error(err);
-            alert('Failed to archive application');
-        }
-    };
 
     const handleArchive = async (id, archive) => {
         try {
