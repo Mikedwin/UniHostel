@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Clock, CheckCircle, XCircle, X, CreditCard, Key, Archive, RotateCcw } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, X, CreditCard, Key, Archive, RotateCcw, Trash2 } from 'lucide-react';
 import API_URL from '../config';
 
 const StudentDashboard = () => {
@@ -10,6 +10,7 @@ const StudentDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState('active'); // 'active' or 'history'
     const [toast, setToast] = useState(null);
+    const [contextMenu, setContextMenu] = useState(null);
 
     const showToast = (message, type = 'success') => {
         setToast({ message, type });
@@ -32,8 +33,29 @@ const StudentDashboard = () => {
 
     useEffect(() => {
         fetchApps();
+        
+        // Close context menu on click outside
+        const handleClick = () => setContextMenu(null);
+        document.addEventListener('click', handleClick);
+        return () => document.removeEventListener('click', handleClick);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token, viewMode]);
+
+    const handleContextMenu = (e, app) => {
+        e.preventDefault();
+        setContextMenu({
+            x: e.pageX,
+            y: e.pageY,
+            app: app
+        });
+    };
+
+    const handleDeleteFromContext = (appId) => {
+        setContextMenu(null);
+        if (window.confirm('Are you sure you want to move this application to history?')) {
+            handleArchive(appId);
+        }
+    };
 
     const handleCancelApplication = async (appId) => {
         if (window.confirm('Are you sure you want to move this application to history?')) {
@@ -190,7 +212,11 @@ const StudentDashboard = () => {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {applications.map(app => (
-                                <tr key={app._id}>
+                                <tr 
+                                    key={app._id} 
+                                    onContextMenu={(e) => viewMode === 'active' ? handleContextMenu(e, app) : null}
+                                    className="hover:bg-gray-50 cursor-pointer"
+                                >
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm font-medium text-gray-900">{app.hostelId?.name || 'N/A'}</div>
                                         <div className="text-xs text-gray-500">{app.hostelId?.location || 'N/A'}</div>
@@ -258,6 +284,30 @@ const StudentDashboard = () => {
                             ))}
                         </tbody>
                     </table>
+                </div>
+            )}
+            
+            {/* Context Menu */}
+            {contextMenu && (
+                <div 
+                    className="fixed bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 min-w-[180px]"
+                    style={{ 
+                        left: `${contextMenu.x}px`, 
+                        top: `${contextMenu.y}px` 
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <button
+                        onClick={() => handleDeleteFromContext(contextMenu.app._id)}
+                        className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-3 text-red-600"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                        <span className="font-medium">Move to History</span>
+                    </button>
+                    <div className="border-t border-gray-200 my-1"></div>
+                    <div className="px-4 py-2 text-xs text-gray-500">
+                        {contextMenu.app.hostelId?.name}
+                    </div>
                 </div>
             )}
         </div>
