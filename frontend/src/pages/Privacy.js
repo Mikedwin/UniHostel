@@ -261,16 +261,7 @@ const Privacy = () => {
           </p>
         </section>
 
-        {/* Section 12 */}
-        <section className="mb-10">
-          <div className="flex items-center mb-4">
-            <Users className="w-6 h-6 text-primary-600 mr-3" />
-            <h2 className="text-2xl font-bold text-gray-900">12. Children's Privacy</h2>
-          </div>
-          <p className="text-gray-700 ml-9">
-            This platform is intended for users aged 18 and above. We do not knowingly collect data from minors.
-          </p>
-        </section>
+      
 
         {/* Section 13 */}
         <section className="mb-10">
@@ -296,7 +287,7 @@ const Privacy = () => {
             <div className="space-y-2">
               <p className="text-gray-900 flex items-center">
                 <Mail className="w-5 h-5 mr-2 text-primary-600" />
-                <strong>Email:</strong> <a href="mailto:support@unihostel.com" className="text-primary-600 hover:underline ml-2">support@unihostel.com</a>
+                <strong>Email:</strong> <a href="mailto:3mikedwin@gmail.com" className="text-primary-600 hover:underline ml-2">3mikedwin@gmail.com</a>
               </p>
               <p className="text-gray-900 flex items-center">
                 <Shield className="w-5 h-5 mr-2 text-primary-600" />
