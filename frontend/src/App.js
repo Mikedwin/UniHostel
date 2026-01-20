@@ -17,6 +17,7 @@ import AddHostel from './pages/AddHostel';
 import EditHostel from './pages/EditHostel';
 import PaymentVerify from './pages/PaymentVerify';
 import Terms from './pages/Terms';
+import About from './pages/About';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function AppContent() {
@@ -35,6 +36,7 @@ function AppContent() {
         <Route path="/hostels" element={<HostelList />} />
         <Route path="/hostels/:id" element={<HostelDetail />} />
         <Route path="/terms" element={<Terms />} />
+        <Route path="/about" element={<About />} />
         
         {/* Authentication Routes */}
         <Route path="/student-login" element={<StudentLogin />} />
