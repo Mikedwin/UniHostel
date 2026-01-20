@@ -69,11 +69,11 @@ const ManagerDashboard = () => {
             const [appRes, hostRes] = await Promise.all([
                 axios.get(`${API_URL}/api/applications/manager?archived=${archived}`, { 
                     headers: { Authorization: `Bearer ${token}` },
-                    timeout: 10000
+                    timeout: 30000
                 }),
                 axios.get(`${API_URL}/api/hostels/my-listings`, { 
                     headers: { Authorization: `Bearer ${token}` },
-                    timeout: 10000
+                    timeout: 30000
                 })
             ]);
             

@@ -388,25 +388,25 @@ app.get('/api/applications/manager', auth, checkRole('manager'), async (req, res
   try {
     console.log('Fetching applications for manager:', req.user.id);
     const { archived } = req.query;
-    const managedHostels = await Hostel.find({ managerId: req.user.id }).select('_id').lean();
-    const hostelIds = managedHostels.map(h => h._id);
-    console.log(`Manager has ${hostelIds.length} hostels`);
-
-    const query = { hostelId: { $in: hostelIds } };
-    if (archived === 'true') {
-      query.isArchived = true;
-    } else {
-      query.isArchived = { $ne: true };
-    }
+    
+    const query = { isArchived: archived === 'true' };
 
     const apps = await Application.find(query)
         .select('-__v -adminNotes')
-        .populate('hostelId', 'name location')
+        .populate({
+          path: 'hostelId',
+          match: { managerId: req.user.id },
+          select: 'name location'
+        })
         .populate('studentId', 'name email')
         .sort({ createdAt: -1 })
         .lean();
-    console.log(`Found ${apps.length} applications`);
-    res.json(apps);
+    
+    // Filter out apps where hostelId is null (not manager's hostels)
+    const filteredApps = apps.filter(app => app.hostelId !== null);
+    
+    console.log(`Found ${filteredApps.length} applications`);
+    res.json(filteredApps);
   } catch (err) {
     console.error('Error fetching manager applications:', err);
     res.status(500).json({ error: err.message });
