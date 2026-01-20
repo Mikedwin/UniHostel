@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, GraduationCap, Building2, Shield, Clock, AlertTriangle, Mail, Phone } from 'lucide-react';
+import { ArrowLeft, GraduationCap, Building2, Shield, Clock, AlertTriangle, Mail, Phone, HelpCircle } from 'lucide-react';
 import Footer from '../components/Footer';
 
 const Support = () => {
