@@ -82,9 +82,11 @@ export const LoadingSpinner = ({ message = 'Loading...' }) => {
   );
 };
 
-export default {
+const SkeletonLoaders = {
   HostelCardSkeleton,
   DashboardSkeleton,
   TableSkeleton,
   LoadingSpinner
 };
+
+export default SkeletonLoaders;

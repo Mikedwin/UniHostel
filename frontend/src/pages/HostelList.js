@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { MapPin, Filter } from 'lucide-react';
 import API_URL from '../config';
-import { HostelCardSkeleton, LoadingSpinner } from '../components/SkeletonLoaders';
+import { HostelCardSkeleton } from '../components/SkeletonLoaders';
 
 const HostelList = () => {
   const [hostels, setHostels] = useState([]);
