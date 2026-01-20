@@ -360,6 +360,14 @@ app.post('/api/applications', auth, checkRole('student'), async (req, res) => {
       totalAmount
     });
     await application.save();
+    
+    console.log('Application created with payment details:', {
+      hostelFee,
+      adminCommission,
+      totalAmount,
+      commissionPercent
+    });
+    
     res.status(201).json(application);
   } catch (err) {
     res.status(500).json({ error: err.message });
