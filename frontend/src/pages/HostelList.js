@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { MapPin, Filter } from 'lucide-react';
 import API_URL from '../config';
+import { HostelCardSkeleton, LoadingSpinner } from '../components/SkeletonLoaders';
 
 const HostelList = () => {
   const [hostels, setHostels] = useState([]);
@@ -266,9 +267,10 @@ const HostelList = () => {
         )}
 
         {loading ? (
-          <div className="text-center py-20">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-            <p className="mt-2 text-gray-500">Loading hostels...</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+              <HostelCardSkeleton key={i} />
+            ))}
           </div>
         ) : (
           <>
