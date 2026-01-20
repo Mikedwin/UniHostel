@@ -83,6 +83,11 @@ const Footer = () => {
                   Support Center
                 </Link>
               </li>
+              <li>
+                <Link to="/contact" className="text-sm hover:text-primary-400 transition-colors">
+                  Contact Us
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -92,14 +97,14 @@ const Footer = () => {
             <ul className="space-y-3">
               <li className="flex items-start">
                 <Mail className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" />
-                <a href="mailto:support@unihostel.com" className="text-sm hover:text-primary-400 transition-colors">
-                  support@unihostel.com
+                <a href="mailto:3mikedwin@gmail.com" className="text-sm hover:text-primary-400 transition-colors">
+                  3mikedwin@gmail.com
                 </a>
               </li>
               <li className="flex items-start">
                 <Phone className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" />
-                <a href="tel:+233123456789" className="text-sm hover:text-primary-400 transition-colors">
-                  +233 123 456 789
+                <a href="https://wa.me/233503847786" className="text-sm hover:text-primary-400 transition-colors" target="_blank" rel="noopener noreferrer">
+                  +233 50 3847 786
                 </a>
               </li>
               <li className="flex items-start">

@@ -262,8 +262,8 @@ const Support = () => {
                 <Mail className="w-8 h-8 text-primary-600" />
               </div>
               <h3 className="font-bold text-gray-900 mb-2">Email Support</h3>
-              <a href="mailto:support@unihostel.com" className="text-primary-600 hover:underline">
-                support@unihostel.com
+              <a href="mailto:3mikedwin@gmail.com" className="text-primary-600 hover:underline">
+                3mikedwin@gmail.com
               </a>
             </div>
 
@@ -272,8 +272,8 @@ const Support = () => {
                 <Phone className="w-8 h-8 text-primary-600" />
               </div>
               <h3 className="font-bold text-gray-900 mb-2">Phone Support</h3>
-              <a href="tel:+233123456789" className="text-primary-600 hover:underline">
-                +233 123 456 789
+              <a href="tel:+23350" className="text-primary-600 hover:underline">
+                +233 50 3847 786
               </a>
             </div>
           </div>
