@@ -159,8 +159,19 @@ const StudentDashboard = () => {
 
     const handleProceedToPayment = async (app) => {
         try {
+            // Debug: Log the application data
+            console.log('Application data:', {
+                hostelFee: app.hostelFee,
+                adminCommission: app.adminCommission,
+                totalAmount: app.totalAmount
+            });
+            
             // Calculate commission percentage for display
-            const commissionPercent = app.hostelFee > 0 ? ((app.adminCommission / app.hostelFee) * 100).toFixed(1) : '3.0';
+            const commissionPercent = app.hostelFee > 0 && app.adminCommission > 0 
+                ? ((app.adminCommission / app.hostelFee) * 100).toFixed(1) 
+                : '3.0';
+            
+            console.log('Commission percent:', commissionPercent);
             
             // Show payment breakdown before proceeding
             const result = await Swal.fire({
@@ -176,17 +187,17 @@ const StudentDashboard = () => {
                         <div style="margin-bottom: 10px;">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                                 <span>Room Price:</span>
-                                <strong>GH₵${app.hostelFee?.toFixed(2) || '0.00'}</strong>
+                                <strong>GH₵${(app.hostelFee || 0).toFixed(2)}</strong>
                             </div>
                             <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #666;">
                                 <span>Platform Fee (${commissionPercent}%):</span>
-                                <strong>GH₵${app.adminCommission?.toFixed(2) || '0.00'}</strong>
+                                <strong>GH₵${(app.adminCommission || 0).toFixed(2)}</strong>
                             </div>
                         </div>
                         <hr style="margin: 15px 0;"/>
                         <div style="display: flex; justify-content: space-between; font-size: 18px;">
                             <strong>Total Amount:</strong>
-                            <strong style="color: #3b82f6;">GH₵${app.totalAmount?.toFixed(2) || '0.00'}</strong>
+                            <strong style="color: #3b82f6;">GH₵${(app.totalAmount || 0).toFixed(2)}</strong>
                         </div>
                     </div>
                 `,
