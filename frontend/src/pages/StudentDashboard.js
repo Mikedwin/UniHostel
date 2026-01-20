@@ -157,11 +157,50 @@ const StudentDashboard = () => {
         }
     };
 
-    const handleProceedToPayment = async (applicationId) => {
+    const handleProceedToPayment = async (app) => {
         try {
-            console.log('Initializing payment for application:', applicationId);
+            // Show payment breakdown before proceeding
+            const result = await Swal.fire({
+                title: 'Payment Breakdown',
+                html: `
+                    <div style="text-align: left; padding: 20px;">
+                        <div style="margin-bottom: 15px;">
+                            <strong>Hostel:</strong> ${app.hostelId?.name || 'N/A'}<br/>
+                            <strong>Room Type:</strong> ${app.roomType}<br/>
+                            <strong>Semester:</strong> ${app.semester}
+                        </div>
+                        <hr style="margin: 15px 0;"/>
+                        <div style="margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Room Price:</span>
+                                <strong>GH₵${app.hostelFee?.toFixed(2) || '0.00'}</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #666;">
+                                <span>Platform Fee (${((app.adminCommission / app.hostelFee) * 100).toFixed(0)}%):</span>
+                                <strong>GH₵${app.adminCommission?.toFixed(2) || '0.00'}</strong>
+                            </div>
+                        </div>
+                        <hr style="margin: 15px 0;"/>
+                        <div style="display: flex; justify-content: space-between; font-size: 18px;">
+                            <strong>Total Amount:</strong>
+                            <strong style="color: #3b82f6;">GH₵${app.totalAmount?.toFixed(2) || '0.00'}</strong>
+                        </div>
+                    </div>
+                `,
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: '#3b82f6',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Proceed to Payment',
+                cancelButtonText: 'Cancel',
+                width: '500px'
+            });
+            
+            if (!result.isConfirmed) return;
+            
+            console.log('Initializing payment for application:', app._id);
             const response = await axios.post(`${API_URL}/api/payment/initialize`, 
-                { applicationId },
+                { applicationId: app._id },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             
@@ -323,7 +362,7 @@ const StudentDashboard = () => {
                                             </button>
                                         ) : app.status === 'approved_for_payment' ? (
                                             <button
-                                                onClick={() => handleProceedToPayment(app._id)}
+                                                onClick={() => handleProceedToPayment(app)}
                                                 className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2 font-semibold"
                                             >
                                                 <CreditCard className="w-4 h-4" />

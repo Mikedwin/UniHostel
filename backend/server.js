@@ -342,7 +342,7 @@ app.post('/api/applications', auth, checkRole('student'), async (req, res) => {
     
     // Calculate payment amounts for later
     const hostelFee = room.price;
-    const commissionPercent = parseFloat(process.env.ADMIN_COMMISSION_PERCENT) || 10;
+    const commissionPercent = parseFloat(process.env.ADMIN_COMMISSION_PERCENT) || 3;
     const adminCommission = Math.round(hostelFee * (commissionPercent / 100));
     const totalAmount = hostelFee + adminCommission;
     
