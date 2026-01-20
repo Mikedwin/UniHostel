@@ -168,11 +168,11 @@ const Support = () => {
             <ul className="space-y-2 text-gray-700 mb-6">
               <li className="flex items-start">
                 <span className="text-orange-500 mr-2">•</span>
-                <span>Submit a support ticket directly from your dashboard</span>
+                <span>Attach screenshots or documents</span>
               </li>
               <li className="flex items-start">
                 <span className="text-orange-500 mr-2">•</span>
-                <span>Attach screenshots or documents</span>
+                <span>Contact the admin through his whatsapp number +233 50 3847 786</span>
               </li>
               <li className="flex items-start">
                 <span className="text-orange-500 mr-2">•</span>
