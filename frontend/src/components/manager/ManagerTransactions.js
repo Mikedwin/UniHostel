@@ -146,8 +146,9 @@ const ManagerTransactions = ({ token, hostels }) => {
             value={filters.hostelId}
             onChange={(e) => handleFilterChange('hostelId', e.target.value)}
             className="px-3 py-2 border rounded-md focus:ring-2 focus:ring-primary-500"
+            disabled={hostels.length <= 1}
           >
-            <option value="">All Hostels</option>
+            {hostels.length > 1 && <option value="">All My Hostels</option>}
             {hostels.map(h => (
               <option key={h._id} value={h._id}>{h.name}</option>
             ))}
