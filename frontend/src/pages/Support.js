@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, GraduationCap, Building2, Shield, HelpCircle, Clock, AlertTriangle, Mail, Phone, MessageSquare } from 'lucide-react';
+import { ArrowLeft, GraduationCap, Building2, Shield, Clock, AlertTriangle, Mail, Phone } from 'lucide-react';
 import Footer from '../components/Footer';
 
 const Support = () => {
@@ -157,30 +157,6 @@ const Support = () => {
           </div>
         </section>
 
-        {/* Common Help Topics */}
-        <section className="mb-12 bg-gray-50 rounded-lg p-6 sm:p-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 text-center">Common Help Topics</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-4xl mx-auto">
-            {[
-              'How the application process works',
-              'Why my application is pending',
-              'Payment not reflecting',
-              'Settlement delays explained',
-              'How access codes work',
-              'Why a room shows as "Unavailable"',
-              'Manager approval vs final confirmation',
-              'Refund policy overview'
-            ].map((topic, index) => (
-              <div key={index} className="bg-white border border-gray-200 rounded-lg p-4 hover:border-primary-300 hover:shadow-sm transition-all cursor-pointer">
-                <div className="flex items-center">
-                  <HelpCircle className="w-5 h-5 text-primary-600 mr-3 flex-shrink-0" />
-                  <span className="text-gray-900 font-medium text-sm">{topic}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
         {/* Report an Issue */}
         <section className="mb-12">
           <div className="bg-gradient-to-br from-orange-50 to-white border border-orange-200 rounded-lg p-6 sm:p-8">
@@ -280,7 +256,7 @@ const Support = () => {
         {/* Contact Information */}
         <section className="mb-12">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 text-center">Get in Touch</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
             <div className="bg-white border border-gray-200 rounded-lg p-6 text-center hover:shadow-md transition-shadow">
               <div className="bg-primary-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                 <Mail className="w-8 h-8 text-primary-600" />
@@ -299,14 +275,6 @@ const Support = () => {
               <a href="tel:+233123456789" className="text-primary-600 hover:underline">
                 +233 123 456 789
               </a>
-            </div>
-
-            <div className="bg-white border border-gray-200 rounded-lg p-6 text-center hover:shadow-md transition-shadow">
-              <div className="bg-primary-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                <MessageSquare className="w-8 h-8 text-primary-600" />
-              </div>
-              <h3 className="font-bold text-gray-900 mb-2">Live Chat</h3>
-              <p className="text-gray-600 text-sm">Available from dashboard</p>
             </div>
           </div>
 
