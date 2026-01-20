@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, Clock, Phone, MessageSquare, Building2, Shield, AlertTriangle } from 'lucide-react';
+import { Mail, Clock, MessageSquare, Building2, Shield, AlertTriangle } from 'lucide-react';
 
 const Contact = () => {
   return (
