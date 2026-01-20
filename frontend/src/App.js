@@ -19,6 +19,7 @@ import PaymentVerify from './pages/PaymentVerify';
 import Terms from './pages/Terms';
 import About from './pages/About';
 import Privacy from './pages/Privacy';
+import Support from './pages/Support';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function AppContent() {
@@ -39,6 +40,7 @@ function AppContent() {
         <Route path="/terms" element={<Terms />} />
         <Route path="/about" element={<About />} />
         <Route path="/privacy" element={<Privacy />} />
+        <Route path="/support" element={<Support />} />
         
         {/* Authentication Routes */}
         <Route path="/student-login" element={<StudentLogin />} />
