@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Check, X, Plus, Edit, Trash2, Search, Eye, TrendingUp, Users, Home, Clock, BarChart3, CheckCircle, XCircle } from 'lucide-react';
+import { Check, X, Plus, Edit, Trash2, Search, Eye, TrendingUp, Users, Home, Clock, BarChart3, CheckCircle, XCircle, DollarSign } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import API_URL from '../config';
 import ManagerAnalytics from '../components/manager/ManagerAnalytics';
+import ManagerTransactions from '../components/manager/ManagerTransactions';
 import Swal from 'sweetalert2';
 
 const ManagerDashboard = () => {
@@ -331,6 +332,17 @@ const ManagerDashboard = () => {
                             <BarChart3 className="w-4 h-4" />
                             Analytics
                         </button>
+                        <button
+                            onClick={() => setActiveTab('transactions')}
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+                                activeTab === 'transactions'
+                                    ? 'bg-primary-600 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            <DollarSign className="w-4 h-4" />
+                            Transactions
+                        </button>
                     </div>
                 </div>
                 <Link to="/add-hostel" className="w-full sm:w-auto bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 flex items-center justify-center">
@@ -365,6 +377,8 @@ const ManagerDashboard = () => {
                 <>
                 {activeTab === 'analytics' ? (
                     <ManagerAnalytics applications={applications} hostels={hostels} />
+                ) : activeTab === 'transactions' ? (
+                    <ManagerTransactions token={token} hostels={hostels} />
                 ) : (
                 <>
                 {/* KPI Stats */}

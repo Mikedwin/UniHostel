@@ -10,6 +10,7 @@ import ApplicationManagementTable from '../components/admin/ApplicationManagemen
 import ApplicationDetailsModal from '../components/admin/ApplicationDetailsModal';
 import ApplicationActionModal from '../components/admin/ApplicationActionModal';
 import AnalyticsDashboard from '../components/admin/AnalyticsDashboard';
+import AdminTransactions from '../components/admin/AdminTransactions';
 
 const AdminDashboard = () => {
     const [stats, setStats] = useState(null);
@@ -170,7 +171,7 @@ const AdminDashboard = () => {
                 <div className="bg-white rounded-lg shadow mb-6">
                     <div className="border-b">
                         <div className="flex space-x-4 px-4">
-                            {['overview', 'analytics', 'users', 'hostels', 'managers', 'applications', 'logs'].map(tab => (
+                            {['overview', 'analytics', 'transactions', 'users', 'hostels', 'managers', 'applications', 'logs'].map(tab => (
                                 <button
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
@@ -217,6 +218,10 @@ const AdminDashboard = () => {
 
                         {activeTab === 'analytics' && (
                             <AnalyticsDashboard token={token} />
+                        )}
+
+                        {activeTab === 'transactions' && (
+                            <AdminTransactions token={token} />
                         )}
 
                         {activeTab === 'applications' && (

@@ -4,6 +4,7 @@ const axios = require('axios');
 const Application = require('../models/Application');
 const Hostel = require('../models/Hostel');
 const User = require('../models/User');
+const Transaction = require('../models/Transaction');
 const { auth } = require('../middleware/auth');
 
 // Step 4: Initialize payment (only for approved_for_payment applications)
@@ -110,8 +111,30 @@ router.get('/verify/:reference', auth, async (req, res) => {
 
     if (status === 'success') {
       // Update application payment status
-      const application = await Application.findById(metadata.applicationId);
+      const application = await Application.findById(metadata.applicationId).populate('hostelId');
       if (application) {
+        // Check if transaction already exists (idempotency)
+        const existingTransaction = await Transaction.findOne({ paymentReference: reference });
+        
+        if (!existingTransaction) {
+          // Create transaction record
+          const transaction = new Transaction({
+            applicationId: application._id,
+            studentId: application.studentId,
+            hostelId: application.hostelId._id,
+            managerId: application.hostelId.managerId,
+            hostelFee: application.hostelFee,
+            adminCommission: application.adminCommission,
+            totalAmount: application.totalAmount,
+            roomType: application.roomType,
+            semester: application.semester,
+            paymentReference: reference,
+            paymentStatus: 'paid',
+            paidAt: new Date()
+          });
+          await transaction.save();
+        }
+        
         application.paymentStatus = 'paid';
         application.status = 'paid_awaiting_final'; // Step 5: Awaiting final approval
         application.paidAt = new Date();
@@ -147,10 +170,32 @@ router.post('/webhook', async (req, res) => {
       const event = req.body;
 
       if (event.event === 'charge.success') {
-        const { metadata } = event.data;
+        const { metadata, reference } = event.data;
         
-        const application = await Application.findById(metadata.applicationId);
+        const application = await Application.findById(metadata.applicationId).populate('hostelId');
         if (application && application.paymentStatus === 'pending') {
+          // Check if transaction already exists (idempotency)
+          const existingTransaction = await Transaction.findOne({ paymentReference: reference });
+          
+          if (!existingTransaction) {
+            // Create transaction record
+            const transaction = new Transaction({
+              applicationId: application._id,
+              studentId: application.studentId,
+              hostelId: application.hostelId._id,
+              managerId: application.hostelId.managerId,
+              hostelFee: application.hostelFee,
+              adminCommission: application.adminCommission,
+              totalAmount: application.totalAmount,
+              roomType: application.roomType,
+              semester: application.semester,
+              paymentReference: reference,
+              paymentStatus: 'paid',
+              paidAt: new Date()
+            });
+            await transaction.save();
+          }
+          
           application.paymentStatus = 'paid';
           application.status = 'paid_awaiting_final';
           application.paidAt = new Date();

@@ -11,6 +11,7 @@ const Application = require('./models/Application');
 const { auth, checkRole } = require('./middleware/auth');
 const adminRoutes = require('./routes/admin');
 const paymentRoutes = require('./routes/payment');
+const transactionRoutes = require('./routes/transactions');
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
@@ -65,6 +66,9 @@ app.use('/api/admin', adminRoutes);
 
 // Payment routes
 app.use('/api/payment', paymentRoutes);
+
+// Transaction routes
+app.use('/api/transactions', transactionRoutes);
 
 // --- AUTH ROUTES ---
 app.post('/api/auth/register', async (req, res) => {
