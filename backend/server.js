@@ -281,7 +281,6 @@ app.put('/api/hostels/:id', auth, checkRole('manager'), async (req, res) => {
     // Handle room type migration
     let updateData = { ...req.body, managerId: req.user.id };
     if (updateData.roomType) {
-      // Map old values to new values if needed
       const roomTypeMap = {
         'Single': '1 in a Room',
         'Double': '2 in a Room', 
@@ -297,6 +296,38 @@ app.put('/api/hostels/:id', auth, checkRole('manager'), async (req, res) => {
       updateData,
       { new: true, runValidators: true }
     );
+    
+    // Auto-update pending applications with new prices
+    if (updateData.roomTypes) {
+      const commissionPercent = parseFloat(process.env.ADMIN_COMMISSION_PERCENT) || 3;
+      
+      for (const roomType of updateData.roomTypes) {
+        const hostelFee = roomType.price;
+        const adminCommission = Math.round(hostelFee * (commissionPercent / 100));
+        const totalAmount = hostelFee + adminCommission;
+        
+        // Update only pending and approved_for_payment applications (not paid)
+        const result = await Application.updateMany(
+          {
+            hostelId: req.params.id,
+            roomType: roomType.type,
+            status: { $in: ['pending', 'approved_for_payment'] },
+            paymentStatus: 'pending'
+          },
+          {
+            $set: {
+              hostelFee,
+              adminCommission,
+              totalAmount
+            }
+          }
+        );
+        
+        if (result.modifiedCount > 0) {
+          console.log(`Updated ${result.modifiedCount} applications for ${roomType.type} with new price: ${hostelFee}`);
+        }
+      }
+    }
     
     res.json(updatedHostel);
   } catch (err) {
