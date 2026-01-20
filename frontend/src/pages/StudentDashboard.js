@@ -159,6 +159,9 @@ const StudentDashboard = () => {
 
     const handleProceedToPayment = async (app) => {
         try {
+            // Calculate commission percentage for display
+            const commissionPercent = app.hostelFee > 0 ? ((app.adminCommission / app.hostelFee) * 100).toFixed(1) : '3.0';
+            
             // Show payment breakdown before proceeding
             const result = await Swal.fire({
                 title: 'Payment Breakdown',
@@ -176,7 +179,7 @@ const StudentDashboard = () => {
                                 <strong>GH₵${app.hostelFee?.toFixed(2) || '0.00'}</strong>
                             </div>
                             <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #666;">
-                                <span>Platform Fee (${((app.adminCommission / app.hostelFee) * 100).toFixed(0)}%):</span>
+                                <span>Platform Fee (${commissionPercent}%):</span>
                                 <strong>GH₵${app.adminCommission?.toFixed(2) || '0.00'}</strong>
                             </div>
                         </div>
