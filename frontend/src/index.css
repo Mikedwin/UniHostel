@@ -10,19 +10,19 @@
       sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-color: #000000;
-    color: #FFFFFF;
+    background-color: #F8FAFC;
+    color: #0F172A;
   }
 }
 
 @layer utilities {
   /* Background Colors */
   .bg-gray-50 {
-    background-color: #1a1a1a !important;
+    background-color: #F8FAFC !important;
   }
 
   .bg-gray-100 {
-    background-color: #2a2a2a !important;
+    background-color: #F1F5F9 !important;
   }
 
   /* Text Colors */
