@@ -11,6 +11,7 @@ import ApplicationDetailsModal from '../components/admin/ApplicationDetailsModal
 import ApplicationActionModal from '../components/admin/ApplicationActionModal';
 import AnalyticsDashboard from '../components/admin/AnalyticsDashboard';
 import AdminTransactions from '../components/admin/AdminTransactions';
+import ManagerRegistrationForm from '../components/admin/ManagerRegistrationForm';
 
 const AdminDashboard = () => {
     const [stats, setStats] = useState(null);
@@ -171,13 +172,13 @@ const AdminDashboard = () => {
                 <div className="bg-white rounded-lg shadow mb-6">
                     <div className="border-b">
                         <div className="flex space-x-4 px-4">
-                            {['overview', 'analytics', 'transactions', 'users', 'hostels', 'managers', 'applications', 'logs'].map(tab => (
+                            {['overview', 'analytics', 'transactions', 'users', 'hostels', 'managers', 'register-manager', 'applications', 'logs'].map(tab => (
                                 <button
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
                                     className={`py-3 px-4 font-medium capitalize ${activeTab === tab ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'}`}
                                 >
-                                    {tab}
+                                    {tab === 'register-manager' ? 'Register Manager' : tab}
                                 </button>
                             ))}
                         </div>
@@ -288,6 +289,10 @@ const AdminDashboard = () => {
                                     </tbody>
                                 </table>
                             </div>
+                        )}
+
+                        {activeTab === 'register-manager' && (
+                            <ManagerRegistrationForm token={token} onSuccess={() => { showSuccess('Manager registered successfully'); fetchDashboardData(); }} />
                         )}
 
                         {activeTab === 'logs' && (

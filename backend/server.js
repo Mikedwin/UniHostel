@@ -80,20 +80,25 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ message: 'All fields are required' });
     }
     
+    // Block manager self-registration
+    if (role === 'manager') {
+      return res.status(403).json({ message: 'Manager accounts can only be created by administrators. Please contact admin for registration.' });
+    }
+    
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).json({ message: 'User already exists' });
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const userRole = role || 'student';
     
-    // New managers need verification, students and existing users don't
+    // Only students can self-register
     const newUser = new User({ 
       name, 
       email, 
       password: hashedPassword, 
-      role: userRole,
-      isVerified: userRole === 'manager' ? false : true,
-      accountStatus: userRole === 'manager' ? 'pending_verification' : 'active'
+      role: userRole === 'manager' ? 'student' : userRole, // Force to student if manager
+      isVerified: true,
+      accountStatus: 'active'
     });
     await newUser.save();
     console.log('User created successfully:', newUser._id);
@@ -101,8 +106,7 @@ app.post('/api/auth/register', async (req, res) => {
     const token = jwt.sign({ id: newUser._id, role: newUser.role }, process.env.JWT_SECRET, { expiresIn: '24h' });
     res.json({ 
       token, 
-      user: { id: newUser._id, name, email, role: newUser.role },
-      needsVerification: userRole === 'manager' && !newUser.isVerified
+      user: { id: newUser._id, name, email, role: newUser.role }
     });
   } catch (err) {
     console.error('Registration error:', err);

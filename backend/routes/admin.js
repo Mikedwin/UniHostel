@@ -799,4 +799,48 @@ router.post('/analytics/export', auth, checkAdmin, async (req, res) => {
   }
 });
 
+// MANAGER REGISTRATION BY ADMIN
+router.post('/managers/create', auth, checkAdmin, async (req, res) => {
+  try {
+    const { name, email, password, phone, hostelName } = req.body;
+    
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Name, email, and password are required' });
+    }
+    
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Email already exists' });
+    }
+    
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newManager = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role: 'manager',
+      phone,
+      hostelName,
+      isVerified: true,
+      accountStatus: 'active'
+    });
+    
+    await newManager.save();
+    await logAdminAction(req.user.id, 'CREATE_MANAGER', 'user', newManager._id, `Created manager account: ${name} (${email})`);
+    
+    res.status(201).json({ 
+      message: 'Manager account created successfully', 
+      manager: { 
+        id: newManager._id, 
+        name: newManager.name, 
+        email: newManager.email,
+        phone: newManager.phone,
+        hostelName: newManager.hostelName
+      } 
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
