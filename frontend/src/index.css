@@ -10,7 +10,7 @@
       sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-color: #F8FAFC;
+    background-color: #F0FDFA;
     color: #0F172A;
   }
 }
@@ -18,11 +18,11 @@
 @layer utilities {
   /* Background Colors */
   .bg-gray-50 {
-    background-color: #F8FAFC !important;
+    background-color: #F0FDFA !important;
   }
 
   .bg-gray-100 {
-    background-color: #F1F5F9 !important;
+    background-color: #CCFBF1 !important;
   }
 
   /* Text Colors */
