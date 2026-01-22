@@ -8,8 +8,6 @@ import HostelList from './pages/HostelList';
 import HostelDetail from './pages/HostelDetail';
 import StudentLogin from './pages/StudentLogin';
 import ManagerLogin from './pages/ManagerLogin';
-import StudentRegister from './pages/StudentRegister';
-import ManagerRegister from './pages/ManagerRegister';
 import StudentDashboard from './pages/StudentDashboard';
 import ManagerDashboard from './pages/ManagerDashboard';
 import AdminDashboard from './pages/AdminDashboard';
@@ -47,8 +45,6 @@ function AppContent() {
         {/* Authentication Routes */}
         <Route path="/student-login" element={<StudentLogin />} />
         <Route path="/manager-login" element={<ManagerLogin />} />
-        <Route path="/student-register" element={<StudentRegister />} />
-        <Route path="/manager-register" element={<ManagerRegister />} />
         
         {/* Payment Verification */}
         <Route path="/payment/verify" element={

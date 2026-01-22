@@ -6,7 +6,6 @@ import { useAuth } from '../context/AuthContext';
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [showRegisterMenu, setShowRegisterMenu] = useState(false);
   const [showLoginMenu, setShowLoginMenu] = useState(false);
 
   const handleLogout = () => {
@@ -79,36 +78,6 @@ const Navbar = () => {
                     >
                       <User className="w-4 h-4 mr-2" />
                       Manager Login
-                    </Link>
-                  </div>
-                </div>
-
-                {/* Register Dropdown */}
-                <div 
-                  className="relative"
-                  onMouseEnter={() => setShowRegisterMenu(true)}
-                  onMouseLeave={() => setShowRegisterMenu(false)}
-                >
-                  <button className="bg-primary-600 text-white px-3 md:px-4 py-2 rounded-md hover:bg-primary-700 transition-colors text-sm md:text-base font-medium flex items-center">
-                    Register
-                    <ChevronDown className="w-4 h-4 ml-1" />
-                  </button>
-                  <div className={`absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg transition-all duration-200 z-50 ${
-                    showRegisterMenu ? 'opacity-100 visible' : 'opacity-0 invisible'
-                  }`}>
-                    <Link 
-                      to="/student-register" 
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 flex items-center rounded-t-md"
-                    >
-                      <User className="w-4 h-4 mr-2" />
-                      Student Register
-                    </Link>
-                    <Link 
-                      to="/manager-register" 
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center rounded-b-md"
-                    >
-                      <User className="w-4 h-4 mr-2" />
-                      Manager Register
                     </Link>
                   </div>
                 </div>

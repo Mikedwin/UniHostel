@@ -843,4 +843,46 @@ router.post('/managers/create', auth, checkAdmin, async (req, res) => {
   }
 });
 
+// STUDENT REGISTRATION BY ADMIN
+router.post('/students/create', auth, checkAdmin, async (req, res) => {
+  try {
+    const { name, email, password, phone } = req.body;
+    
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Name, email, and password are required' });
+    }
+    
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Email already exists' });
+    }
+    
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newStudent = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role: 'student',
+      phone,
+      isVerified: true,
+      accountStatus: 'active'
+    });
+    
+    await newStudent.save();
+    await logAdminAction(req.user.id, 'CREATE_STUDENT', 'user', newStudent._id, `Created student account: ${name} (${email})`);
+    
+    res.status(201).json({ 
+      message: 'Student account created successfully', 
+      student: { 
+        id: newStudent._id, 
+        name: newStudent.name, 
+        email: newStudent.email,
+        phone: newStudent.phone
+      } 
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
