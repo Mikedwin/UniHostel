@@ -16,7 +16,7 @@
 }
 
 @layer utilities {
-  /* Override default gray backgrounds */
+  /* Background Colors */
   .bg-gray-50 {
     background-color: #F8FAFC !important;
   }
@@ -25,7 +25,7 @@
     background-color: #F1F5F9 !important;
   }
 
-  /* Override text colors */
+  /* Text Colors */
   .text-gray-900 {
     color: #0F172A !important;
   }
@@ -42,18 +42,47 @@
     color: #64748B !important;
   }
 
-  /* Override border colors */
+  /* Border Colors */
   .border-gray-200 {
-    border-color: #E2E8F0 !important;
+    border-color: #E5E7EB !important;
   }
 
   .border-gray-300 {
-    border-color: #CBD5E1 !important;
+    border-color: #D1D5DB !important;
   }
 
-  /* Divider color */
+  /* Divider Colors */
   .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
-    border-color: #E2E8F0 !important;
+    border-color: #E5E7EB !important;
+  }
+
+  /* Semantic Color Utilities */
+  .bg-success {
+    background-color: #22C55E;
+  }
+
+  .text-success {
+    color: #22C55E;
+  }
+
+  .bg-warning {
+    background-color: #EAB308;
+  }
+
+  .text-warning {
+    color: #EAB308;
+  }
+
+  .bg-error {
+    background-color: #EF4444;
+  }
+
+  .text-error {
+    color: #EF4444;
+  }
+
+  .text-secondary {
+    color: #6366F1;
   }
 }
 
