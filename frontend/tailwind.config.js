@@ -19,6 +19,17 @@ module.exports = {
           900: '#1e3a8a',
         },
       },
+      backgroundColor: {
+        'main': '#F8FAFC',
+        'card': '#FFFFFF',
+      },
+      textColor: {
+        'primary-dark': '#0F172A',
+        'secondary-dark': '#475569',
+      },
+      borderColor: {
+        'divider': '#E2E8F0',
+      },
     },
   },
   plugins: [],
