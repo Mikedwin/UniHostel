@@ -73,9 +73,38 @@ app.use('/api/transactions', transactionRoutes);
 // --- AUTH ROUTES ---
 app.post('/api/auth/register', async (req, res) => {
   try {
-    // Registration is disabled - only admin can create accounts
-    return res.status(403).json({ 
-      message: 'Public registration is disabled. Students and managers must be registered by administrators. Please contact admin.' 
+    console.log('Registration attempt:', req.body);
+    const { name, email, password, role } = req.body;
+    
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+    
+    // Only allow student registration
+    if (role && role !== 'student') {
+      return res.status(403).json({ message: 'Only student registration is allowed. Managers must be registered by administrators.' });
+    }
+    
+    const existingUser = await User.findOne({ email });
+    if (existingUser) return res.status(400).json({ message: 'User already exists' });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    const newUser = new User({ 
+      name, 
+      email, 
+      password: hashedPassword, 
+      role: 'student',
+      isVerified: true,
+      accountStatus: 'active'
+    });
+    await newUser.save();
+    console.log('Student created successfully:', newUser._id);
+
+    const token = jwt.sign({ id: newUser._id, role: newUser.role }, process.env.JWT_SECRET, { expiresIn: '24h' });
+    res.json({ 
+      token, 
+      user: { id: newUser._id, name, email, role: newUser.role }
     });
   } catch (err) {
     console.error('Registration error:', err);

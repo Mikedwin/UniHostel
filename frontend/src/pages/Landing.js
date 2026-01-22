@@ -59,10 +59,10 @@ const Landing = () => {
                 Browse Hostels
               </Link>
               <Link 
-                to="/manager-register" 
+                to="/student-register" 
                 className="inline-flex items-center justify-center px-6 sm:px-8 py-3 border border-transparent text-base font-semibold rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 transition-colors duration-200"
               >
-                List Your Hostel
+                Register as Student
               </Link>
             </div>
           </div>
