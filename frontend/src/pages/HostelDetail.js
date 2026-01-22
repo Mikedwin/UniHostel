@@ -117,37 +117,37 @@ const HostelDetail = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6 md:py-8">
         {/* Hostel View Image at the top */}
-        <div className="mb-8 relative">
+        <div className="mb-6 sm:mb-8 relative">
           <img 
             src={hostel.hostelViewImage || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=1200&q=80'} 
             alt={`${hostel.name} - Hostel View`} 
-            className="w-full h-64 sm:h-80 lg:h-96 object-cover rounded-xl shadow-sm"
+            className="w-full h-48 sm:h-64 md:h-80 lg:h-96 object-cover rounded-lg sm:rounded-xl shadow-sm"
           />
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent rounded-b-xl p-6">
-            <h1 className="text-3xl sm:text-4xl font-bold text-white">{hostel.name}</h1>
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent rounded-b-lg sm:rounded-b-xl p-4 sm:p-6">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">{hostel.name}</h1>
           </div>
         </div>
         
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-          <div className="xl:col-span-2 space-y-6">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+          <div className="xl:col-span-2 space-y-4 sm:space-y-6">
             {/* Hostel Information */}
-            <div className="bg-white p-6 rounded-xl shadow-sm">
-              <div className="flex items-center text-gray-600 mb-6">
-                <MapPin className="w-5 h-5 mr-2" />
-                <span className="text-lg">{hostel.location}</span>
+            <div className="bg-white p-4 sm:p-6 rounded-lg sm:rounded-xl shadow-sm">
+              <div className="flex items-center text-gray-600 mb-4 sm:mb-6">
+                <MapPin className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                <span className="text-base sm:text-lg">{hostel.location}</span>
               </div>
               
-              <div className="mb-6">
-                <h2 className="text-xl font-bold mb-3">Description</h2>
-                <p className="text-gray-700 leading-relaxed">{hostel.description}</p>
+              <div className="mb-4 sm:mb-6">
+                <h2 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3">Description</h2>
+                <p className="text-sm sm:text-base text-gray-700 leading-relaxed">{hostel.description}</p>
               </div>
             </div>
 
             {/* Available Room Types */}
-            <div className="bg-white p-6 rounded-xl shadow-sm">
-              <h2 className="text-2xl font-bold mb-6">Available Room Types</h2>
+            <div className="bg-white p-4 sm:p-6 rounded-lg sm:rounded-xl shadow-sm">
+              <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Available Room Types</h2>
               
               {/* Desktop: Grid Layout */}
               <div className="hidden md:grid md:grid-cols-2 gap-6">
@@ -376,11 +376,11 @@ const HostelDetail = () => {
 
           <div className="xl:col-span-1">
             {appData.roomType ? (
-              <div className="bg-white p-6 rounded-xl shadow-lg border border-primary-100 sticky top-8">
-                <h2 className="text-xl font-bold mb-4">Application Form</h2>
-                <div className="mb-4 p-3 bg-blue-50 rounded-md">
-                  <p className="text-sm text-gray-600">Applying for:</p>
-                  <p className="font-bold text-primary-700">{appData.roomType}</p>
+              <div className="bg-white p-4 sm:p-6 rounded-lg sm:rounded-xl shadow-lg border border-primary-100 xl:sticky xl:top-8">
+                <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Application Form</h2>
+                <div className="mb-3 sm:mb-4 p-3 bg-blue-50 rounded-md">
+                  <p className="text-xs sm:text-sm text-gray-600">Applying for:</p>
+                  <p className="text-sm sm:text-base font-bold text-primary-700">{appData.roomType}</p>
                 </div>
                 
                 {(() => {
@@ -471,9 +471,9 @@ const HostelDetail = () => {
                 </div>
               </div>
             ) : (
-              <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 sticky top-8">
-                <h2 className="text-xl font-bold mb-4">Select a Room Type</h2>
-                <p className="text-gray-600 text-sm">Click "Apply for this Room" on any available room type to start your application.</p>
+              <div className="bg-white p-4 sm:p-6 rounded-lg sm:rounded-xl shadow-lg border border-gray-200 xl:sticky xl:top-8">
+                <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Select a Room Type</h2>
+                <p className="text-gray-600 text-xs sm:text-sm">Click "Apply for this Room" on any available room type to start your application.</p>
                 
                 <div className="pt-6 border-t border-gray-200 mt-6">
                   <div className="flex items-center">

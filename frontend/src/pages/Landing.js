@@ -41,26 +41,26 @@ const Landing = () => {
     <div className="bg-white">
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center min-h-[500px] lg:min-h-[600px] py-8 lg:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12 items-center min-h-[500px] lg:min-h-[600px] py-6 sm:py-8 lg:py-12">
           {/* Content */}
           <div className="order-2 lg:order-1 text-center lg:text-left">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl tracking-tight font-extrabold text-gray-900 leading-tight">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl tracking-tight font-extrabold text-gray-900 leading-tight">
               <span className="block">Find your next</span>
               <span className="block text-primary-600 mt-1">Student Hostel</span>
             </h1>
-            <p className="mt-4 sm:mt-6 text-base sm:text-lg text-gray-600 max-w-2xl mx-auto lg:mx-0">
+            <p className="mt-3 sm:mt-4 md:mt-6 text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl mx-auto lg:mx-0">
               The most reliable platform for university students to find, compare and book verified accommodation. Secure your semester residence with ease.
             </p>
-            <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start">
+            <div className="mt-4 sm:mt-6 md:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start">
               <Link 
                 to="/hostels" 
-                className="inline-flex items-center justify-center px-6 sm:px-8 py-3 border border-transparent text-base font-semibold rounded-md text-white bg-primary-600 hover:bg-primary-700 transition-colors duration-200 shadow-lg hover:shadow-xl"
+                className="inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-3.5 border border-transparent text-sm sm:text-base font-semibold rounded-md text-white bg-primary-600 hover:bg-primary-700 transition-colors duration-200 shadow-lg hover:shadow-xl"
               >
                 Browse Hostels
               </Link>
               <Link 
                 to="/student-register" 
-                className="inline-flex items-center justify-center px-6 sm:px-8 py-3 border border-transparent text-base font-semibold rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 transition-colors duration-200"
+                className="inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-3.5 border border-transparent text-sm sm:text-base font-semibold rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 transition-colors duration-200"
               >
                 Register as Student
               </Link>
@@ -70,7 +70,7 @@ const Landing = () => {
           {/* Image */}
           <div className="order-1 lg:order-2">
             <img
-              className="w-full h-48 sm:h-64 md:h-80 lg:h-96 object-cover rounded-lg shadow-xl"
+              className="w-full h-48 sm:h-56 md:h-72 lg:h-96 object-cover rounded-lg shadow-xl"
               src="https://images.unsplash.com/photo-1555854877-bab0e564b8d5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
               alt="Student dormitory"
               loading="lazy"
@@ -80,58 +80,58 @@ const Landing = () => {
       </div>
 
       {/* Features Section */}
-      <div className="bg-gray-50 py-12 sm:py-16">
+      <div className="bg-gray-50 py-8 sm:py-12 md:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-3">
-            <div className="flex flex-col items-center text-center p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary-500 text-white mb-4">
-                <Search />
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 md:gap-8 md:grid-cols-3">
+            <div className="flex flex-col items-center text-center p-4 sm:p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-md bg-primary-500 text-white mb-3 sm:mb-4">
+                <Search className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Easy Search</h3>
-              <p className="text-sm text-gray-600">Filter by location, price, and facilities to find the perfect fit.</p>
+              <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2">Easy Search</h3>
+              <p className="text-xs sm:text-sm text-gray-600">Filter by location, price, and facilities to find the perfect fit.</p>
             </div>
-            <div className="flex flex-col items-center text-center p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary-500 text-white mb-4">
-                <ShieldCheck />
+            <div className="flex flex-col items-center text-center p-4 sm:p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-md bg-primary-500 text-white mb-3 sm:mb-4">
+                <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Verified Listings</h3>
-              <p className="text-sm text-gray-600">All hostels are registered and verified for physical safety.</p>
+              <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2">Verified Listings</h3>
+              <p className="text-xs sm:text-sm text-gray-600">All hostels are registered and verified for physical safety.</p>
             </div>
-            <div className="flex flex-col items-center text-center p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary-500 text-white mb-4">
-                <Clock />
+            <div className="flex flex-col items-center text-center p-4 sm:p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-md bg-primary-500 text-white mb-3 sm:mb-4">
+                <Clock className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Real-time Status</h3>
-              <p className="text-sm text-gray-600">Apply instantly and track your application status live.</p>
+              <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2">Real-time Status</h3>
+              <p className="text-xs sm:text-sm text-gray-600">Apply instantly and track your application status live.</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* FAQ Section */}
-      <div id="faq" className="bg-white py-12 sm:py-16">
+      <div id="faq" className="bg-white py-8 sm:py-12 md:py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3">Frequently Asked Questions</h2>
-            <p className="text-base sm:text-lg text-gray-600">Everything you need to know about booking your hostel</p>
+          <div className="text-center mb-6 sm:mb-8 md:mb-10">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 mb-2 sm:mb-3">Frequently Asked Questions</h2>
+            <p className="text-sm sm:text-base md:text-lg text-gray-600">Everything you need to know about booking your hostel</p>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {faqs.map((faq, index) => (
               <div key={index} className="border border-gray-200 rounded-lg overflow-hidden hover:border-primary-300 transition-colors">
                 <button
                   onClick={() => toggleFaq(index)}
-                  className="w-full px-4 sm:px-6 py-4 text-left bg-white hover:bg-gray-50 transition-colors flex justify-between items-center"
+                  className="w-full px-4 sm:px-6 py-3 sm:py-4 text-left bg-white hover:bg-gray-50 transition-colors flex justify-between items-center gap-3"
                 >
-                  <span className="text-base sm:text-lg font-semibold text-gray-900 pr-4">{faq.question}</span>
+                  <span className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 pr-2">{faq.question}</span>
                   {openFaq === index ? (
-                    <ChevronUp className="w-5 h-5 text-primary-600 flex-shrink-0" />
+                    <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600 flex-shrink-0" />
                   ) : (
-                    <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                    <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 flex-shrink-0" />
                   )}
                 </button>
                 {openFaq === index && (
-                  <div className="px-4 sm:px-6 py-4 bg-gray-50 border-t border-gray-200">
-                    <p className="text-sm sm:text-base text-gray-700 leading-relaxed">{faq.answer}</p>
+                  <div className="px-4 sm:px-6 py-3 sm:py-4 bg-gray-50 border-t border-gray-200">
+                    <p className="text-xs sm:text-sm md:text-base text-gray-700 leading-relaxed">{faq.answer}</p>
                   </div>
                 )}
               </div>

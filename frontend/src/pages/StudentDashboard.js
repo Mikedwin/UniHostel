@@ -281,9 +281,9 @@ const StudentDashboard = () => {
                 </div>
             )}
             
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold flex items-center gap-2">
+                    <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
                         My Applications
                         {newUpdates > 0 && (
                             <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">
@@ -318,92 +318,169 @@ const StudentDashboard = () => {
                     <p className="text-gray-500 mb-4">You haven't applied for any hostels yet.</p>
                 </div>
             ) : (
-                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hostel</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Semester</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Access Code</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {applications.map(app => (
-                                <tr 
-                                    key={app._id} 
-                                    onContextMenu={(e) => viewMode === 'active' ? handleContextMenu(e, app) : null}
-                                    className="hover:bg-gray-50 cursor-pointer"
-                                >
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-gray-900">{app.hostelId?.name || 'N/A'}</div>
-                                        <div className="text-xs text-gray-500">{app.hostelId?.location || 'N/A'}</div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{app.semester}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full items-center ${getStatusStyle(app.status)}`}>
-                                            {getStatusIcon(app.status)}
-                                            {getStatusText(app.status)}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                        {app.accessCode ? (
-                                            <div className="flex items-center gap-2">
-                                                <Key className="w-4 h-4 text-green-600" />
+                <>
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block bg-white rounded-lg shadow-sm overflow-hidden">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hostel</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Semester</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Access Code</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {applications.map(app => (
+                                    <tr 
+                                        key={app._id} 
+                                        onContextMenu={(e) => viewMode === 'active' ? handleContextMenu(e, app) : null}
+                                        className="hover:bg-gray-50 cursor-pointer"
+                                    >
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm font-medium text-gray-900">{app.hostelId?.name || 'N/A'}</div>
+                                            <div className="text-xs text-gray-500">{app.hostelId?.location || 'N/A'}</div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{app.semester}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full items-center ${getStatusStyle(app.status)}`}>
+                                                {getStatusIcon(app.status)}
+                                                {getStatusText(app.status)}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                            {app.accessCode ? (
+                                                <div className="flex items-center gap-2">
+                                                    <Key className="w-4 h-4 text-green-600" />
+                                                    <code className="bg-gray-100 px-2 py-1 rounded font-mono text-xs">{app.accessCode}</code>
+                                                </div>
+                                            ) : (
+                                                <span className="text-gray-400">-</span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                            {viewMode === 'history' ? (
+                                                <button 
+                                                    onClick={() => handleRestore(app._id)}
+                                                    className="flex items-center gap-1 text-blue-600 hover:bg-blue-50 px-3 py-1 rounded text-xs font-medium" 
+                                                    title="Restore to Active">
+                                                    <RotateCcw className="w-3 h-3" />
+                                                    Restore
+                                                </button>
+                                            ) : canMoveToHistory(app) ? (
+                                                <button 
+                                                    onClick={() => handleArchiveClick(app._id)}
+                                                    className="flex items-center gap-1 text-gray-600 hover:bg-gray-50 px-3 py-1 rounded text-xs font-medium" 
+                                                    title="Move to History">
+                                                    <Archive className="w-3 h-3" />
+                                                    Move to History
+                                                </button>
+                                            ) : app.status === 'approved_for_payment' ? (
+                                                <button
+                                                    onClick={() => handleProceedToPayment(app)}
+                                                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2 font-semibold"
+                                                >
+                                                    <CreditCard className="w-4 h-4" />
+                                                    Pay Now
+                                                </button>
+                                            ) : app.status === 'pending' ? (
+                                                <button 
+                                                    onClick={() => handleCancelApplication(app._id)}
+                                                    className="flex items-center gap-1 text-red-600 hover:bg-red-50 px-3 py-1 rounded text-xs font-medium" 
+                                                    title="Cancel Application"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                    Cancel
+                                                </button>
+                                            ) : app.status === 'paid_awaiting_final' ? (
+                                                <span className="text-orange-600 text-xs font-medium">Awaiting Final Approval</span>
+                                            ) : app.status === 'approved' ? (
+                                                <span className="text-green-600 text-xs font-medium">Completed</span>
+                                            ) : (
+                                                <span className="text-gray-400">-</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Mobile Card View */}
+                    <div className="md:hidden space-y-4">
+                        {applications.map(app => (
+                            <div key={app._id} className="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+                                <div className="flex justify-between items-start mb-3">
+                                    <div className="flex-1">
+                                        <h3 className="font-bold text-gray-900">{app.hostelId?.name || 'N/A'}</h3>
+                                        <p className="text-xs text-gray-500">{app.hostelId?.location || 'N/A'}</p>
+                                    </div>
+                                    <span className={`px-2 py-1 text-xs font-semibold rounded-full flex items-center gap-1 ${getStatusStyle(app.status)}`}>
+                                        {getStatusIcon(app.status)}
+                                        {getStatusText(app.status)}
+                                    </span>
+                                </div>
+                                
+                                <div className="space-y-2 mb-3">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-600">Semester:</span>
+                                        <span className="font-medium">{app.semester}</span>
+                                    </div>
+                                    {app.accessCode && (
+                                        <div className="flex justify-between text-sm items-center">
+                                            <span className="text-gray-600">Access Code:</span>
+                                            <div className="flex items-center gap-1">
+                                                <Key className="w-3 h-3 text-green-600" />
                                                 <code className="bg-gray-100 px-2 py-1 rounded font-mono text-xs">{app.accessCode}</code>
                                             </div>
-                                        ) : (
-                                            <span className="text-gray-400">-</span>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                        {viewMode === 'history' ? (
-                                            <button 
-                                                onClick={() => handleRestore(app._id)}
-                                                className="flex items-center gap-1 text-blue-600 hover:bg-blue-50 px-3 py-1 rounded text-xs font-medium" 
-                                                title="Restore to Active">
-                                                <RotateCcw className="w-3 h-3" />
-                                                Restore
-                                            </button>
-                                        ) : canMoveToHistory(app) ? (
-                                            <button 
-                                                onClick={() => handleArchiveClick(app._id)}
-                                                className="flex items-center gap-1 text-gray-600 hover:bg-gray-50 px-3 py-1 rounded text-xs font-medium" 
-                                                title="Move to History">
-                                                <Archive className="w-3 h-3" />
-                                                Move to History
-                                            </button>
-                                        ) : app.status === 'approved_for_payment' ? (
-                                            <button
-                                                onClick={() => handleProceedToPayment(app)}
-                                                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2 font-semibold"
-                                            >
-                                                <CreditCard className="w-4 h-4" />
-                                                Pay Now
-                                            </button>
-                                        ) : app.status === 'pending' ? (
-                                            <button 
-                                                onClick={() => handleCancelApplication(app._id)}
-                                                className="flex items-center gap-1 text-red-600 hover:bg-red-50 px-3 py-1 rounded text-xs font-medium" 
-                                                title="Cancel Application"
-                                            >
-                                                <X className="w-3 h-3" />
-                                                Cancel
-                                            </button>
-                                        ) : app.status === 'paid_awaiting_final' ? (
-                                            <span className="text-orange-600 text-xs font-medium">Awaiting Final Approval</span>
-                                        ) : app.status === 'approved' ? (
-                                            <span className="text-green-600 text-xs font-medium">Completed</span>
-                                        ) : (
-                                            <span className="text-gray-400">-</span>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="pt-3 border-t border-gray-200">
+                                    {viewMode === 'history' ? (
+                                        <button 
+                                            onClick={() => handleRestore(app._id)}
+                                            className="w-full flex items-center justify-center gap-2 text-blue-600 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded font-medium"
+                                        >
+                                            <RotateCcw className="w-4 h-4" />
+                                            Restore to Active
+                                        </button>
+                                    ) : canMoveToHistory(app) ? (
+                                        <button 
+                                            onClick={() => handleArchiveClick(app._id)}
+                                            className="w-full flex items-center justify-center gap-2 text-gray-600 bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded font-medium"
+                                        >
+                                            <Archive className="w-4 h-4" />
+                                            Move to History
+                                        </button>
+                                    ) : app.status === 'approved_for_payment' ? (
+                                        <button
+                                            onClick={() => handleProceedToPayment(app)}
+                                            className="w-full bg-blue-600 text-white px-4 py-3 rounded hover:bg-blue-700 flex items-center justify-center gap-2 font-semibold"
+                                        >
+                                            <CreditCard className="w-5 h-5" />
+                                            Pay Now
+                                        </button>
+                                    ) : app.status === 'pending' ? (
+                                        <button 
+                                            onClick={() => handleCancelApplication(app._id)}
+                                            className="w-full flex items-center justify-center gap-2 text-red-600 bg-red-50 hover:bg-red-100 px-4 py-2 rounded font-medium"
+                                        >
+                                            <X className="w-4 h-4" />
+                                            Cancel Application
+                                        </button>
+                                    ) : app.status === 'paid_awaiting_final' ? (
+                                        <div className="text-center text-orange-600 font-medium py-2">Awaiting Final Approval</div>
+                                    ) : app.status === 'approved' ? (
+                                        <div className="text-center text-green-600 font-medium py-2">Completed</div>
+                                    ) : null}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </>
             )}
             
             {/* Context Menu */}
