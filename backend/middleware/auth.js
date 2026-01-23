@@ -2,11 +2,24 @@ const jwt = require('jsonwebtoken');
 
 const auth = (req, res, next) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    if (!token) return res.status(401).json({ message: 'No authentication token, access denied' });
+    const authHeader = req.header('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: 'No authentication token, access denied' });
+    }
+    
+    const token = authHeader.replace('Bearer ', '');
+    if (!token || token.length < 20) {
+      return res.status(401).json({ message: 'Invalid token format' });
+    }
 
-    const verified = jwt.verify(token, process.env.JWT_SECRET);
-    if (!verified) return res.status(401).json({ message: 'Token verification failed, access denied' });
+    const verified = jwt.verify(token, process.env.JWT_SECRET, {
+      algorithms: ['HS256'],
+      maxAge: '8h'
+    });
+    
+    if (!verified || !verified.id || !verified.role) {
+      return res.status(401).json({ message: 'Token verification failed' });
+    }
 
     req.user = verified;
     next();
@@ -17,14 +30,20 @@ const auth = (req, res, next) => {
     if (err.name === 'JsonWebTokenError') {
       return res.status(401).json({ message: 'Invalid token. Please login again.' });
     }
-    res.status(500).json({ error: err.message });
+    res.status(401).json({ message: 'Authentication failed' });
   }
 };
 
-const checkRole = (role) => {
+const checkRole = (allowedRoles) => {
   return (req, res, next) => {
-    if (req.user.role !== role) {
-      return res.status(403).json({ message: 'Access denied: Unauthorized role' });
+    const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
+    
+    if (!req.user || !req.user.role) {
+      return res.status(403).json({ message: 'Access denied: No role found' });
+    }
+    
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ message: 'Access denied: Insufficient permissions' });
     }
     next();
   };

@@ -63,18 +63,27 @@ app.use(mongoSanitize());
 // 4. Prevent HTTP Parameter Pollution
 app.use(hpp());
 
-// Body parser with size limits
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
+// Body parser with size limits (reduced for security)
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ limit: '2mb', extended: true }));
 
 // CORS Configuration
+const allowedOrigins = process.env.NODE_ENV === 'production' 
+  ? ['https://uni-hostel-two.vercel.app'] 
+  : ['http://localhost:3000'];
+
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://uni-hostel-two.vercel.app', process.env.FRONTEND_URL] 
-    : ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  maxAge: 600
 }));
 
 // Database Connection
@@ -123,7 +132,26 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/transactions', transactionRoutes);
 
 // --- AUTH ROUTES ---
-app.post('/api/auth/register', async (req, res) => {
+// Input validation middleware
+const validateInput = (req, res, next) => {
+  const { email, password, name } = req.body;
+  
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ message: 'Invalid email format' });
+  }
+  
+  if (password && password.length < 8) {
+    return res.status(400).json({ message: 'Password must be at least 8 characters' });
+  }
+  
+  if (name && (name.length < 2 || name.length > 100)) {
+    return res.status(400).json({ message: 'Name must be between 2 and 100 characters' });
+  }
+  
+  next();
+};
+
+app.post('/api/auth/register', validateInput, async (req, res) => {
   try {
     console.log('Registration attempt:', req.body);
     const { name, email, password, role } = req.body;
@@ -140,7 +168,7 @@ app.post('/api/auth/register', async (req, res) => {
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).json({ message: 'User already exists' });
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
     
     const newUser = new User({ 
       name, 
@@ -153,7 +181,11 @@ app.post('/api/auth/register', async (req, res) => {
     await newUser.save();
     console.log('Student created successfully:', newUser._id);
 
-    const token = jwt.sign({ id: newUser._id, role: newUser.role }, process.env.JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign(
+      { id: newUser._id, role: newUser.role, iat: Math.floor(Date.now() / 1000) }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: '8h', algorithm: 'HS256' }
+    );
     res.json({ 
       token, 
       user: { id: newUser._id, name, email, role: newUser.role }
@@ -164,7 +196,7 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', validateInput, async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
@@ -194,7 +226,11 @@ app.post('/api/auth/login', async (req, res) => {
     }
     await user.save();
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign(
+      { id: user._id, role: user.role, iat: Math.floor(Date.now() / 1000) }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: '8h', algorithm: 'HS256' }
+    );
     res.json({ 
       token, 
       user: { id: user._id, name: user.name, email: user.email, role: user.role },
