@@ -108,10 +108,7 @@ const Login = () => {
                             type="submit"
                             disabled={loading}
                             className="w-full flex items-center justify-center px-8 py-3.5 border border-transparent text-base font-semibold rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-                            style={{ 
-                                backgroundColor: '#23817A',
-                                '--tw-ring-color': '#23817A'
-                            } as React.CSSProperties}
+                            style={{ backgroundColor: '#23817A' }}
                             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1a6159'}
                             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#23817A'}
                         >

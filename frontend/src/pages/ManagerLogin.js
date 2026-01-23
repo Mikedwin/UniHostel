@@ -112,10 +112,7 @@ const ManagerLogin = () => {
                             type="submit" 
                             disabled={loading}
                             className="w-full text-white py-2 px-4 rounded-md font-medium focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                            style={{ 
-                                backgroundColor: '#23817A',
-                                '--tw-ring-color': '#23817A'
-                            } as React.CSSProperties}
+                            style={{ backgroundColor: '#23817A' }}
                             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1a6159'}
                             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#23817A'}
                         >
