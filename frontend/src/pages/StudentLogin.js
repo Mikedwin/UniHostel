@@ -63,11 +63,12 @@ const StudentLogin = () => {
                             <input 
                                 type="email" 
                                 required 
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:border-transparent transition-colors" 
-                                style={{ '--tw-ring-color': '#23817A' } as React.CSSProperties}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none transition-colors" 
                                 placeholder="Enter your email"
                                 value={formData.email}
-                                onChange={e => setFormData({...formData, email: e.target.value})} 
+                                onChange={e => setFormData({...formData, email: e.target.value})}
+                                onFocus={(e) => e.target.style.borderColor = '#23817A'}
+                                onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                             />
                         </div>
                         
@@ -79,11 +80,12 @@ const StudentLogin = () => {
                                 <input 
                                     type={showPassword ? "text" : "password"}
                                     required 
-                                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:border-transparent transition-colors" 
-                                    style={{ '--tw-ring-color': '#23817A' } as React.CSSProperties}
+                                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none transition-colors" 
                                     placeholder="Enter your password"
                                     value={formData.password}
-                                    onChange={e => setFormData({...formData, password: e.target.value})} 
+                                    onChange={e => setFormData({...formData, password: e.target.value})}
+                                    onFocus={(e) => e.target.style.borderColor = '#23817A'}
+                                    onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                                 />
                                 <button
                                     type="button"

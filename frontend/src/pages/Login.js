@@ -75,11 +75,12 @@ const Login = () => {
                                 <input
                                     type="email"
                                     required
-                                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-colors"
-                                    style={{ '--tw-ring-color': '#23817A' } as React.CSSProperties}
+                                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none transition-colors"
                                     placeholder="you@example.com"
                                     value={formData.email}
                                     onChange={e => setFormData({...formData, email: e.target.value})}
+                                    onFocus={(e) => e.target.style.borderColor = '#23817A'}
+                                    onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                                 />
                             </div>
                         </div>
@@ -93,11 +94,12 @@ const Login = () => {
                                 <input
                                     type="password"
                                     required
-                                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-colors"
-                                    style={{ '--tw-ring-color': '#23817A' } as React.CSSProperties}
+                                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none transition-colors"
                                     placeholder="••••••••"
                                     value={formData.password}
                                     onChange={e => setFormData({...formData, password: e.target.value})}
+                                    onFocus={(e) => e.target.style.borderColor = '#23817A'}
+                                    onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                                 />
                             </div>
                         </div>
