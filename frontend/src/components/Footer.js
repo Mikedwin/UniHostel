@@ -4,7 +4,7 @@ import { Home, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } fro
 
 const Footer = () => {
   return (
-    <footer className="bg-[#22C55E] border-t border-green-600">
+    <footer className="bg-[#23817A] border-t border-[#1a6660]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
           {/* About Section */}
@@ -118,7 +118,7 @@ const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-green-600 mt-6 sm:mt-8 pt-6 sm:pt-8 text-center">
+        <div className="border-t border-[#1a6660] mt-6 sm:mt-8 pt-6 sm:pt-8 text-center">
           <p className="text-xs sm:text-sm text-white/90">
             © {new Date().getFullYear()} UniHostel. All rights reserved. Built for students, by students.
           </p>
