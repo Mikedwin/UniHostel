@@ -5,6 +5,7 @@ import { MapPin, CheckCircle, MessageSquare, Wifi, Droplet, Zap, Shield, Car, Wi
 import { useAuth } from '../context/AuthContext';
 import API_URL from '../config';
 import Swal from 'sweetalert2';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const HostelDetail = () => {
   const { id } = useParams();
@@ -112,7 +113,7 @@ const HostelDetail = () => {
     return null;
   };
 
-  if (loading) return <div className="text-center py-20">Loading hostel details...</div>;
+  if (loading) return <LoadingSpinner message="Loading hostel details..." fullScreen />;
   if (!hostel) return <div className="text-center py-20">Hostel not found.</div>;
 
   return (

@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Clock, CheckCircle, XCircle, X, CreditCard, Key, Archive, RotateCcw, Trash2 } from 'lucide-react';
 import API_URL from '../config';
 import Swal from 'sweetalert2';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const StudentDashboard = () => {
     const [applications, setApplications] = useState([]);
@@ -312,7 +313,7 @@ const StudentDashboard = () => {
                 </div>
             </div>
             {loading ? (
-                <p>Loading...</p>
+                <LoadingSpinner message="Loading your applications..." />
             ) : applications.length === 0 ? (
                 <div className="bg-white p-8 rounded-lg shadow-sm text-center">
                     <p className="text-gray-500 mb-4">You haven't applied for any hostels yet.</p>

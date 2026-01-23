@@ -12,6 +12,7 @@ import ApplicationActionModal from '../components/admin/ApplicationActionModal';
 import AnalyticsDashboard from '../components/admin/AnalyticsDashboard';
 import AdminTransactions from '../components/admin/AdminTransactions';
 import ManagerRegistrationForm from '../components/admin/ManagerRegistrationForm';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const AdminDashboard = () => {
     const [stats, setStats] = useState(null);
@@ -98,7 +99,7 @@ const AdminDashboard = () => {
     };
 
     if (loading) {
-        return <div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;
+        return <LoadingSpinner message="Loading admin dashboard..." fullScreen />;
     }
 
     return (

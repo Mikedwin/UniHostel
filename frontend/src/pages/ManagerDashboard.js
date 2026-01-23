@@ -7,6 +7,7 @@ import API_URL from '../config';
 import ManagerAnalytics from '../components/manager/ManagerAnalytics';
 import ManagerTransactions from '../components/manager/ManagerTransactions';
 import Swal from 'sweetalert2';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const ManagerDashboard = () => {
     const [applications, setApplications] = useState([]);
@@ -352,12 +353,7 @@ const ManagerDashboard = () => {
             </div>
 
             {loading && (
-                <div className="flex justify-center items-center py-12">
-                    <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-                        <p className="text-gray-600">Loading your dashboard...</p>
-                    </div>
-                </div>
+                <LoadingSpinner message="Loading your dashboard..." />
             )}
 
             {error && (
