@@ -521,7 +521,10 @@ const ManagerDashboard = () => {
                                 <span className="text-sm text-gray-600">{selectedApps.length} selected</span>
                                 <button
                                     onClick={() => handleBulkAction('approve_for_payment')}
-                                    className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                                    className="text-white px-3 py-1 rounded text-sm"
+                                    style={{ backgroundColor: '#23817A' }}
+                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1a6159'}
+                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#23817A'}
                                 >
                                     Approve for Payment
                                 </button>
@@ -923,7 +926,10 @@ const ManagerDashboard = () => {
                                                     handleStatusUpdate(selectedApp._id, 'approve_for_payment');
                                                     setShowDetailsModal(false);
                                                 }}
-                                                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                                                className="flex-1 text-white px-4 py-2 rounded"
+                                                style={{ backgroundColor: '#23817A' }}
+                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1a6159'}
+                                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#23817A'}
                                             >
                                                 Approve for Payment
                                             </button>

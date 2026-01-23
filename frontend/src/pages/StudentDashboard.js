@@ -380,7 +380,10 @@ const StudentDashboard = () => {
                                             ) : app.status === 'approved_for_payment' ? (
                                                 <button
                                                     onClick={() => handleProceedToPayment(app)}
-                                                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2 font-semibold"
+                                                    className="text-white px-4 py-2 rounded flex items-center gap-2 font-semibold"
+                                                    style={{ backgroundColor: '#23817A' }}
+                                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1a6159'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#23817A'}
                                                 >
                                                     <CreditCard className="w-4 h-4" />
                                                     Pay Now
@@ -459,7 +462,10 @@ const StudentDashboard = () => {
                                     ) : app.status === 'approved_for_payment' ? (
                                         <button
                                             onClick={() => handleProceedToPayment(app)}
-                                            className="w-full bg-blue-600 text-white px-4 py-3 rounded hover:bg-blue-700 flex items-center justify-center gap-2 font-semibold"
+                                            className="w-full text-white px-4 py-3 rounded flex items-center justify-center gap-2 font-semibold"
+                                            style={{ backgroundColor: '#23817A' }}
+                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1a6159'}
+                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#23817A'}
                                         >
                                             <CreditCard className="w-5 h-5" />
                                             Pay Now
