@@ -54,10 +54,10 @@ const StudentRegister = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-md w-full space-y-8">
                 <div className="text-center">
-                    <div className="mx-auto h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center mb-4">
+                    <div className="mx-auto h-16 w-16 bg-primary-600 rounded-full flex items-center justify-center mb-4">
                         <GraduationCap className="h-8 w-8 text-white" />
                     </div>
                     <h2 className="text-3xl font-extrabold text-gray-900">Student Registration</h2>
@@ -83,7 +83,7 @@ const StudentRegister = () => {
                                 <input 
                                     type="text" 
                                     required 
-                                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors" 
                                     placeholder="Enter your full name"
                                     value={formData.name}
                                     onChange={e => setFormData({...formData, name: e.target.value})} 
@@ -100,7 +100,7 @@ const StudentRegister = () => {
                                 <input 
                                     type="email" 
                                     required 
-                                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors" 
                                     placeholder="Enter your email"
                                     value={formData.email}
                                     onChange={e => setFormData({...formData, email: e.target.value})} 
@@ -117,7 +117,7 @@ const StudentRegister = () => {
                                 <input 
                                     type={showPassword ? "text" : "password"}
                                     required 
-                                    className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                                    className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors" 
                                     placeholder="Create a password"
                                     value={formData.password}
                                     onChange={e => setFormData({...formData, password: e.target.value})} 
@@ -145,7 +145,7 @@ const StudentRegister = () => {
                                 <input 
                                     type={showConfirmPassword ? "text" : "password"}
                                     required 
-                                    className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                                    className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors" 
                                     placeholder="Confirm your password"
                                     value={formData.confirmPassword}
                                     onChange={e => setFormData({...formData, confirmPassword: e.target.value})} 
@@ -167,7 +167,7 @@ const StudentRegister = () => {
                         <button 
                             type="submit" 
                             disabled={loading}
-                            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                            className="w-full bg-primary-600 text-white py-2 px-4 rounded-md font-medium hover:bg-primary-700 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                         >
                             {loading ? (
                                 <>
@@ -183,13 +183,13 @@ const StudentRegister = () => {
                     <div className="mt-6 text-center">
                         <p className="text-sm text-gray-600">
                             Already have an account?{' '}
-                            <Link to="/student-login" className="text-blue-600 font-medium hover:text-blue-500">
+                            <Link to="/student-login" className="text-primary-600 font-medium hover:text-primary-500">
                                 Sign In
                             </Link>
                         </p>
                         <p className="mt-2 text-xs text-gray-500">
                             Are you a hostel manager?{' '}
-                            <Link to="/manager-register" className="text-indigo-600 hover:text-indigo-500">
+                            <Link to="/manager-register" className="text-primary-600 hover:text-primary-500">
                                 Manager Registration
                             </Link>
                         </p>
