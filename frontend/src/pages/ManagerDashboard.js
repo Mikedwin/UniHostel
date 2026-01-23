@@ -682,7 +682,10 @@ const ManagerDashboard = () => {
                                                         {viewMode === 'history' && (
                                                             <button 
                                                                 onClick={() => handleArchive(app._id, false)}
-                                                                className="text-blue-600 hover:bg-blue-50 px-3 py-1 rounded text-xs" 
+                                                                className="px-3 py-1 rounded text-xs" 
+                                                                style={{ color: '#23817A', backgroundColor: 'rgba(35, 129, 122, 0.1)' }}
+                                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(35, 129, 122, 0.2)'}
+                                                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(35, 129, 122, 0.1)'}
                                                                 title="Restore to Active">
                                                                 Restore
                                                             </button>

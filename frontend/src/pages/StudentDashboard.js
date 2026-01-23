@@ -364,7 +364,10 @@ const StudentDashboard = () => {
                                             {viewMode === 'history' ? (
                                                 <button 
                                                     onClick={() => handleRestore(app._id)}
-                                                    className="flex items-center gap-1 text-blue-600 hover:bg-blue-50 px-3 py-1 rounded text-xs font-medium" 
+                                                    className="flex items-center gap-1 hover:bg-opacity-10 px-3 py-1 rounded text-xs font-medium" 
+                                                    style={{ color: '#23817A', backgroundColor: 'rgba(35, 129, 122, 0.1)' }}
+                                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(35, 129, 122, 0.2)'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(35, 129, 122, 0.1)'}
                                                     title="Restore to Active">
                                                     <RotateCcw className="w-3 h-3" />
                                                     Restore
@@ -446,7 +449,10 @@ const StudentDashboard = () => {
                                     {viewMode === 'history' ? (
                                         <button 
                                             onClick={() => handleRestore(app._id)}
-                                            className="w-full flex items-center justify-center gap-2 text-blue-600 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded font-medium"
+                                            className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded font-medium"
+                                            style={{ color: '#23817A', backgroundColor: 'rgba(35, 129, 122, 0.1)' }}
+                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(35, 129, 122, 0.2)'}
+                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(35, 129, 122, 0.1)'}
                                         >
                                             <RotateCcw className="w-4 h-4" />
                                             Restore to Active
