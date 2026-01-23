@@ -1,12 +1,11 @@
 import React from 'react';
-import { Loader2 } from 'lucide-react';
+import { Home } from 'lucide-react';
 
 const LoadingSpinner = ({ message = 'Loading...', fullScreen = false }) => {
     const content = (
         <div className="flex flex-col items-center justify-center gap-4">
             <div className="relative">
-                <Loader2 className="w-12 h-12 text-primary-600 animate-spin" />
-                <div className="absolute inset-0 w-12 h-12 border-4 border-primary-200 rounded-full"></div>
+                <Home className="w-16 h-16 animate-spin" style={{ color: '#23817A' }} />
             </div>
             <p className="text-gray-600 font-medium animate-pulse">{message}</p>
         </div>
