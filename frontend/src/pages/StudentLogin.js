@@ -36,10 +36,10 @@ const StudentLogin = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-md w-full space-y-8">
                 <div className="text-center">
-                    <div className="mx-auto h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center mb-4">
+                    <div className="mx-auto h-16 w-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: '#23817A' }}>
                         <GraduationCap className="h-8 w-8 text-white" />
                     </div>
                     <h2 className="text-3xl font-extrabold text-gray-900">Student Login</h2>
@@ -63,7 +63,8 @@ const StudentLogin = () => {
                             <input 
                                 type="email" 
                                 required 
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:border-transparent transition-colors" 
+                                style={{ '--tw-ring-color': '#23817A' } as React.CSSProperties}
                                 placeholder="Enter your email"
                                 value={formData.email}
                                 onChange={e => setFormData({...formData, email: e.target.value})} 
@@ -78,7 +79,8 @@ const StudentLogin = () => {
                                 <input 
                                     type={showPassword ? "text" : "password"}
                                     required 
-                                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:border-transparent transition-colors" 
+                                    style={{ '--tw-ring-color': '#23817A' } as React.CSSProperties}
                                     placeholder="Enter your password"
                                     value={formData.password}
                                     onChange={e => setFormData({...formData, password: e.target.value})} 
@@ -100,7 +102,13 @@ const StudentLogin = () => {
                         <button 
                             type="submit" 
                             disabled={loading}
-                            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                            className="w-full text-white py-2 px-4 rounded-md font-medium focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                            style={{ 
+                                backgroundColor: '#23817A',
+                                '--tw-ring-color': '#23817A'
+                            } as React.CSSProperties}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1a6159'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#23817A'}
                         >
                             {loading ? (
                                 <>
@@ -116,13 +124,13 @@ const StudentLogin = () => {
                     <div className="mt-6 text-center">
                         <p className="text-sm text-gray-600">
                             Don't have an account?{' '}
-                            <Link to="/student-register" className="text-blue-600 font-medium hover:text-blue-500">
+                            <Link to="/student-register" className="font-medium" style={{ color: '#23817A' }}>
                                 Register as Student
                             </Link>
                         </p>
                         <p className="mt-2 text-xs text-gray-500">
                             Are you a hostel manager?{' '}
-                            <Link to="/manager-login" className="text-indigo-600 hover:text-indigo-500">
+                            <Link to="/manager-login" style={{ color: '#23817A' }}>
                                 Manager Login
                             </Link>
                         </p>
