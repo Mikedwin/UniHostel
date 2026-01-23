@@ -84,21 +84,21 @@ const Landing = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 gap-4 sm:gap-6 md:gap-8 md:grid-cols-3">
             <div className="flex flex-col items-center text-center p-4 sm:p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-md bg-primary-500 text-white mb-3 sm:mb-4">
+              <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-md bg-white text-primary-600 border-2 border-primary-600 mb-3 sm:mb-4">
                 <Search className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2">Easy Search</h3>
               <p className="text-xs sm:text-sm text-gray-600">Filter by location, price, and facilities to find the perfect fit.</p>
             </div>
             <div className="flex flex-col items-center text-center p-4 sm:p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-md bg-primary-500 text-white mb-3 sm:mb-4">
+              <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-md bg-white text-primary-600 border-2 border-primary-600 mb-3 sm:mb-4">
                 <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2">Verified Listings</h3>
               <p className="text-xs sm:text-sm text-gray-600">All hostels are registered and verified for physical safety.</p>
             </div>
             <div className="flex flex-col items-center text-center p-4 sm:p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-md bg-primary-500 text-white mb-3 sm:mb-4">
+              <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-md bg-white text-primary-600 border-2 border-primary-600 mb-3 sm:mb-4">
                 <Clock className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2">Real-time Status</h3>
