@@ -7,6 +7,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 const hpp = require('hpp');
+const crypto = require('crypto');
 require('dotenv').config();
 
 const User = require('./models/User');
@@ -37,10 +38,10 @@ app.use(helmet({
   }
 }));
 
-// 2. Rate Limiting - Prevent brute force attacks
+// 2. Rate Limiting - TIGHTENED: More aggressive limits
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 60, // REDUCED: limit each IP to 60 requests per windowMs
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -48,7 +49,7 @@ const limiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 login attempts per windowMs
+  max: 3, // REDUCED: limit each IP to 3 login attempts per windowMs
   message: 'Too many login attempts, please try again after 15 minutes.',
   skipSuccessfulRequests: true,
 });
@@ -67,14 +68,15 @@ app.use(hpp());
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ limit: '2mb', extended: true }));
 
-// CORS Configuration
+// CORS Configuration - FIXED: Strict origin validation
 const allowedOrigins = process.env.NODE_ENV === 'production' 
   ? ['https://uni-hostel-two.vercel.app'] 
   : ['http://localhost:3000'];
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Only allow requests from whitelisted origins (no origin-less requests)
+    if (origin && allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -104,6 +106,19 @@ const connectDB = async () => {
   }
 };
 connectDB();
+
+// Utility: Validate MongoDB ObjectId
+const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
+
+// Utility: Escape regex special characters
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+// Utility: Generate secure access code
+const generateAccessCode = () => {
+  const timestamp = Date.now();
+  const randomBytes = crypto.randomBytes(4).toString('hex').toUpperCase();
+  return `UNI-${timestamp}-${randomBytes}`;
+};
 
 // Health check endpoint
 app.get('/', (req, res) => {
@@ -248,7 +263,8 @@ app.get('/api/hostels', async (req, res) => {
     let query = { isAvailable: true };
     
     if (location) {
-      query.location = { $regex: location, $options: 'i' };
+      const escapedLocation = escapeRegex(location);
+      query.location = { $regex: escapedLocation, $options: 'i' };
     }
     
     if (maxPrice) {
@@ -256,11 +272,12 @@ app.get('/api/hostels', async (req, res) => {
     }
     
     if (search) {
+      const escapedSearch = escapeRegex(search);
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { location: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-        { facilities: { $in: [new RegExp(search, 'i')] } }
+        { name: { $regex: escapedSearch, $options: 'i' } },
+        { location: { $regex: escapedSearch, $options: 'i' } },
+        { description: { $regex: escapedSearch, $options: 'i' } },
+        { facilities: { $in: [new RegExp(escapedSearch, 'i')] } }
       ];
     }
 
@@ -282,7 +299,8 @@ app.get('/api/hostels', async (req, res) => {
     
     res.json(lightHostels);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error fetching hostels:', err);
+    res.status(500).json({ error: 'Failed to fetch hostels' });
   }
 });
 
@@ -348,17 +366,31 @@ app.get('/api/hostels/my-listings', auth, checkRole('manager'), async (req, res)
 
 app.get('/api/hostels/:id', async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({ error: 'Invalid hostel ID' });
+    }
+    
     const hostel = await Hostel.findById(req.params.id)
       .populate('managerId', 'name email')
       .lean();
+    
+    if (!hostel) {
+      return res.status(404).json({ error: 'Hostel not found' });
+    }
+    
     res.json(hostel);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error fetching hostel:', err);
+    res.status(500).json({ error: 'Failed to fetch hostel' });
   }
 });
 
 app.put('/api/hostels/:id', auth, checkRole('manager'), async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid hostel ID' });
+    }
+    
     const hostel = await Hostel.findById(req.params.id);
     if (!hostel) {
       return res.status(404).json({ message: 'Hostel not found' });
@@ -428,6 +460,10 @@ app.put('/api/hostels/:id', auth, checkRole('manager'), async (req, res) => {
 
 app.delete('/api/hostels/:id', auth, checkRole('manager'), async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid hostel ID' });
+    }
+    
     const hostel = await Hostel.findById(req.params.id);
     if (!hostel) {
       return res.status(404).json({ message: 'Hostel not found' });
@@ -450,6 +486,10 @@ app.delete('/api/hostels/:id', auth, checkRole('manager'), async (req, res) => {
 app.post('/api/applications', auth, checkRole('student'), async (req, res) => {
   try {
     const { hostelId, roomType, semester, studentName, contactNumber } = req.body;
+    
+    if (!isValidObjectId(hostelId)) {
+      return res.status(400).json({ error: 'Invalid hostel ID' });
+    }
     
     const hostel = await Hostel.findById(hostelId);
     if (!hostel) {
@@ -491,7 +531,8 @@ app.post('/api/applications', auth, checkRole('student'), async (req, res) => {
     
     res.status(201).json(application);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error creating application:', err);
+    res.status(500).json({ error: 'Failed to create application' });
   }
 });
 
@@ -513,7 +554,8 @@ app.get('/api/applications/student', auth, checkRole('student'), async (req, res
       .lean();
     res.json(apps);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error fetching student applications:', err);
+    res.status(500).json({ error: 'Failed to fetch applications' });
   }
 });
 
@@ -542,7 +584,7 @@ app.get('/api/applications/manager', auth, checkRole('manager'), async (req, res
     res.json(filteredApps);
   } catch (err) {
     console.error('Error fetching manager applications:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Failed to fetch applications' });
   }
 });
 
@@ -550,6 +592,11 @@ app.get('/api/applications/manager', auth, checkRole('manager'), async (req, res
 app.get('/api/applications/hostel/:hostelId/stats', async (req, res) => {
   try {
     const { hostelId } = req.params;
+    
+    if (!isValidObjectId(hostelId)) {
+      return res.status(400).json({ error: 'Invalid hostel ID' });
+    }
+    
     const applications = await Application.find({ hostelId, status: { $in: ['pending', 'approved'] } }).lean();
     
     const stats = {};
@@ -569,13 +616,18 @@ app.get('/api/applications/hostel/:hostelId/stats', async (req, res) => {
     
     res.json(stats);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error fetching stats:', err);
+    res.status(500).json({ error: 'Failed to fetch statistics' });
   }
 });
 
 // Step 2 & 6: Manager approves for payment OR final approval
 app.patch('/api/applications/:id/status', auth, checkRole('manager'), async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({ error: 'Invalid application ID' });
+    }
+    
     const { action } = req.body; // 'approve_for_payment', 'reject', 'final_approve'
     const app = await Application.findById(req.params.id).populate('hostelId');
     
@@ -632,8 +684,8 @@ app.patch('/api/applications/:id/status', auth, checkRole('manager'), async (req
       hostel.roomTypes[roomIndex].available = hostel.roomTypes[roomIndex].occupiedCapacity < room.totalCapacity;
       await hostel.save();
       
-      // Generate access code
-      const accessCode = `UNI-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+      // Generate secure access code
+      const accessCode = generateAccessCode();
       app.status = 'approved';
       app.accessCode = accessCode;
       app.accessCodeIssuedAt = new Date();
@@ -654,12 +706,17 @@ app.patch('/api/applications/:id/status', auth, checkRole('manager'), async (req
     
     res.status(400).json({ error: 'Invalid action' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error updating application status:', err);
+    res.status(500).json({ error: 'Failed to update application status' });
   }
 });
 
 app.delete('/api/applications/:id', auth, checkRole('student'), async (req, res) => {
     try {
+        if (!isValidObjectId(req.params.id)) {
+            return res.status(400).json({ message: 'Invalid application ID' });
+        }
+        
         const app = await Application.findById(req.params.id);
         if (!app) {
             return res.status(404).json({ message: 'Application not found' });
@@ -677,13 +734,18 @@ app.delete('/api/applications/:id', auth, checkRole('student'), async (req, res)
         
         res.json({ message: 'Application moved to history' });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('Error deleting application:', err);
+        res.status(500).json({ error: 'Failed to delete application' });
     }
 });
 
 // Archive/Unarchive application (Manager or Student)
 app.patch('/api/applications/:id/archive', auth, async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({ error: 'Invalid application ID' });
+    }
+    
     const { archive } = req.body;
     const app = await Application.findById(req.params.id).populate('hostelId');
     
@@ -711,7 +773,8 @@ app.patch('/api/applications/:id/archive', auth, async (req, res) => {
     
     res.json({ message: archive ? 'Application archived' : 'Application restored', application: app });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error archiving application:', err);
+    res.status(500).json({ error: 'Failed to archive application' });
   }
 });
 
