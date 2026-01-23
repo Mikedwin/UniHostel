@@ -33,8 +33,8 @@ const Login = () => {
     return (
         <div className="min-h-screen bg-gradient-from-gray-50 to-gray-100 flex">
             {/* Left Side - Image */}
-            <div className="hidden lg:flex lg:w-1/2 bg-primary-600 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-800 opacity-90"></div>
+            <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden" style={{ backgroundColor: '#23817A' }}>
+                <div className="absolute inset-0 opacity-90" style={{ background: 'linear-gradient(to bottom right, #23817A, #1a6159)' }}></div>
                 <img
                     src="https://images.unsplash.com/photo-1555854877-bab0e564b8d5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
                     alt="Student accommodation"
@@ -43,7 +43,7 @@ const Login = () => {
                 <div className="absolute inset-0 flex items-center justify-center p-12">
                     <div className="text-white text-center">
                         <h1 className="text-5xl font-extrabold mb-4">Welcome Back!</h1>
-                        <p className="text-xl text-primary-100">Sign in to access your UniHostel account</p>
+                        <p className="text-xl" style={{ color: '#d1f0ed' }}>Sign in to access your UniHostel account</p>
                     </div>
                 </div>
             </div>
@@ -52,8 +52,8 @@ const Login = () => {
             <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8 lg:p-12">
                 <div className="w-full max-w-md">
                     <div className="text-center mb-8">
-                        <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-full mb-4">
-                            <LogIn className="w-8 h-8 text-primary-600" />
+                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{ backgroundColor: '#e6f5f4' }}>
+                            <LogIn className="w-8 h-8" style={{ color: '#23817A' }} />
                         </div>
                         <h2 className="text-3xl font-extrabold text-gray-900">Sign In</h2>
                         <p className="mt-2 text-sm text-gray-600">Access your UniHostel account</p>
@@ -75,7 +75,8 @@ const Login = () => {
                                 <input
                                     type="email"
                                     required
-                                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-colors"
+                                    style={{ '--tw-ring-color': '#23817A' } as React.CSSProperties}
                                     placeholder="you@example.com"
                                     value={formData.email}
                                     onChange={e => setFormData({...formData, email: e.target.value})}
@@ -92,7 +93,8 @@ const Login = () => {
                                 <input
                                     type="password"
                                     required
-                                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-colors"
+                                    style={{ '--tw-ring-color': '#23817A' } as React.CSSProperties}
                                     placeholder="••••••••"
                                     value={formData.password}
                                     onChange={e => setFormData({...formData, password: e.target.value})}
@@ -103,7 +105,13 @@ const Login = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full flex items-center justify-center px-8 py-3.5 border border-transparent text-base font-semibold rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full flex items-center justify-center px-8 py-3.5 border border-transparent text-base font-semibold rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                            style={{ 
+                                backgroundColor: '#23817A',
+                                '--tw-ring-color': '#23817A'
+                            } as React.CSSProperties}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1a6159'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#23817A'}
                         >
                             {loading ? (
                                 <>
@@ -132,7 +140,13 @@ const Login = () => {
                         <div className="mt-6 text-center">
                             <Link
                                 to="/student-register"
-                                className="inline-flex items-center justify-center px-8 py-3 border border-primary-600 text-base font-semibold rounded-lg text-primary-700 bg-white hover:bg-primary-50 transition-colors duration-200"
+                                className="inline-flex items-center justify-center px-8 py-3 border text-base font-semibold rounded-lg bg-white transition-colors duration-200"
+                                style={{ 
+                                    borderColor: '#23817A',
+                                    color: '#23817A'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e6f5f4'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
                             >
                                 Create Student Account
                             </Link>
@@ -140,7 +154,7 @@ const Login = () => {
                     </div>
 
                     <div className="mt-6 text-center">
-                        <Link to="/" className="text-sm text-primary-600 hover:text-primary-500 font-medium">
+                        <Link to="/" className="text-sm font-medium" style={{ color: '#23817A' }}>
                             ← Back to Home
                         </Link>
                     </div>
