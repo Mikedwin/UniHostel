@@ -57,7 +57,7 @@ const StudentRegister = () => {
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-md w-full space-y-8">
                 <div className="text-center">
-                    <div className="mx-auto h-16 w-16 bg-primary-600 rounded-full flex items-center justify-center mb-4">
+                    <div className="mx-auto h-16 w-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: '#23817A' }}>
                         <GraduationCap className="h-8 w-8 text-white" />
                     </div>
                     <h2 className="text-3xl font-extrabold text-gray-900">Student Registration</h2>
@@ -83,10 +83,12 @@ const StudentRegister = () => {
                                 <input 
                                     type="text" 
                                     required 
-                                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors" 
+                                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none transition-colors" 
                                     placeholder="Enter your full name"
                                     value={formData.name}
-                                    onChange={e => setFormData({...formData, name: e.target.value})} 
+                                    onChange={e => setFormData({...formData, name: e.target.value})}
+                                    onFocus={(e) => e.target.style.borderColor = '#23817A'}
+                                    onBlur={(e) => e.target.style.borderColor = '#d1d5db'} 
                                 />
                             </div>
                         </div>
@@ -100,10 +102,12 @@ const StudentRegister = () => {
                                 <input 
                                     type="email" 
                                     required 
-                                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors" 
+                                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none transition-colors" 
                                     placeholder="Enter your email"
                                     value={formData.email}
-                                    onChange={e => setFormData({...formData, email: e.target.value})} 
+                                    onChange={e => setFormData({...formData, email: e.target.value})}
+                                    onFocus={(e) => e.target.style.borderColor = '#23817A'}
+                                    onBlur={(e) => e.target.style.borderColor = '#d1d5db'} 
                                 />
                             </div>
                         </div>
@@ -117,10 +121,12 @@ const StudentRegister = () => {
                                 <input 
                                     type={showPassword ? "text" : "password"}
                                     required 
-                                    className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors" 
+                                    className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none transition-colors" 
                                     placeholder="Create a password"
                                     value={formData.password}
-                                    onChange={e => setFormData({...formData, password: e.target.value})} 
+                                    onChange={e => setFormData({...formData, password: e.target.value})}
+                                    onFocus={(e) => e.target.style.borderColor = '#23817A'}
+                                    onBlur={(e) => e.target.style.borderColor = '#d1d5db'} 
                                 />
                                 <button
                                     type="button"
@@ -145,10 +151,12 @@ const StudentRegister = () => {
                                 <input 
                                     type={showConfirmPassword ? "text" : "password"}
                                     required 
-                                    className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors" 
+                                    className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none transition-colors" 
                                     placeholder="Confirm your password"
                                     value={formData.confirmPassword}
-                                    onChange={e => setFormData({...formData, confirmPassword: e.target.value})} 
+                                    onChange={e => setFormData({...formData, confirmPassword: e.target.value})}
+                                    onFocus={(e) => e.target.style.borderColor = '#23817A'}
+                                    onBlur={(e) => e.target.style.borderColor = '#d1d5db'} 
                                 />
                                 <button
                                     type="button"
@@ -167,7 +175,10 @@ const StudentRegister = () => {
                         <button 
                             type="submit" 
                             disabled={loading}
-                            className="w-full bg-primary-600 text-white py-2 px-4 rounded-md font-medium hover:bg-primary-700 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                            className="w-full text-white py-2 px-4 rounded-md font-medium focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                            style={{ backgroundColor: '#23817A' }}
+                            onMouseEnter={(e) => !loading && (e.currentTarget.style.backgroundColor = '#1a6159')}
+                            onMouseLeave={(e) => !loading && (e.currentTarget.style.backgroundColor = '#23817A')}
                         >
                             {loading ? (
                                 <>
@@ -183,13 +194,13 @@ const StudentRegister = () => {
                     <div className="mt-6 text-center">
                         <p className="text-sm text-gray-600">
                             Already have an account?{' '}
-                            <Link to="/student-login" className="text-primary-600 font-medium hover:text-primary-500">
+                            <Link to="/student-login" className="font-medium" style={{ color: '#23817A' }}>
                                 Sign In
                             </Link>
                         </p>
                         <p className="mt-2 text-xs text-gray-500">
                             Are you a hostel manager?{' '}
-                            <Link to="/manager-register" className="text-primary-600 hover:text-primary-500">
+                            <Link to="/manager-register" style={{ color: '#23817A' }}>
                                 Manager Registration
                             </Link>
                         </p>
