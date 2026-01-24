@@ -8,8 +8,12 @@ const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 const hpp = require('hpp');
 const crypto = require('crypto');
+const morgan = require('morgan');
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 
+const logger = require('./config/logger');
 const User = require('./models/User');
 const Hostel = require('./models/Hostel');
 const Application = require('./models/Application');
@@ -19,6 +23,17 @@ const paymentRoutes = require('./routes/payment');
 const transactionRoutes = require('./routes/transactions');
 
 const app = express();
+
+// Create logs directory if it doesn't exist
+const logsDir = path.join(__dirname, 'logs');
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir);
+}
+
+// HTTP Request Logging with Morgan
+const accessLogStream = fs.createWriteStream(path.join(logsDir, 'access.log'), { flags: 'a' });
+app.use(morgan('combined', { stream: accessLogStream }));
+app.use(morgan('dev')); // Console logging in development
 
 // Security Middleware
 // 1. Helmet - Sets various HTTP headers for security
@@ -99,8 +114,10 @@ const connectDB = async () => {
       socketTimeoutMS: 30000,
       family: 4
     });
+    logger.info('MongoDB Connected successfully');
     console.log('MongoDB Connected');
   } catch (err) {
+    logger.error('MongoDB Connection Error:', err);
     console.log('MongoDB Error:', err);
     process.exit(1);
   }
@@ -780,6 +797,32 @@ app.patch('/api/applications/:id/archive', auth, async (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
+  logger.info(`Server started on port ${PORT}`);
+  logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`Server running on port ${PORT}`);
   console.log(`API available at http://localhost:${PORT}`);
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  logger.error('Unhandled error:', {
+    error: err.message,
+    stack: err.stack,
+    url: req.url,
+    method: req.method,
+    ip: req.ip
+  });
+  res.status(500).json({ error: 'Internal server error' });
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+  logger.error('Uncaught Exception:', err);
+  process.exit(1);
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (err) => {
+  logger.error('Unhandled Rejection:', err);
+  process.exit(1);
 });
