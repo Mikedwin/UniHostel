@@ -11,6 +11,10 @@ logs/
 *.log
 npm-debug.log*
 
+# Backups
+backups/
+*.gz
+
 # OS files
 .DS_Store
 Thumbs.db
