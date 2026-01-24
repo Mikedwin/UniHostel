@@ -21,6 +21,7 @@ const { auth, checkRole } = require('./middleware/auth');
 const adminRoutes = require('./routes/admin');
 const paymentRoutes = require('./routes/payment');
 const transactionRoutes = require('./routes/transactions');
+const backupRoutes = require('./routes/backup');
 
 const app = express();
 
@@ -162,6 +163,9 @@ app.use('/api/payment', paymentRoutes);
 
 // Transaction routes
 app.use('/api/transactions', transactionRoutes);
+
+// Backup routes
+app.use('/api/backup', backupRoutes);
 
 // --- AUTH ROUTES ---
 // Input validation middleware
