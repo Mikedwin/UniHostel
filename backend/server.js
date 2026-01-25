@@ -209,16 +209,26 @@ app.post('/api/auth/register', validateInput, async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 12);
     
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    
     const newUser = new User({ 
       name, 
       email, 
       password: hashedPassword, 
       role: 'student',
-      isVerified: true,
+      isVerified: false,
+      verificationToken,
+      verificationTokenExpires,
       accountStatus: 'active'
     });
     await newUser.save();
     console.log('Student created successfully:', newUser._id);
+    
+    // For now, auto-verify (until email service is set up)
+    // TODO: Send verification email
+    logger.info(`Verification link: ${process.env.FRONTEND_URL}/verify-email/${verificationToken}`);
 
     const token = jwt.sign(
       { id: newUser._id, role: newUser.role, iat: Math.floor(Date.now() / 1000) }, 
@@ -227,11 +237,39 @@ app.post('/api/auth/register', validateInput, async (req, res) => {
     );
     res.json({ 
       token, 
-      user: { id: newUser._id, name, email, role: newUser.role }
+      user: { id: newUser._id, name, email, role: newUser.role, isVerified: false },
+      message: 'Registration successful. Please check your email to verify your account.'
     });
   } catch (err) {
     console.error('Registration error:', err);
     res.status(500).json({ message: err.message || 'Registration failed' });
+  }
+});
+
+// Email verification endpoint
+app.get('/api/auth/verify-email/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    
+    const user = await User.findOne({
+      verificationToken: token,
+      verificationTokenExpires: { $gt: Date.now() }
+    });
+    
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired verification token' });
+    }
+    
+    user.isVerified = true;
+    user.verificationToken = undefined;
+    user.verificationTokenExpires = undefined;
+    await user.save();
+    
+    logger.info(`User verified: ${user.email}`);
+    res.json({ message: 'Email verified successfully! You can now login.' });
+  } catch (err) {
+    logger.error('Email verification error:', err);
+    res.status(500).json({ message: 'Verification failed' });
   }
 });
 
@@ -277,6 +315,72 @@ app.post('/api/auth/login', validateInput, async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// Forgot password - Request reset
+app.post('/api/auth/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+    
+    const user = await User.findOne({ email });
+    if (!user) {
+      // Don't reveal if user exists
+      return res.json({ message: 'If an account exists, a password reset link has been sent to your email.' });
+    }
+    
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    await user.save();
+    
+    // TODO: Send email with reset link
+    logger.info(`Password reset link: ${process.env.FRONTEND_URL}/reset-password/${resetToken}`);
+    console.log(`Password reset link for ${email}: ${process.env.FRONTEND_URL}/reset-password/${resetToken}`);
+    
+    res.json({ message: 'If an account exists, a password reset link has been sent to your email.' });
+  } catch (err) {
+    logger.error('Forgot password error:', err);
+    res.status(500).json({ message: 'Failed to process request' });
+  }
+});
+
+// Reset password with token
+app.post('/api/auth/reset-password/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+    
+    if (!password || password.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters' });
+    }
+    
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+    
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired reset token' });
+    }
+    
+    // Update password
+    user.password = await bcrypt.hash(password, 12);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    user.passwordResetRequired = false;
+    await user.save();
+    
+    logger.info(`Password reset successful for user: ${user.email}`);
+    res.json({ message: 'Password reset successful. You can now login with your new password.' });
+  } catch (err) {
+    logger.error('Reset password error:', err);
+    res.status(500).json({ message: 'Failed to reset password' });
   }
 });
 

@@ -99,6 +99,11 @@ const StudentLogin = () => {
                                     )}
                                 </button>
                             </div>
+                            <div className="text-right mt-1">
+                                <Link to="/forgot-password" className="text-xs" style={{ color: '#23817A' }}>
+                                    Forgot password?
+                                </Link>
+                            </div>
                         </div>
                         
                         <button 
