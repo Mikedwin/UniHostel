@@ -52,29 +52,14 @@ app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ limit: '2mb', extended: true }));
 
 // CORS Configuration - MUST BE BEFORE OTHER MIDDLEWARE
-const allowedOrigins = process.env.NODE_ENV === 'production' 
-  ? ['https://uni-hostel-two.vercel.app', 'https://unihostel-production.up.railway.app'] 
-  : ['http://localhost:3000'];
-
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, Postman, etc.)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: '*',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
-  exposedHeaders: ['X-CSRF-Token'],
-  maxAge: 600
+  exposedHeaders: ['X-CSRF-Token']
 }));
 
-// Handle preflight requests
 app.options('*', cors());
 
 // Security Middleware
@@ -893,6 +878,10 @@ app.get('/api/hostels/:id', cacheMiddleware(600), async (req, res) => {
 
 app.put('/api/hostels/:id', auth, checkRole('manager'), validateImageUpload, async (req, res) => {
   try {
+    console.log('PUT /api/hostels/:id - Request received');
+    console.log('Hostel ID:', req.params.id);
+    console.log('User ID:', req.user.id);
+    
     if (!isValidObjectId(req.params.id)) {
       return res.status(400).json({ message: 'Invalid hostel ID' });
     }
@@ -964,6 +953,8 @@ app.put('/api/hostels/:id', auth, checkRole('manager'), validateImageUpload, asy
     res.json(updatedHostel);
   } catch (err) {
     console.error('Error updating hostel:', err);
+    console.error('Error stack:', err.stack);
+    logger.error('Hostel update error:', { error: err.message, stack: err.stack, hostelId: req.params.id });
     res.status(500).json({ message: err.message || 'Failed to update hostel' });
   }
 });
