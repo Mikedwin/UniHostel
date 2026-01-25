@@ -145,7 +145,8 @@ app.get('/', (req, res) => {
   res.json({ 
     status: 'ok', 
     message: 'UniHostel API is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    version: '1.0.1'
   });
 });
 
