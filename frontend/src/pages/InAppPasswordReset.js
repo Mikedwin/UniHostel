@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Lock, Mail, HelpCircle, CheckCircle } from 'lucide-react';
 import API_URL from '../config';
 
@@ -14,7 +14,6 @@ const InAppPasswordReset = () => {
     const [userId, setUserId] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
 
     const handleVerifyEmail = async (e) => {
         e.preventDefault();
