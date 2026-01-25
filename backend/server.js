@@ -285,6 +285,22 @@ app.post('/api/auth/login', validateInput, async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: 'User does not exist' });
 
+    // Check if account is locked
+    if (user.accountLockedUntil && user.accountLockedUntil > new Date()) {
+      const minutesLeft = Math.ceil((user.accountLockedUntil - new Date()) / 60000);
+      return res.status(423).json({ 
+        message: `Account locked due to multiple failed login attempts. Try again in ${minutesLeft} minutes.`,
+        lockedUntil: user.accountLockedUntil
+      });
+    }
+
+    // Reset lock if lockout period has passed
+    if (user.accountLockedUntil && user.accountLockedUntil <= new Date()) {
+      user.failedLoginAttempts = 0;
+      user.accountLockedUntil = null;
+      await user.save();
+    }
+
     // Check account status
     if (user.accountStatus === 'suspended') {
       return res.status(403).json({ message: `Account suspended. Reason: ${user.suspensionReason || 'Contact admin'}` });
@@ -294,8 +310,42 @@ app.post('/api/auth/login', validateInput, async (req, res) => {
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
+    
+    if (!isMatch) {
+      // Increment failed login attempts
+      user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+      user.lastFailedLogin = new Date();
+      
+      const maxAttempts = parseInt(process.env.MAX_LOGIN_ATTEMPTS) || 5;
+      const lockoutDuration = parseInt(process.env.LOCKOUT_DURATION_MINUTES) || 30;
+      
+      // Lock account if max attempts reached
+      if (user.failedLoginAttempts >= maxAttempts) {
+        user.accountLockedUntil = new Date(Date.now() + lockoutDuration * 60000);
+        await user.save();
+        
+        logger.warn(`Account locked for user: ${user.email} after ${maxAttempts} failed attempts`);
+        
+        return res.status(423).json({ 
+          message: `Account locked due to ${maxAttempts} failed login attempts. Try again in ${lockoutDuration} minutes.`,
+          lockedUntil: user.accountLockedUntil
+        });
+      }
+      
+      await user.save();
+      
+      const attemptsLeft = maxAttempts - user.failedLoginAttempts;
+      return res.status(400).json({ 
+        message: `Invalid credentials. ${attemptsLeft} attempt(s) remaining before account lockout.`,
+        attemptsLeft
+      });
+    }
 
+    // Successful login - reset failed attempts
+    user.failedLoginAttempts = 0;
+    user.accountLockedUntil = null;
+    user.lastFailedLogin = null;
+    
     // Update last login and add to login history
     user.lastLogin = new Date();
     user.loginHistory.push({
@@ -318,6 +368,8 @@ app.post('/api/auth/login', validateInput, async (req, res) => {
     // Generate CSRF token
     const csrfToken = generateCsrfToken(user._id.toString());
     
+    logger.info(`Successful login for user: ${user.email}`);
+    
     res.json({ 
       token, 
       csrfToken,
@@ -325,6 +377,7 @@ app.post('/api/auth/login', validateInput, async (req, res) => {
       passwordResetRequired: user.passwordResetRequired
     });
   } catch (err) {
+    logger.error('Login error:', err);
     res.status(500).json({ error: err.message });
   }
 });

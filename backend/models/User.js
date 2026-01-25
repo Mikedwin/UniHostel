@@ -26,6 +26,9 @@ const userSchema = new mongoose.Schema({
   temporaryPassword: { type: String },
   securityQuestion: { type: String },
   securityAnswer: { type: String },
+  failedLoginAttempts: { type: Number, default: 0 },
+  accountLockedUntil: { type: Date },
+  lastFailedLogin: { type: Date },
   createdAt: { type: Date, default: Date.now }
 });
 

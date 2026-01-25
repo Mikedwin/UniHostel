@@ -29,7 +29,15 @@ const StudentLogin = () => {
             login(res.data.user, res.data.token, res.data.csrfToken);
             navigate('/hostels');
         } catch (err) {
-            setError(err.response?.data?.message || 'Invalid credentials');
+            if (err.response?.status === 423) {
+                // Account locked
+                setError(err.response?.data?.message || 'Account temporarily locked');
+            } else if (err.response?.data?.attemptsLeft !== undefined) {
+                // Show remaining attempts
+                setError(err.response?.data?.message || 'Invalid credentials');
+            } else {
+                setError(err.response?.data?.message || 'Invalid credentials');
+            }
         } finally {
             setLoading(false);
         }
