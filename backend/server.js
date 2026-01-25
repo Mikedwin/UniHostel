@@ -431,10 +431,11 @@ app.post('/api/auth/reset-verify', async (req, res) => {
     }
     
     if (!user.securityQuestion) {
-      return res.status(400).json({ 
-        message: 'Security question not set. Please contact support.',
-        needsSetup: true 
-      });
+      // Auto-set a default security question for existing users
+      user.securityQuestion = "What is your email address?";
+      user.securityAnswer = await bcrypt.hash(email.toLowerCase().trim(), 12);
+      await user.save();
+      logger.info(`Auto-set security question for user: ${user.email}`);
     }
     
     res.json({ 
