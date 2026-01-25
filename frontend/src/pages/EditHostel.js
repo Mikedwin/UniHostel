@@ -36,8 +36,10 @@ const EditHostel = () => {
     useEffect(() => {
         const fetchHostel = async () => {
             try {
+                console.log('Fetching hostel:', id);
                 const response = await axios.get(`${API_URL}/api/hostels/${id}`);
                 const hostel = response.data;
+                console.log('Hostel data:', hostel);
                 setName(hostel.name);
                 setLocation(hostel.location);
                 setDescription(hostel.description);
@@ -49,13 +51,16 @@ const EditHostel = () => {
                     occupiedCapacity: room.occupiedCapacity || 0
                 }));
                 setRoomTypes(roomsWithCapacity);
+                setFetchLoading(false);
             } catch (err) {
-                setError('Failed to load hostel data');
-            } finally {
+                console.error('Error fetching hostel:', err);
+                setError(err.response?.data?.error || err.message || 'Failed to load hostel data');
                 setFetchLoading(false);
             }
         };
-        fetchHostel();
+        if (id) {
+            fetchHostel();
+        }
     }, [id]);
 
     const addFacility = (facility) => {
@@ -127,7 +132,26 @@ const EditHostel = () => {
     };
 
     if (fetchLoading) {
-        return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>;
+        return (
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+                <div className="text-xl font-semibold mb-2">Loading hostel data...</div>
+                {error && <div className="text-red-600 mt-4">{error}</div>}
+            </div>
+        );
+    }
+
+    if (error && !name) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+                <div className="text-red-600 text-xl mb-4">{error}</div>
+                <button 
+                    onClick={() => navigate('/manager-dashboard')}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                    Back to Dashboard
+                </button>
+            </div>
+        );
     }
 
     return (
