@@ -26,7 +26,7 @@ const StudentLogin = () => {
                 return;
             }
             
-            login(res.data.user, res.data.token);
+            login(res.data.user, res.data.token, res.data.csrfToken);
             navigate('/hostels');
         } catch (err) {
             setError(err.response?.data?.message || 'Invalid credentials');

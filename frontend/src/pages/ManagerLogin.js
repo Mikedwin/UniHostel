@@ -28,7 +28,7 @@ const ManagerLogin = () => {
                 return;
             }
             
-            login(res.data.user, res.data.token);
+            login(res.data.user, res.data.token, res.data.csrfToken);
             
             if (role === 'admin') {
                 navigate('/admin-dashboard');

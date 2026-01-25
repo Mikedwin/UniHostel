@@ -18,6 +18,7 @@ const User = require('./models/User');
 const Hostel = require('./models/Hostel');
 const Application = require('./models/Application');
 const { auth, checkRole } = require('./middleware/auth');
+const { generateCsrfToken, csrfProtection } = require('./middleware/csrf');
 const adminRoutes = require('./routes/admin');
 const paymentRoutes = require('./routes/payment');
 const transactionRoutes = require('./routes/transactions');
@@ -102,7 +103,8 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
+  exposedHeaders: ['X-CSRF-Token'],
   maxAge: 600
 }));
 
@@ -160,6 +162,9 @@ app.get('/api/health', (req, res) => {
 
 // Admin routes
 app.use('/api/admin', adminRoutes);
+
+// CSRF Protection - Apply after auth, before protected routes
+app.use('/api', auth, csrfProtection);
 
 // Payment routes
 app.use('/api/payment', paymentRoutes);
@@ -308,8 +313,13 @@ app.post('/api/auth/login', validateInput, async (req, res) => {
       process.env.JWT_SECRET, 
       { expiresIn: '8h', algorithm: 'HS256' }
     );
+    
+    // Generate CSRF token
+    const csrfToken = generateCsrfToken(user._id.toString());
+    
     res.json({ 
       token, 
+      csrfToken,
       user: { id: user._id, name: user.name, email: user.email, role: user.role },
       passwordResetRequired: user.passwordResetRequired
     });
