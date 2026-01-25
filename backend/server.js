@@ -319,6 +319,8 @@ app.post('/api/auth/login', validateInput, async (req, res) => {
 });
 
 // Forgot password - Request reset
+const { sendPasswordResetEmail } = require('./utils/emailService');
+
 app.post('/api/auth/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
@@ -329,19 +331,16 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     
     const user = await User.findOne({ email });
     if (!user) {
-      // Don't reveal if user exists
       return res.json({ message: 'If an account exists, a password reset link has been sent to your email.' });
     }
     
-    // Generate reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
     user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000);
     await user.save();
     
-    // TODO: Send email with reset link
-    logger.info(`Password reset link: ${process.env.FRONTEND_URL}/reset-password/${resetToken}`);
-    console.log(`Password reset link for ${email}: ${process.env.FRONTEND_URL}/reset-password/${resetToken}`);
+    await sendPasswordResetEmail(email, resetToken);
+    logger.info(`Password reset requested for: ${email}`);
     
     res.json({ message: 'If an account exists, a password reset link has been sent to your email.' });
   } catch (err) {
