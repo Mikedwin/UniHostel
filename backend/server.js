@@ -891,7 +891,7 @@ app.get('/api/hostels/:id', cacheMiddleware(600), async (req, res) => {
   }
 });
 
-app.put('/api/hostels/:id', auth, csrfProtection, checkRole('manager'), validateImageUpload, async (req, res) => {
+app.put('/api/hostels/:id', auth, checkRole('manager'), validateImageUpload, async (req, res) => {
   try {
     if (!isValidObjectId(req.params.id)) {
       return res.status(400).json({ message: 'Invalid hostel ID' });
