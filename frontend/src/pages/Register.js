@@ -6,14 +6,20 @@ import API_URL from '../config';
 
 const Register = () => {
   const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'student' });
+  const [tosAccepted, setTosAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!tosAccepted || !privacyAccepted) {
+      setError('You must accept the Terms of Service and Privacy Policy');
+      return;
+    }
     try {
-      const res = await axios.post(`${API_URL}/api/auth/register`, formData);
+      const res = await axios.post(`${API_URL}/api/auth/register`, { ...formData, tosAccepted, privacyPolicyAccepted: privacyAccepted });
       login(res.data.user, res.data.token);
       navigate(res.data.user.role === 'manager' ? '/manager-dashboard' : '/hostels');
     } catch (err) {
@@ -47,6 +53,16 @@ const Register = () => {
               <label className="block text-sm font-medium text-gray-700">Password</label>
               <input type="password" required className="mt-1 block w-full border border-gray-300 rounded-md p-2" 
                 onChange={e => setFormData({...formData, password: e.target.value})} />
+            </div>
+            <div className="space-y-3 pt-2">
+              <label className="flex items-start">
+                <input type="checkbox" checked={tosAccepted} onChange={e => setTosAccepted(e.target.checked)} className="mt-1 mr-2" />
+                <span className="text-sm text-gray-700">I accept the <Link to="/terms" target="_blank" className="text-primary-600 font-semibold hover:underline">Terms of Service</Link></span>
+              </label>
+              <label className="flex items-start">
+                <input type="checkbox" checked={privacyAccepted} onChange={e => setPrivacyAccepted(e.target.checked)} className="mt-1 mr-2" />
+                <span className="text-sm text-gray-700">I accept the <Link to="/privacy" target="_blank" className="text-primary-600 font-semibold hover:underline">Privacy Policy</Link></span>
+              </label>
             </div>
           </div>
           <button type="submit" className="w-full bg-primary-600 text-white py-2 rounded-md font-bold hover:bg-primary-700 transition">

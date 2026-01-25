@@ -6,7 +6,7 @@ import { Plus, X } from 'lucide-react';
 import API_URL from '../config';
 
 const EditHostel = () => {
-    const { token } = useAuth();
+    const { token, csrfToken } = useAuth();
     const navigate = useNavigate();
     const { id } = useParams();
     const [loading, setLoading] = useState(false);
@@ -112,7 +112,10 @@ const EditHostel = () => {
             };
             
             await axios.put(`${API_URL}/api/hostels/${id}`, formData, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { 
+                    Authorization: `Bearer ${token}`,
+                    'X-CSRF-Token': csrfToken
+                }
             });
             
             navigate('/manager-dashboard');

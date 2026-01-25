@@ -11,6 +11,8 @@ const crypto = require('crypto');
 const morgan = require('morgan');
 const fs = require('fs');
 const path = require('path');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./swagger');
 require('dotenv').config();
 
 const logger = require('./config/logger');
@@ -19,11 +21,18 @@ const Hostel = require('./models/Hostel');
 const Application = require('./models/Application');
 const { auth, checkRole } = require('./middleware/auth');
 const { generateCsrfToken, csrfProtection, invalidateCsrfToken } = require('./middleware/csrf');
+const { validateImageUpload } = require('./middleware/imageValidation');
+const { cacheMiddleware } = require('./middleware/cache');
+const { scheduleDataRetentionCleanup } = require('./services/dataRetention');
+const cache = require('./services/cache');
 const adminRoutes = require('./routes/admin');
 const authRoutes = require('./routes/auth');
 const paymentRoutes = require('./routes/payment');
 const transactionRoutes = require('./routes/transactions');
 const backupRoutes = require('./routes/backup');
+const gdprRoutes = require('./routes/gdpr');
+const dataRetentionRoutes = require('./routes/dataRetention');
+const cacheRoutes = require('./routes/cache');
 
 const app = express();
 
@@ -130,6 +139,9 @@ const connectDB = async () => {
 };
 connectDB();
 
+// Schedule data retention cleanup
+scheduleDataRetentionCleanup();
+
 // Utility: Validate MongoDB ObjectId
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
@@ -149,9 +161,16 @@ app.get('/', (req, res) => {
     status: 'ok', 
     message: 'UniHostel API is running',
     timestamp: new Date().toISOString(),
-    version: '1.0.1'
+    version: '1.0.1',
+    documentation: '/api-docs'
   });
 });
+
+// API Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'UniHostel API Documentation'
+}));
 
 app.get('/api/health', (req, res) => {
   res.json({ 
@@ -176,7 +195,48 @@ app.use('/api/transactions', auth, csrfProtection, transactionRoutes);
 // Backup routes
 app.use('/api/backup', backupRoutes);
 
+// GDPR compliance routes
+app.use('/api/gdpr', gdprRoutes);
+
+// Data retention routes
+app.use('/api/data-retention', dataRetentionRoutes);
+
+// Cache management routes
+app.use('/api/cache', cacheRoutes);
+
 // --- AUTH ROUTES ---
+/**
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Register new student account
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name, email, password, tosAccepted, privacyPolicyAccepted]
+ *             properties:
+ *               name: { type: string, minLength: 2, maxLength: 100 }
+ *               email: { type: string, format: email }
+ *               password: { type: string, minLength: 8 }
+ *               tosAccepted: { type: boolean }
+ *               privacyPolicyAccepted: { type: boolean }
+ *     responses:
+ *       200:
+ *         description: Registration successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token: { type: string }
+ *                 user: { $ref: '#/components/schemas/User' }
+ *       400:
+ *         description: Validation error or user exists
+ */
 // Input validation middleware
 const validateInput = (req, res, next) => {
   const { email, password, name } = req.body;
@@ -199,10 +259,15 @@ const validateInput = (req, res, next) => {
 app.post('/api/auth/register', validateInput, async (req, res) => {
   try {
     console.log('Registration attempt:', req.body);
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, tosAccepted, privacyPolicyAccepted } = req.body;
     
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'All fields are required' });
+    }
+    
+    // Require ToS and Privacy Policy acceptance
+    if (!tosAccepted || !privacyPolicyAccepted) {
+      return res.status(400).json({ message: 'You must accept the Terms of Service and Privacy Policy to register' });
     }
     
     // Only allow student registration
@@ -227,7 +292,11 @@ app.post('/api/auth/register', validateInput, async (req, res) => {
       isVerified: false,
       verificationToken,
       verificationTokenExpires,
-      accountStatus: 'active'
+      accountStatus: 'active',
+      tosAccepted: true,
+      tosAcceptedAt: new Date(),
+      privacyPolicyAccepted: true,
+      privacyPolicyAcceptedAt: new Date()
     });
     await newUser.save();
     console.log('Student created successfully:', newUser._id);
@@ -279,6 +348,38 @@ app.get('/api/auth/verify-email/:token', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Login to account
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email: { type: string }
+ *               password: { type: string }
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token: { type: string }
+ *                 csrfToken: { type: string }
+ *                 user: { $ref: '#/components/schemas/User' }
+ *       400:
+ *         description: Invalid credentials
+ *       423:
+ *         description: Account locked
+ */
 app.post('/api/auth/login', validateInput, async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -383,7 +484,15 @@ app.post('/api/auth/login', validateInput, async (req, res) => {
 });
 
 // Forgot password - Request reset
-const { sendPasswordResetEmail } = require('./utils/emailService');
+const { 
+  sendPasswordResetEmail,
+  sendApplicationSubmittedEmail,
+  sendApplicationApprovedForPaymentEmail,
+  sendPaymentSuccessEmail,
+  sendFinalApprovalEmail,
+  sendApplicationRejectedEmail,
+  sendNewApplicationNotificationToManager
+} = require('./utils/emailService');
 
 app.post('/api/auth/forgot-password', async (req, res) => {
   try {
@@ -573,7 +682,33 @@ app.post('/api/auth/set-security-question', auth, csrfProtection, async (req, re
 });
 
 // --- HOSTEL ROUTES ---
-app.get('/api/hostels', async (req, res) => {
+/**
+ * @swagger
+ * /api/hostels:
+ *   get:
+ *     tags: [Hostels]
+ *     summary: Get all available hostels
+ *     parameters:
+ *       - in: query
+ *         name: location
+ *         schema: { type: string }
+ *       - in: query
+ *         name: maxPrice
+ *         schema: { type: number }
+ *       - in: query
+ *         name: search
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: List of hostels
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Hostel'
+ */
+app.get('/api/hostels', cacheMiddleware(300), async (req, res) => {
   try {
     const { location, maxPrice, search } = req.query;
     let query = { isAvailable: true };
@@ -620,7 +755,35 @@ app.get('/api/hostels', async (req, res) => {
   }
 });
 
-app.post('/api/hostels', auth, csrfProtection, checkRole('manager'), async (req, res) => {
+/**
+ * @swagger
+ * /api/hostels:
+ *   post:
+ *     tags: [Hostels]
+ *     summary: Create new hostel (Manager only)
+ *     security:
+ *       - bearerAuth: []
+ *       - csrfToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name, location, description, roomTypes]
+ *             properties:
+ *               name: { type: string }
+ *               location: { type: string }
+ *               description: { type: string }
+ *               roomTypes: { type: array }
+ *               facilities: { type: array }
+ *     responses:
+ *       201:
+ *         description: Hostel created
+ *       403:
+ *         description: Not authorized or unverified
+ */
+app.post('/api/hostels', auth, csrfProtection, checkRole('manager'), validateImageUpload, async (req, res) => {
   try {
     // Check if manager is verified
     const manager = await User.findById(req.user.id);
@@ -642,6 +805,9 @@ app.post('/api/hostels', auth, csrfProtection, checkRole('manager'), async (req,
     
     const newHostel = new Hostel({ ...req.body, managerId: req.user.id });
     const savedHostel = await newHostel.save();
+    
+    // Invalidate hostel list cache
+    cache.invalidatePattern('cache:/api/hostels');
     
     console.log('Hostel created successfully:', savedHostel._id);
     res.status(201).json(savedHostel);
@@ -680,7 +846,28 @@ app.get('/api/hostels/my-listings', auth, checkRole('manager'), async (req, res)
   }
 });
 
-app.get('/api/hostels/:id', async (req, res) => {
+/**
+ * @swagger
+ * /api/hostels/{id}:
+ *   get:
+ *     tags: [Hostels]
+ *     summary: Get hostel details
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Hostel details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Hostel'
+ *       404:
+ *         description: Hostel not found
+ */
+app.get('/api/hostels/:id', cacheMiddleware(600), async (req, res) => {
   try {
     if (!isValidObjectId(req.params.id)) {
       return res.status(400).json({ error: 'Invalid hostel ID' });
@@ -701,7 +888,7 @@ app.get('/api/hostels/:id', async (req, res) => {
   }
 });
 
-app.put('/api/hostels/:id', auth, csrfProtection, checkRole('manager'), async (req, res) => {
+app.put('/api/hostels/:id', auth, csrfProtection, checkRole('manager'), validateImageUpload, async (req, res) => {
   try {
     if (!isValidObjectId(req.params.id)) {
       return res.status(400).json({ message: 'Invalid hostel ID' });
@@ -734,6 +921,10 @@ app.put('/api/hostels/:id', auth, csrfProtection, checkRole('manager'), async (r
       updateData,
       { new: true, runValidators: true }
     );
+    
+    // Invalidate cache
+    cache.invalidatePattern('cache:/api/hostels');
+    cache.del(`cache:/api/hostels/${req.params.id}`);
     
     // Auto-update pending applications with new prices
     if (updateData.roomTypes) {
@@ -790,6 +981,11 @@ app.delete('/api/hostels/:id', auth, csrfProtection, checkRole('manager'), async
     }
     
     await Hostel.findByIdAndDelete(req.params.id);
+    
+    // Invalidate cache
+    cache.invalidatePattern('cache:/api/hostels');
+    cache.del(`cache:/api/hostels/${req.params.id}`);
+    
     res.json({ message: 'Hostel deleted successfully' });
   } catch (err) {
     console.error('Error deleting hostel:', err);
@@ -798,6 +994,36 @@ app.delete('/api/hostels/:id', auth, csrfProtection, checkRole('manager'), async
 });
 
 // --- APPLICATION ROUTES ---
+/**
+ * @swagger
+ * /api/applications:
+ *   post:
+ *     tags: [Applications]
+ *     summary: Submit hostel application (Student only)
+ *     security:
+ *       - bearerAuth: []
+ *       - csrfToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [hostelId, roomType, semester, studentName, contactNumber]
+ *             properties:
+ *               hostelId: { type: string }
+ *               roomType: { type: string }
+ *               semester: { type: string }
+ *               studentName: { type: string }
+ *               contactNumber: { type: string }
+ *     responses:
+ *       201:
+ *         description: Application submitted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Application'
+ */
 // Step 1: Student applies (no payment yet)
 app.post('/api/applications', auth, csrfProtection, checkRole('student'), async (req, res) => {
   try {
@@ -845,6 +1071,17 @@ app.post('/api/applications', auth, csrfProtection, checkRole('student'), async 
       commissionPercent
     });
     
+    // Send email notifications
+    const student = await User.findById(req.user.id);
+    const manager = await User.findById(hostel.managerId);
+    
+    try {
+      await sendApplicationSubmittedEmail(student.email, student.name, hostel.name, roomType, semester);
+      await sendNewApplicationNotificationToManager(manager.email, manager.name, student.name, hostel.name, roomType);
+    } catch (emailErr) {
+      logger.error('Email notification error:', emailErr);
+    }
+    
     res.status(201).json(application);
   } catch (err) {
     console.error('Error creating application:', err);
@@ -852,6 +1089,28 @@ app.post('/api/applications', auth, csrfProtection, checkRole('student'), async 
   }
 });
 
+/**
+ * @swagger
+ * /api/applications/student:
+ *   get:
+ *     tags: [Applications]
+ *     summary: Get student's applications
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: archived
+ *         schema: { type: boolean }
+ *     responses:
+ *       200:
+ *         description: List of applications
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Application'
+ */
 app.get('/api/applications/student', auth, checkRole('student'), async (req, res) => {
   try {
     const { archived } = req.query;
@@ -967,6 +1226,15 @@ app.patch('/api/applications/:id/status', auth, csrfProtection, checkRole('manag
       }
       app.status = 'approved_for_payment';
       await app.save();
+      
+      // Send approval email to student
+      const student = await User.findById(app.studentId);
+      try {
+        await sendApplicationApprovedForPaymentEmail(student.email, student.name, hostel.name, app.roomType, app.totalAmount);
+      } catch (emailErr) {
+        logger.error('Email notification error:', emailErr);
+      }
+      
       return res.json({ message: 'Application approved for payment', application: app });
     }
     
@@ -974,6 +1242,15 @@ app.patch('/api/applications/:id/status', auth, csrfProtection, checkRole('manag
       // Reject application
       app.status = 'rejected';
       await app.save();
+      
+      // Send rejection email to student
+      const student = await User.findById(app.studentId);
+      try {
+        await sendApplicationRejectedEmail(student.email, student.name, hostel.name, app.roomType);
+      } catch (emailErr) {
+        logger.error('Email notification error:', emailErr);
+      }
+      
       return res.json({ message: 'Application rejected', application: app });
     }
     
@@ -1007,6 +1284,14 @@ app.patch('/api/applications/:id/status', auth, csrfProtection, checkRole('manag
       app.accessCodeIssuedAt = new Date();
       app.finalApprovedAt = new Date();
       await app.save();
+      
+      // Send final approval email with access code
+      const student = await User.findById(app.studentId);
+      try {
+        await sendFinalApprovalEmail(student.email, student.name, hostel.name, app.roomType, accessCode);
+      } catch (emailErr) {
+        logger.error('Email notification error:', emailErr);
+      }
       
       return res.json({ 
         message: 'Application finally approved', 

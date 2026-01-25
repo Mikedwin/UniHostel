@@ -21,6 +21,10 @@ const transactionSchema = new mongoose.Schema({
   paidAt: { type: Date, default: Date.now, index: true },
   refundedAt: Date,
   
+  // Data retention
+  anonymized: { type: Boolean, default: false },
+  anonymizedAt: Date,
+  
   createdAt: { type: Date, default: Date.now }
 });
 

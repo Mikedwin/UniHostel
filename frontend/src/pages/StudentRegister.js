@@ -13,6 +13,8 @@ const StudentRegister = () => {
         confirmPassword: '',
         role: 'student' 
     });
+    const [tosAccepted, setTosAccepted] = useState(false);
+    const [privacyAccepted, setPrivacyAccepted] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -26,6 +28,11 @@ const StudentRegister = () => {
         setError('');
         
         try {
+            if (!tosAccepted || !privacyAccepted) {
+                setError('You must accept the Terms of Service and Privacy Policy');
+                return;
+            }
+            
             if (formData.password !== formData.confirmPassword) {
                 setError('Passwords do not match');
                 return;
@@ -39,7 +46,7 @@ const StudentRegister = () => {
             const { confirmPassword, ...submitData } = formData;
             console.log('Submitting registration data:', submitData);
             
-            const res = await axios.post(`${API_URL}/api/auth/register`, submitData);
+            const res = await axios.post(`${API_URL}/api/auth/register`, { ...submitData, tosAccepted, privacyPolicyAccepted: privacyAccepted });
             console.log('Registration response:', res.data);
             
             login(res.data.user, res.data.token);
@@ -170,6 +177,17 @@ const StudentRegister = () => {
                                     )}
                                 </button>
                             </div>
+                        </div>
+                        
+                        <div className="space-y-3 pt-2">
+                            <label className="flex items-start">
+                                <input type="checkbox" checked={tosAccepted} onChange={e => setTosAccepted(e.target.checked)} className="mt-1 mr-2" />
+                                <span className="text-sm text-gray-700">I accept the <Link to="/terms" target="_blank" className="font-semibold hover:underline" style={{ color: '#23817A' }}>Terms of Service</Link></span>
+                            </label>
+                            <label className="flex items-start">
+                                <input type="checkbox" checked={privacyAccepted} onChange={e => setPrivacyAccepted(e.target.checked)} className="mt-1 mr-2" />
+                                <span className="text-sm text-gray-700">I accept the <Link to="/privacy" target="_blank" className="font-semibold hover:underline" style={{ color: '#23817A' }}>Privacy Policy</Link></span>
+                            </label>
                         </div>
                         
                         <button 

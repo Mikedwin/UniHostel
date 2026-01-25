@@ -29,6 +29,10 @@ const userSchema = new mongoose.Schema({
   failedLoginAttempts: { type: Number, default: 0 },
   accountLockedUntil: { type: Date },
   lastFailedLogin: { type: Date },
+  tosAccepted: { type: Boolean, default: false },
+  tosAcceptedAt: { type: Date },
+  privacyPolicyAccepted: { type: Boolean, default: false },
+  privacyPolicyAcceptedAt: { type: Date },
   createdAt: { type: Date, default: Date.now }
 });
 

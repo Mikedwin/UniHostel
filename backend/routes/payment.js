@@ -6,6 +6,8 @@ const Hostel = require('../models/Hostel');
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 const { auth } = require('../middleware/auth');
+const { sendPaymentSuccessEmail } = require('../utils/emailService');
+const logger = require('../config/logger');
 
 // Step 4: Initialize payment (only for approved_for_payment applications)
 router.post('/initialize', auth, async (req, res) => {
@@ -140,6 +142,21 @@ router.get('/verify/:reference', auth, async (req, res) => {
         application.paidAt = new Date();
         await application.save();
 
+        // Send payment success email
+        const student = await User.findById(application.studentId);
+        try {
+          await sendPaymentSuccessEmail(
+            student.email,
+            student.name,
+            application.hostelId.name,
+            application.roomType,
+            application.totalAmount,
+            reference
+          );
+        } catch (emailErr) {
+          logger.error('Payment email notification error:', emailErr);
+        }
+
         res.json({ 
           success: true, 
           message: 'Payment verified successfully. Awaiting final manager approval.',
@@ -200,6 +217,21 @@ router.post('/webhook', async (req, res) => {
           application.status = 'paid_awaiting_final';
           application.paidAt = new Date();
           await application.save();
+          
+          // Send payment success email
+          const student = await User.findById(application.studentId);
+          try {
+            await sendPaymentSuccessEmail(
+              student.email,
+              student.name,
+              application.hostelId.name,
+              application.roomType,
+              application.totalAmount,
+              reference
+            );
+          } catch (emailErr) {
+            logger.error('Webhook payment email error:', emailErr);
+          }
         }
       }
     }

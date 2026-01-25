@@ -25,6 +25,7 @@ import About from './pages/About';
 import Privacy from './pages/Privacy';
 import Support from './pages/Support';
 import Contact from './pages/Contact';
+import GDPRSettings from './pages/GDPRSettings';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function AppContent() {
@@ -47,6 +48,11 @@ function AppContent() {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/support" element={<Support />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/gdpr-settings" element={
+          <ProtectedRoute>
+            <GDPRSettings />
+          </ProtectedRoute>
+        } />
         
         {/* Authentication Routes */}
         <Route path="/student-login" element={<StudentLogin />} />
