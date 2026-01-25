@@ -15,6 +15,13 @@ setInterval(() => {
 
 // Generate CSRF token
 const generateCsrfToken = (userId) => {
+  // Invalidate old tokens for this user
+  for (const [token, data] of csrfTokens.entries()) {
+    if (data.userId === userId) {
+      csrfTokens.delete(token);
+    }
+  }
+  
   const token = crypto.randomBytes(32).toString('hex');
   csrfTokens.set(token, {
     userId,
@@ -25,6 +32,8 @@ const generateCsrfToken = (userId) => {
 
 // Verify CSRF token
 const verifyCsrfToken = (token, userId) => {
+  if (!token || !userId) return false;
+  
   const data = csrfTokens.get(token);
   if (!data) return false;
   if (data.userId !== userId) return false;
@@ -33,6 +42,13 @@ const verifyCsrfToken = (token, userId) => {
     return false;
   }
   return true;
+};
+
+// Invalidate CSRF token (on logout)
+const invalidateCsrfToken = (token) => {
+  if (token) {
+    csrfTokens.delete(token);
+  }
 };
 
 // Middleware to check CSRF token
@@ -71,4 +87,4 @@ const csrfProtection = (req, res, next) => {
   next();
 };
 
-module.exports = { generateCsrfToken, csrfProtection };
+module.exports = { generateCsrfToken, csrfProtection, invalidateCsrfToken };

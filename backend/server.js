@@ -18,8 +18,9 @@ const User = require('./models/User');
 const Hostel = require('./models/Hostel');
 const Application = require('./models/Application');
 const { auth, checkRole } = require('./middleware/auth');
-const { generateCsrfToken, csrfProtection } = require('./middleware/csrf');
+const { generateCsrfToken, csrfProtection, invalidateCsrfToken } = require('./middleware/csrf');
 const adminRoutes = require('./routes/admin');
+const authRoutes = require('./routes/auth');
 const paymentRoutes = require('./routes/payment');
 const transactionRoutes = require('./routes/transactions');
 const backupRoutes = require('./routes/backup');
@@ -163,11 +164,14 @@ app.get('/api/health', (req, res) => {
 // Admin routes
 app.use('/api/admin', adminRoutes);
 
-// Payment routes
-app.use('/api/payment', paymentRoutes);
+// Auth routes
+app.use('/api/auth', authRoutes);
 
-// Transaction routes
-app.use('/api/transactions', transactionRoutes);
+// Payment routes - CSRF protected
+app.use('/api/payment', auth, csrfProtection, paymentRoutes);
+
+// Transaction routes - CSRF protected
+app.use('/api/transactions', auth, csrfProtection, transactionRoutes);
 
 // Backup routes
 app.use('/api/backup', backupRoutes);

@@ -38,3 +38,20 @@ export const setupAxiosInterceptors = (logout, navigate) => {
     }
   );
 };
+
+// Call logout endpoint to invalidate CSRF token
+export const logoutWithCsrfCleanup = async (API_URL) => {
+  try {
+    const csrfToken = localStorage.getItem('csrfToken');
+    if (csrfToken) {
+      await axios.post(`${API_URL}/api/auth/logout`, {}, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'X-CSRF-Token': csrfToken
+        }
+      });
+    }
+  } catch (err) {
+    console.error('Logout cleanup failed:', err);
+  }
+};
