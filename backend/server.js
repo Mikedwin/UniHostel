@@ -368,7 +368,6 @@ app.post('/api/auth/reset-password/:token', async (req, res) => {
       return res.status(400).json({ message: 'Invalid or expired reset token' });
     }
     
-    // Update password
     user.password = await bcrypt.hash(password, 12);
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
@@ -380,6 +379,40 @@ app.post('/api/auth/reset-password/:token', async (req, res) => {
   } catch (err) {
     logger.error('Reset password error:', err);
     res.status(500).json({ message: 'Failed to reset password' });
+  }
+});
+
+// Change password (authenticated)
+app.post('/api/auth/change-password', auth, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Current and new password are required' });
+    }
+    
+    if (newPassword.length < 8) {
+      return res.status(400).json({ message: 'New password must be at least 8 characters' });
+    }
+    
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
+    
+    user.password = await bcrypt.hash(newPassword, 12);
+    await user.save();
+    
+    logger.info(`Password changed for user: ${user.email}`);
+    res.json({ message: 'Password changed successfully' });
+  } catch (err) {
+    logger.error('Change password error:', err);
+    res.status(500).json({ message: 'Failed to change password' });
   }
 });
 

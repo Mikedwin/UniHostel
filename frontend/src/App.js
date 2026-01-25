@@ -11,6 +11,7 @@ import ManagerLogin from './pages/ManagerLogin';
 import StudentRegister from './pages/StudentRegister';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import ChangePassword from './pages/ChangePassword';
 import StudentDashboard from './pages/StudentDashboard';
 import ManagerDashboard from './pages/ManagerDashboard';
 import AdminDashboard from './pages/AdminDashboard';
@@ -51,6 +52,11 @@ function AppContent() {
         <Route path="/student-register" element={<StudentRegister />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/change-password" element={
+          <ProtectedRoute>
+            <ChangePassword />
+          </ProtectedRoute>
+        } />
         
         {/* Payment Verification */}
         <Route path="/payment/verify" element={

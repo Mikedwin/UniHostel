@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Clock, CheckCircle, XCircle, X, CreditCard, Key, Archive, RotateCcw, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Clock, CheckCircle, XCircle, X, CreditCard, Key, Archive, RotateCcw, Trash2, Settings } from 'lucide-react';
 import API_URL from '../config';
 import Swal from 'sweetalert2';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -9,6 +10,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 const StudentDashboard = () => {
     const [applications, setApplications] = useState([]);
     const { token } = useAuth();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState('active'); // 'active' or 'history'
     const [toast, setToast] = useState(null);
@@ -311,6 +313,16 @@ const StudentDashboard = () => {
                         </button>
                     </div>
                 </div>
+                <button
+                    onClick={() => navigate('/change-password')}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-white"
+                    style={{ backgroundColor: '#23817A' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1a6159'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#23817A'}
+                >
+                    <Settings className="w-4 h-4" />
+                    Change Password
+                </button>
             </div>
             {loading ? (
                 <LoadingSpinner message="Loading your applications..." />
