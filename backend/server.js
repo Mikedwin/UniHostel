@@ -47,6 +47,36 @@ const accessLogStream = fs.createWriteStream(path.join(logsDir, 'access.log'), {
 app.use(morgan('combined', { stream: accessLogStream }));
 app.use(morgan('dev')); // Console logging in development
 
+// Body parser with size limits (reduced for security)
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ limit: '2mb', extended: true }));
+
+// CORS Configuration - MUST BE BEFORE OTHER MIDDLEWARE
+const allowedOrigins = process.env.NODE_ENV === 'production' 
+  ? ['https://uni-hostel-two.vercel.app', 'https://unihostel-production.up.railway.app'] 
+  : ['http://localhost:3000'];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
+  exposedHeaders: ['X-CSRF-Token'],
+  maxAge: 600
+}));
+
+// Handle preflight requests
+app.options('*', cors());
+
 // Security Middleware
 // 1. Helmet - Sets various HTTP headers for security
 app.use(helmet({
@@ -90,36 +120,6 @@ app.use(mongoSanitize());
 
 // 4. Prevent HTTP Parameter Pollution
 app.use(hpp());
-
-// Body parser with size limits (reduced for security)
-app.use(express.json({ limit: '2mb' }));
-app.use(express.urlencoded({ limit: '2mb', extended: true }));
-
-// CORS Configuration - FIXED: Strict origin validation
-const allowedOrigins = process.env.NODE_ENV === 'production' 
-  ? ['https://uni-hostel-two.vercel.app', 'https://unihostel-production.up.railway.app'] 
-  : ['http://localhost:3000'];
-
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, Postman, etc.)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
-  exposedHeaders: ['X-CSRF-Token'],
-  maxAge: 600
-}));
-
-// Handle preflight requests
-app.options('*', cors());
 
 // Database Connection
 const connectDB = async () => {
