@@ -86,13 +86,15 @@ app.use(express.urlencoded({ limit: '2mb', extended: true }));
 
 // CORS Configuration - FIXED: Strict origin validation
 const allowedOrigins = process.env.NODE_ENV === 'production' 
-  ? ['https://uni-hostel-two.vercel.app'] 
+  ? ['https://uni-hostel-two.vercel.app', 'https://unihostel-production.up.railway.app'] 
   : ['http://localhost:3000'];
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Only allow requests from whitelisted origins (no origin-less requests)
-    if (origin && allowedOrigins.includes(origin)) {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -800,11 +802,23 @@ app.patch('/api/applications/:id/archive', auth, async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   logger.info(`Server started on port ${PORT}`);
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`Server running on port ${PORT}`);
   console.log(`API available at http://localhost:${PORT}`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM received, shutting down gracefully');
+  server.close(() => {
+    logger.info('Server closed');
+    mongoose.connection.close(false, () => {
+      logger.info('MongoDB connection closed');
+      process.exit(0);
+    });
+  });
 });
 
 // Global error handler
