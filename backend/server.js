@@ -416,6 +416,97 @@ app.post('/api/auth/change-password', auth, async (req, res) => {
   }
 });
 
+// In-app password reset - Step 1: Verify email and security question
+app.post('/api/auth/reset-verify', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+    
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'No account found with this email' });
+    }
+    
+    if (!user.securityQuestion) {
+      return res.status(400).json({ 
+        message: 'Security question not set. Please contact support.',
+        needsSetup: true 
+      });
+    }
+    
+    res.json({ 
+      securityQuestion: user.securityQuestion,
+      userId: user._id 
+    });
+  } catch (err) {
+    logger.error('Reset verify error:', err);
+    res.status(500).json({ message: 'Failed to verify account' });
+  }
+});
+
+// In-app password reset - Step 2: Verify answer and reset password
+app.post('/api/auth/reset-with-security', async (req, res) => {
+  try {
+    const { userId, securityAnswer, newPassword } = req.body;
+    
+    if (!userId || !securityAnswer || !newPassword) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+    
+    if (newPassword.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters' });
+    }
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    const isMatch = await bcrypt.compare(securityAnswer.toLowerCase().trim(), user.securityAnswer);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Security answer is incorrect' });
+    }
+    
+    user.password = await bcrypt.hash(newPassword, 12);
+    await user.save();
+    
+    logger.info(`Password reset via security question for: ${user.email}`);
+    res.json({ message: 'Password reset successful. You can now login with your new password.' });
+  } catch (err) {
+    logger.error('Reset with security error:', err);
+    res.status(500).json({ message: 'Failed to reset password' });
+  }
+});
+
+// Set security question (authenticated)
+app.post('/api/auth/set-security-question', auth, async (req, res) => {
+  try {
+    const { securityQuestion, securityAnswer } = req.body;
+    
+    if (!securityQuestion || !securityAnswer) {
+      return res.status(400).json({ message: 'Security question and answer are required' });
+    }
+    
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    user.securityQuestion = securityQuestion;
+    user.securityAnswer = await bcrypt.hash(securityAnswer.toLowerCase().trim(), 12);
+    await user.save();
+    
+    logger.info(`Security question set for user: ${user.email}`);
+    res.json({ message: 'Security question set successfully' });
+  } catch (err) {
+    logger.error('Set security question error:', err);
+    res.status(500).json({ message: 'Failed to set security question' });
+  }
+});
+
 // --- HOSTEL ROUTES ---
 app.get('/api/hostels', async (req, res) => {
   try {

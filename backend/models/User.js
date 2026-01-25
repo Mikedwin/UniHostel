@@ -24,6 +24,8 @@ const userSchema = new mongoose.Schema({
   }],
   passwordResetRequired: { type: Boolean, default: false },
   temporaryPassword: { type: String },
+  securityQuestion: { type: String },
+  securityAnswer: { type: String },
   createdAt: { type: Date, default: Date.now }
 });
 

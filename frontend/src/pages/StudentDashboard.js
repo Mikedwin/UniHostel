@@ -323,6 +323,20 @@ const StudentDashboard = () => {
                     <Settings className="w-4 h-4" />
                     Change Password
                 </button>
+                <button
+                    onClick={() => navigate('/setup-security-question')}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium border-2"
+                    style={{ borderColor: '#23817A', color: '#23817A' }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#e6f5f4';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                >
+                    <Settings className="w-4 h-4" />
+                    Security Question
+                </button>
             </div>
             {loading ? (
                 <LoadingSpinner message="Loading your applications..." />
