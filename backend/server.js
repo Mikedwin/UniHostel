@@ -163,9 +163,6 @@ app.get('/api/health', (req, res) => {
 // Admin routes
 app.use('/api/admin', adminRoutes);
 
-// CSRF Protection - Apply after auth, before protected routes
-app.use('/api', auth, csrfProtection);
-
 // Payment routes
 app.use('/api/payment', paymentRoutes);
 
@@ -393,7 +390,7 @@ app.post('/api/auth/reset-password/:token', async (req, res) => {
 });
 
 // Change password (authenticated)
-app.post('/api/auth/change-password', auth, async (req, res) => {
+app.post('/api/auth/change-password', auth, csrfProtection, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
     
@@ -493,7 +490,7 @@ app.post('/api/auth/reset-with-security', async (req, res) => {
 });
 
 // Set security question (authenticated)
-app.post('/api/auth/set-security-question', auth, async (req, res) => {
+app.post('/api/auth/set-security-question', auth, csrfProtection, async (req, res) => {
   try {
     const { securityQuestion, securityAnswer } = req.body;
     
@@ -566,7 +563,7 @@ app.get('/api/hostels', async (req, res) => {
   }
 });
 
-app.post('/api/hostels', auth, checkRole('manager'), async (req, res) => {
+app.post('/api/hostels', auth, csrfProtection, checkRole('manager'), async (req, res) => {
   try {
     // Check if manager is verified
     const manager = await User.findById(req.user.id);
@@ -647,7 +644,7 @@ app.get('/api/hostels/:id', async (req, res) => {
   }
 });
 
-app.put('/api/hostels/:id', auth, checkRole('manager'), async (req, res) => {
+app.put('/api/hostels/:id', auth, csrfProtection, checkRole('manager'), async (req, res) => {
   try {
     if (!isValidObjectId(req.params.id)) {
       return res.status(400).json({ message: 'Invalid hostel ID' });
@@ -720,7 +717,7 @@ app.put('/api/hostels/:id', auth, checkRole('manager'), async (req, res) => {
   }
 });
 
-app.delete('/api/hostels/:id', auth, checkRole('manager'), async (req, res) => {
+app.delete('/api/hostels/:id', auth, csrfProtection, checkRole('manager'), async (req, res) => {
   try {
     if (!isValidObjectId(req.params.id)) {
       return res.status(400).json({ message: 'Invalid hostel ID' });
@@ -745,7 +742,7 @@ app.delete('/api/hostels/:id', auth, checkRole('manager'), async (req, res) => {
 
 // --- APPLICATION ROUTES ---
 // Step 1: Student applies (no payment yet)
-app.post('/api/applications', auth, checkRole('student'), async (req, res) => {
+app.post('/api/applications', auth, csrfProtection, checkRole('student'), async (req, res) => {
   try {
     const { hostelId, roomType, semester, studentName, contactNumber } = req.body;
     
@@ -884,7 +881,7 @@ app.get('/api/applications/hostel/:hostelId/stats', async (req, res) => {
 });
 
 // Step 2 & 6: Manager approves for payment OR final approval
-app.patch('/api/applications/:id/status', auth, checkRole('manager'), async (req, res) => {
+app.patch('/api/applications/:id/status', auth, csrfProtection, checkRole('manager'), async (req, res) => {
   try {
     if (!isValidObjectId(req.params.id)) {
       return res.status(400).json({ error: 'Invalid application ID' });
@@ -973,7 +970,7 @@ app.patch('/api/applications/:id/status', auth, checkRole('manager'), async (req
   }
 });
 
-app.delete('/api/applications/:id', auth, checkRole('student'), async (req, res) => {
+app.delete('/api/applications/:id', auth, csrfProtection, checkRole('student'), async (req, res) => {
     try {
         if (!isValidObjectId(req.params.id)) {
             return res.status(400).json({ message: 'Invalid application ID' });
@@ -1002,7 +999,7 @@ app.delete('/api/applications/:id', auth, checkRole('student'), async (req, res)
 });
 
 // Archive/Unarchive application (Manager or Student)
-app.patch('/api/applications/:id/archive', auth, async (req, res) => {
+app.patch('/api/applications/:id/archive', auth, csrfProtection, async (req, res) => {
   try {
     if (!isValidObjectId(req.params.id)) {
       return res.status(400).json({ error: 'Invalid application ID' });
