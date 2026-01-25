@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Home, User, LogOut, LayoutDashboard, ChevronDown, Menu, X, Settings } from 'lucide-react';
+import { Home, User, LogOut, LayoutDashboard, ChevronDown, Menu, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Navbar = () => {
@@ -44,13 +44,6 @@ const Navbar = () => {
                 >
                   <LayoutDashboard className="w-4 h-4 mr-1" />
                   Dashboard
-                </Link>
-                <Link 
-                  to="/change-password"
-                  className="flex items-center text-gray-700 hover:text-primary-600 text-base"
-                >
-                  <Settings className="w-4 h-4 mr-1" />
-                  Change Password
                 </Link>
                 <button 
                   onClick={handleLogout}
@@ -128,14 +121,6 @@ const Navbar = () => {
                 >
                   <LayoutDashboard className="w-4 h-4 mr-2" />
                   Dashboard
-                </Link>
-                <Link 
-                  to="/change-password"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center text-gray-700 py-2 hover:bg-gray-50 px-3 rounded"
-                >
-                  <Settings className="w-4 h-4 mr-2" />
-                  Change Password
                 </Link>
                 <button 
                   onClick={handleLogout}

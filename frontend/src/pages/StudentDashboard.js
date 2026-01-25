@@ -314,16 +314,6 @@ const StudentDashboard = () => {
                     </div>
                 </div>
                 <button
-                    onClick={() => navigate('/change-password')}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-white"
-                    style={{ backgroundColor: '#23817A' }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1a6159'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#23817A'}
-                >
-                    <Settings className="w-4 h-4" />
-                    Change Password
-                </button>
-                <button
                     onClick={() => navigate('/setup-security-question')}
                     className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium border-2"
                     style={{ borderColor: '#23817A', color: '#23817A' }}
