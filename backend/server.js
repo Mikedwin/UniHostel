@@ -112,11 +112,14 @@ app.use(cors({
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
   exposedHeaders: ['X-CSRF-Token'],
   maxAge: 600
 }));
+
+// Handle preflight requests
+app.options('*', cors());
 
 // Database Connection
 const connectDB = async () => {
