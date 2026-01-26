@@ -86,7 +86,7 @@ const HostelList = () => {
                   hostelId: hostel._id,
                   hostelName: hostel.name,
                   hostelLocation: hostel.location,
-                  hostelImage: hostel.hostelViewImage
+                  hostelImage: room.roomImage || hostel.roomTypes?.[0]?.roomImage || ''
                 });
               }
             });
