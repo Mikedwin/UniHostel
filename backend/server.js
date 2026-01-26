@@ -814,21 +814,12 @@ app.get('/api/hostels/my-listings', auth, checkRole('manager'), async (req, res)
   try {
     console.log('Fetching hostels for manager:', req.user.id);
     const hostels = await Hostel.find({ managerId: req.user.id })
-      .select('name location description roomTypes facilities isAvailable createdAt hostelViewImage')
+      .select('name location description roomTypes facilities isAvailable createdAt')
       .sort({ createdAt: -1 })
       .lean();
     
-    // Remove large images
-    const lightHostels = hostels.map(h => ({
-      ...h,
-      roomImages: undefined,
-      bathroomImages: undefined,
-      kitchenImages: undefined,
-      compoundImages: undefined
-    }));
-    
     console.log(`Found ${hostels.length} hostels for manager ${req.user.id}`);
-    res.json(lightHostels);
+    res.json(hostels);
   } catch (err) {
     console.error('Error fetching manager hostels:', err);
     res.status(500).json({ error: err.message });
