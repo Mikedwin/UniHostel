@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Check, X, Plus, Edit, Trash2, Search, Eye, TrendingUp, Users, Home, Clock, BarChart3, CheckCircle, XCircle, DollarSign } from 'lucide-react';
+import { Check, X, Plus, Trash2, Search, Eye, TrendingUp, Users, Home, Clock, BarChart3, CheckCircle, XCircle, DollarSign } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import API_URL from '../config';
 import ManagerAnalytics from '../components/manager/ManagerAnalytics';
