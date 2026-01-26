@@ -29,23 +29,37 @@ const EditHostelSimple = () => {
     useEffect(() => {
         const fetchHostel = async () => {
             try {
-                const response = await axios.get(`${API_URL}/api/hostels/${id}?light=true`, {
-                    timeout: 10000
+                console.log('Fetching hostel:', id);
+                const response = await axios.get(`${API_URL}/api/hostels/${id}`, {
+                    headers: { Authorization: `Bearer ${token}` }
                 });
                 const hostel = response.data;
+                console.log('Hostel loaded successfully');
                 setName(hostel.name);
                 setLocation(hostel.location);
                 setDescription(hostel.description);
-                setHostelViewImage(hostel.hostelViewImage || '');
-                setRoomTypes(hostel.roomTypes || []);
+                // Don't load existing image to avoid size issues
+                setHostelViewImage('');
+                // Load room types without images
+                const roomsWithoutImages = (hostel.roomTypes || []).map(room => ({
+                    type: room.type,
+                    price: room.price,
+                    totalCapacity: room.totalCapacity || 1,
+                    occupiedCapacity: room.occupiedCapacity || 0,
+                    available: room.available,
+                    facilities: room.facilities || [],
+                    roomImage: '' // Don't load existing image
+                }));
+                setRoomTypes(roomsWithoutImages);
                 setFetchLoading(false);
             } catch (err) {
+                console.error('Error fetching hostel:', err);
                 setError(err.response?.data?.error || err.message || 'Failed to load hostel');
                 setFetchLoading(false);
             }
         };
-        if (id) fetchHostel();
-    }, [id]);
+        if (id && token) fetchHostel();
+    }, [id, token]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -74,7 +88,13 @@ const EditHostelSimple = () => {
     };
 
     if (fetchLoading) {
-        return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>;
+        return (
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+                <div className="text-xl font-semibold text-gray-700">Loading hostel data...</div>
+                <div className="text-sm text-gray-500 mt-2">This may take a few seconds</div>
+            </div>
+        );
     }
 
     if (error && !name) {
