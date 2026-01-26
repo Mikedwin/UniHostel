@@ -1,8 +1,12 @@
 [phases.setup]
 nixPkgs = ['nodejs_20']
+nixpkgsArchive = 'ba913eda2df8eb72147259189d55932012df6301'
 
 [phases.install]
-cmds = ['cd backend && npm ci --omit=dev']
+cmds = [
+  'cd backend',
+  'npm ci --omit=dev'
+]
 
 [start]
 cmd = 'cd backend && node server.js'
