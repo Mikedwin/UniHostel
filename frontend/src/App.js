@@ -18,7 +18,7 @@ import StudentDashboard from './pages/StudentDashboard';
 import ManagerDashboard from './pages/ManagerDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import AddHostel from './pages/AddHostel';
-import EditHostel from './pages/EditHostel';
+import EditHostelSimple from './pages/EditHostelSimple';
 import PaymentVerify from './pages/PaymentVerify';
 import Terms from './pages/Terms';
 import About from './pages/About';
@@ -106,7 +106,7 @@ function AppContent() {
         
         <Route path="/edit-hostel/:id" element={
           <ProtectedRoute role="manager">
-            <EditHostel />
+            <EditHostelSimple />
           </ProtectedRoute>
         } />
       </Routes>
