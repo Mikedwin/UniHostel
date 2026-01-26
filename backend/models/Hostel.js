@@ -8,7 +8,7 @@ if (mongoose.models.Hostel) {
 const roomTypeSchema = new mongoose.Schema({
   type: { type: String, enum: ['1 in a Room', '2 in a Room', '3 in a Room', '4 in a Room'], required: true },
   price: { type: Number, required: true },
-  roomImage: { type: String, required: true },
+  roomImage: { type: String, required: false },
   facilities: [String],
   totalCapacity: { type: Number, required: true, min: 1 },
   occupiedCapacity: { type: Number, default: 0 },

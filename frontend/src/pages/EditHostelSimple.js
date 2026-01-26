@@ -30,11 +30,21 @@ const EditHostelSimple = () => {
         const fetchHostel = async () => {
             try {
                 console.log('Fetching hostel:', id);
+                console.log('API URL:', `${API_URL}/api/hostels/${id}`);
+                console.log('Token available:', !!token);
+                
                 const response = await axios.get(`${API_URL}/api/hostels/${id}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
+                
+                console.log('Response received:', response.status);
                 const hostel = response.data;
-                console.log('Hostel loaded successfully');
+                console.log('Hostel data:', { 
+                    name: hostel.name, 
+                    roomTypesCount: hostel.roomTypes?.length,
+                    hasImage: !!hostel.hostelViewImage 
+                });
+                
                 setName(hostel.name);
                 setLocation(hostel.location);
                 setDescription(hostel.description);
@@ -51,14 +61,22 @@ const EditHostelSimple = () => {
                     roomImage: '' // Don't load existing image
                 }));
                 setRoomTypes(roomsWithoutImages);
+                console.log('State updated successfully');
                 setFetchLoading(false);
             } catch (err) {
                 console.error('Error fetching hostel:', err);
+                console.error('Error response:', err.response?.data);
+                console.error('Error status:', err.response?.status);
                 setError(err.response?.data?.error || err.message || 'Failed to load hostel');
                 setFetchLoading(false);
             }
         };
-        if (id && token) fetchHostel();
+        if (id && token) {
+            console.log('Starting fetch with id:', id);
+            fetchHostel();
+        } else {
+            console.log('Missing id or token:', { id, hasToken: !!token });
+        }
     }, [id, token]);
 
     const handleSubmit = async (e) => {
