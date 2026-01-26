@@ -731,13 +731,6 @@ const ManagerDashboard = () => {
                                             <div className="relative h-32 overflow-hidden rounded-t-lg">
                                                 <img src={hostel.hostelViewImage} alt={hostel.name} className="w-full h-full object-cover" />
                                                 <div className="absolute top-2 right-2 flex gap-2">
-                                                    <Link 
-                                                        to={`/edit-hostel/${hostel._id}`}
-                                                        className="bg-white text-blue-600 hover:bg-blue-50 p-2 rounded-full shadow-md" 
-                                                        title="Edit"
-                                                    >
-                                                        <Edit className="w-4 h-4" />
-                                                    </Link>
                                                     <button
                                                         onClick={() => handleDeleteHostel(hostel._id, hostel.name)}
                                                         className="bg-white text-red-600 hover:bg-red-50 p-2 rounded-full shadow-md" 
@@ -763,13 +756,6 @@ const ManagerDashboard = () => {
                                                 </div>
                                                 {!hostel.hostelViewImage && (
                                                     <div className="flex gap-2">
-                                                        <Link 
-                                                            to={`/edit-hostel/${hostel._id}`}
-                                                            className="text-blue-600 hover:bg-blue-50 p-1.5 rounded" 
-                                                            title="Edit"
-                                                        >
-                                                            <Edit className="w-4 h-4" />
-                                                        </Link>
                                                         <button
                                                             onClick={() => handleDeleteHostel(hostel._id, hostel.name)}
                                                             className="text-red-600 hover:bg-red-50 p-1.5 rounded" 
