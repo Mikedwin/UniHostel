@@ -296,10 +296,9 @@ const HostelList = () => {
                     className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200"
                   >
                     <img 
-                      src={room.roomImage || room.hostelImage || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80'} 
+                      src={`${room.roomImage || room.hostelImage}?t=${room.hostelId}-${index}` || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80'} 
                       alt={room.type} 
                       className="h-48 w-full object-cover"
-                      key={`${room.hostelId}-${index}`}
                       onError={(e) => {
                         e.target.src = 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80';
                       }}
@@ -347,10 +346,9 @@ const HostelList = () => {
                     >
                       <div className="relative">
                         <img 
-                          src={hostel.roomTypes?.[0]?.roomImage || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80'} 
+                          src={`${hostel.roomTypes?.[0]?.roomImage}?t=${hostel._id}` || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80'} 
                           alt={hostel.name} 
                           className="h-48 w-full object-cover"
-                          key={hostel._id}
                           onError={(e) => {
                             e.target.src = 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80';
                           }}
