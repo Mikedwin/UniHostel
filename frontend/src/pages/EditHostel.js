@@ -38,21 +38,25 @@ const EditHostel = () => {
             try {
                 console.log('Fetching hostel:', id);
                 const response = await axios.get(`${API_URL}/api/hostels/${id}?light=true`, {
-                    timeout: 10000 // 10 second timeout
+                    timeout: 10000
                 });
                 const hostel = response.data;
                 console.log('Hostel data:', hostel);
                 setName(hostel.name);
                 setLocation(hostel.location);
                 setDescription(hostel.description);
-                setHostelViewImage(hostel.hostelViewImage || '');
-                // Ensure existing rooms have totalCapacity, default to 1 if missing
-                const roomsWithCapacity = (hostel.roomTypes || []).map(room => ({
-                    ...room,
+                // Don't load hostelViewImage - too large, manager can upload new one
+                setHostelViewImage('');
+                // Load room types but without images
+                const roomsWithoutImages = (hostel.roomTypes || []).map(room => ({
+                    type: room.type,
+                    price: room.price,
                     totalCapacity: room.totalCapacity || 1,
-                    occupiedCapacity: room.occupiedCapacity || 0
+                    occupiedCapacity: room.occupiedCapacity || 0,
+                    facilities: room.facilities || [],
+                    roomImage: '' // Manager can upload new image if needed
                 }));
-                setRoomTypes(roomsWithCapacity);
+                setRoomTypes(roomsWithoutImages);
                 setFetchLoading(false);
             } catch (err) {
                 console.error('Error fetching hostel:', err);
