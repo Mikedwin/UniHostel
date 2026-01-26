@@ -47,7 +47,7 @@ const HostelList = () => {
                     hostelId: hostel._id,
                     hostelName: hostel.name,
                     hostelLocation: hostel.location,
-                    hostelImage: hostel.hostelViewImage
+                    hostelImage: hostel.roomTypes?.[0]?.roomImage || ''
                   });
                 }
               }
@@ -346,7 +346,7 @@ const HostelList = () => {
                     >
                       <div className="relative">
                         <img 
-                          src={hostel.hostelViewImage || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80'} 
+                          src={hostel.roomTypes?.[0]?.roomImage || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80'} 
                           alt={hostel.name} 
                           className="h-48 w-full object-cover"
                           onError={(e) => {
