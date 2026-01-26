@@ -37,7 +37,7 @@ const EditHostel = () => {
         const fetchHostel = async () => {
             try {
                 console.log('Fetching hostel:', id);
-                const response = await axios.get(`${API_URL}/api/hostels/${id}`);
+                const response = await axios.get(`${API_URL}/api/hostels/${id}?light=true`);
                 const hostel = response.data;
                 console.log('Hostel data:', hostel);
                 setName(hostel.name);

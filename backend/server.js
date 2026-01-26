@@ -856,7 +856,7 @@ app.get('/api/hostels/my-listings', auth, checkRole('manager'), async (req, res)
  *       404:
  *         description: Hostel not found
  */
-app.get('/api/hostels/:id', cacheMiddleware(600), async (req, res) => {
+app.get('/api/hostels/:id', async (req, res) => {
   try {
     if (!isValidObjectId(req.params.id)) {
       return res.status(400).json({ error: 'Invalid hostel ID' });
@@ -868,6 +868,14 @@ app.get('/api/hostels/:id', cacheMiddleware(600), async (req, res) => {
     
     if (!hostel) {
       return res.status(404).json({ error: 'Hostel not found' });
+    }
+    
+    // Remove large images if response is too big
+    if (req.query.light === 'true') {
+      delete hostel.roomImages;
+      delete hostel.bathroomImages;
+      delete hostel.kitchenImages;
+      delete hostel.compoundImages;
     }
     
     res.json(hostel);
