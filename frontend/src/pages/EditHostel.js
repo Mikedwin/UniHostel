@@ -56,6 +56,7 @@ const EditHostel = () => {
                 setFetchLoading(false);
             } catch (err) {
                 console.error('Error fetching hostel:', err);
+                console.error('Error details:', err.response?.data || err.message);
                 setError(err.response?.data?.error || err.message || 'Failed to load hostel data');
                 setFetchLoading(false);
             }
