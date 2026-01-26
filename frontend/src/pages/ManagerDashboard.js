@@ -727,7 +727,7 @@ const ManagerDashboard = () => {
                                         {/* Hostel Header with Image */}
                                         {hostel.hostelViewImage && (
                                             <div className="relative h-32 overflow-hidden rounded-t-lg">
-                                                <img src={hostel.hostelViewImage} alt={hostel.name} className="w-full h-full object-cover" />
+                                                <img src={hostel.hostelViewImage} alt={hostel.name} className="w-full h-full object-cover" key={hostel._id} />
                                                 <div className="absolute top-2 right-2 flex gap-2">
                                                     <Link 
                                                         to={`/edit-hostel/${hostel._id}`}
