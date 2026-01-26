@@ -70,12 +70,10 @@ const ManagerDashboard = () => {
             const archived = viewMode === 'history' ? 'true' : 'false';
             const [appRes, hostRes] = await Promise.all([
                 axios.get(`${API_URL}/api/applications/manager?archived=${archived}`, { 
-                    headers: { Authorization: `Bearer ${token}` },
-                    timeout: 30000
+                    headers: { Authorization: `Bearer ${token}` }
                 }),
                 axios.get(`${API_URL}/api/hostels/my-listings`, { 
-                    headers: { Authorization: `Bearer ${token}` },
-                    timeout: 30000
+                    headers: { Authorization: `Bearer ${token}` }
                 })
             ]);
             
