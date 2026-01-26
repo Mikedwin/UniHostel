@@ -1,13 +1,8 @@
 {
-  "name": "unihostel-backend",
+  "name": "unihostel",
   "version": "1.0.0",
-  "description": "UniHostel Backend API",
-  "main": "backend/server.js",
   "scripts": {
-    "start": "cd backend && node server.js"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "dependencies": {}
+    "start": "cd backend && npm start",
+    "install": "cd backend && npm install"
+  }
 }
