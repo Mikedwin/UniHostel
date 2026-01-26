@@ -6,7 +6,7 @@ import { Save, X, Upload, Image as ImageIcon } from 'lucide-react';
 import API_URL from '../config';
 
 const EditHostelSimple = () => {
-    const { token, csrfToken } = useAuth();
+    const { token } = useAuth();
     const navigate = useNavigate();
     const { id } = useParams();
     const [loading, setLoading] = useState(false);
