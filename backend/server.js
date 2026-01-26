@@ -722,7 +722,7 @@ app.get('/api/hostels', cacheMiddleware(300), async (req, res) => {
     }
 
     const hostels = await Hostel.find(query)
-      .select('name location description roomTypes facilities isAvailable managerId createdAt hostelViewImage')
+      .select('name location description roomTypes facilities isAvailable managerId createdAt')
       .populate('managerId', 'name email')
       .sort({ createdAt: -1 })
       .limit(50)
@@ -854,19 +854,12 @@ app.get('/api/hostels/:id', async (req, res) => {
     }
     
     const hostel = await Hostel.findById(req.params.id)
+      .select('name location description roomTypes facilities isAvailable managerId createdAt')
       .populate('managerId', 'name email')
       .lean();
     
     if (!hostel) {
       return res.status(404).json({ error: 'Hostel not found' });
-    }
-    
-    // Remove large images if response is too big
-    if (req.query.light === 'true') {
-      delete hostel.roomImages;
-      delete hostel.bathroomImages;
-      delete hostel.kitchenImages;
-      delete hostel.compoundImages;
     }
     
     res.json(hostel);
