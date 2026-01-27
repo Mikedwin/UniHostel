@@ -122,7 +122,7 @@ const HostelDetail = () => {
         {/* Hostel View Image at the top */}
         <div className="mb-6 sm:mb-8 relative">
           <img 
-            src={hostel.roomTypes?.[0]?.roomImage || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=1200&q=80'} 
+            src={hostel.hostelViewImage || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=1200&q=80'} 
             alt={`${hostel.name} - Hostel View`} 
             className="w-full h-48 sm:h-64 md:h-80 lg:h-96 object-cover rounded-lg sm:rounded-xl shadow-sm"
             key={hostel._id}

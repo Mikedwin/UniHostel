@@ -722,7 +722,7 @@ app.get('/api/hostels', cacheMiddleware(300), async (req, res) => {
     }
 
     const hostels = await Hostel.find(query)
-      .select('name location description roomTypes facilities isAvailable managerId createdAt')
+      .select('name location hostelViewImage description roomTypes facilities isAvailable managerId createdAt')
       .populate('managerId', 'name email')
       .sort({ createdAt: -1 })
       .limit(50)
@@ -814,7 +814,7 @@ app.get('/api/hostels/my-listings', auth, checkRole('manager'), async (req, res)
   try {
     console.log('Fetching hostels for manager:', req.user.id);
     const hostels = await Hostel.find({ managerId: req.user.id })
-      .select('name location description roomTypes facilities isAvailable createdAt')
+      .select('name location hostelViewImage description roomTypes facilities isAvailable createdAt')
       .sort({ createdAt: -1 })
       .lean();
     
@@ -854,7 +854,7 @@ app.get('/api/hostels/:id', async (req, res) => {
     }
     
     const hostel = await Hostel.findById(req.params.id)
-      .select('name location description roomTypes facilities isAvailable managerId createdAt')
+      .select('name location hostelViewImage description roomTypes facilities isAvailable managerId createdAt')
       .populate('managerId', 'name email')
       .lean();
     

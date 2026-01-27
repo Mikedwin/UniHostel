@@ -355,7 +355,7 @@ const HostelList = () => {
                     >
                       <div className="relative">
                         <img 
-                          src={getImageUrl(hostel.roomTypes?.[0]?.roomImage, hostel._id)} 
+                          src={getImageUrl(hostel.hostelViewImage, hostel._id)} 
                           alt={hostel.name} 
                           className="h-48 w-full object-cover"
                           loading="eager"
