@@ -48,9 +48,9 @@ const EditHostelSimple = () => {
                 setName(hostel.name);
                 setLocation(hostel.location);
                 setDescription(hostel.description);
-                // Don't load existing image to avoid size issues
-                setHostelViewImage('');
-                // Load room types without images
+                // Keep existing image reference (don't load to avoid size issues)
+                setHostelViewImage(hostel.hostelViewImage || '');
+                // Load room types with image references
                 const roomsWithoutImages = (hostel.roomTypes || []).map(room => ({
                     type: room.type,
                     price: room.price,
@@ -58,7 +58,7 @@ const EditHostelSimple = () => {
                     occupiedCapacity: room.occupiedCapacity || 0,
                     available: room.available,
                     facilities: room.facilities || [],
-                    roomImage: '' // Don't load existing image
+                    roomImage: room.roomImage || '' // Keep existing image reference
                 }));
                 setRoomTypes(roomsWithoutImages);
                 console.log('State updated successfully');
@@ -85,13 +85,20 @@ const EditHostelSimple = () => {
         setError('');
         
         try {
-            await axios.put(`${API_URL}/api/hostels/${id}`, {
+            // Only include fields that should be updated
+            const updateData = {
                 name: name.trim(),
                 location: location.trim(),
                 description: description.trim(),
-                hostelViewImage,
                 roomTypes
-            }, {
+            };
+            
+            // Only update hostelViewImage if a new one was uploaded (starts with 'data:image')
+            if (hostelViewImage && hostelViewImage.startsWith('data:image')) {
+                updateData.hostelViewImage = hostelViewImage;
+            }
+            
+            await axios.put(`${API_URL}/api/hostels/${id}`, updateData, {
                 headers: { 
                     Authorization: `Bearer ${token}`
                 }
@@ -179,11 +186,11 @@ const EditHostelSimple = () => {
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Hostel View Image
                             </label>
-                            <p className="text-xs text-gray-500 mb-2">Upload a main image of your hostel (optional, max 500KB)</p>
+                            <p className="text-xs text-gray-500 mb-2">Upload a new image to replace the existing one (optional, max 500KB)</p>
                             <div className="flex items-center gap-4">
                                 <label className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 cursor-pointer border border-gray-300">
                                     <Upload className="w-4 h-4" />
-                                    Choose Image
+                                    {hostelViewImage && hostelViewImage.startsWith('data:image') ? 'Change Image' : 'Upload New Image'}
                                     <input
                                         type="file"
                                         accept="image/*"
@@ -202,23 +209,36 @@ const EditHostelSimple = () => {
                                         }}
                                     />
                                 </label>
-                                {hostelViewImage && (
+                                {hostelViewImage && hostelViewImage.startsWith('data:image') && (
                                     <button
                                         type="button"
                                         onClick={() => setHostelViewImage('')}
                                         className="text-red-600 hover:text-red-700 text-sm flex items-center gap-1"
                                     >
                                         <X className="w-4 h-4" />
-                                        Remove
+                                        Remove New Image
                                     </button>
                                 )}
                             </div>
-                            {hostelViewImage && (
+                            {hostelViewImage && hostelViewImage.startsWith('data:image') ? (
                                 <div className="mt-3 relative group border-2 border-blue-200 rounded-lg overflow-hidden">
                                     <img src={hostelViewImage} alt="Hostel View" className="w-full h-48 object-cover" />
                                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity flex items-center justify-center">
                                         <ImageIcon className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                                     </div>
+                                    <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded">
+                                        New Image
+                                    </div>
+                                </div>
+                            ) : hostelViewImage ? (
+                                <div className="mt-3 p-3 bg-gray-50 border border-gray-300 rounded-lg flex items-center gap-2">
+                                    <ImageIcon className="w-5 h-5 text-gray-500" />
+                                    <span className="text-sm text-gray-700">Existing image will be kept (not shown to avoid loading delays)</span>
+                                </div>
+                            ) : (
+                                <div className="mt-3 p-3 bg-yellow-50 border border-yellow-300 rounded-lg flex items-center gap-2">
+                                    <ImageIcon className="w-5 h-5 text-yellow-600" />
+                                    <span className="text-sm text-yellow-700">No image uploaded yet</span>
                                 </div>
                             )}
                         </div>
