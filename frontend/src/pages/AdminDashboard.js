@@ -113,54 +113,54 @@ const AdminDashboard = () => {
 
             <div className="max-w-7xl mx-auto px-4 py-6">
                 {/* Stats Overview */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-white p-4 rounded-lg shadow">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+                    <div className="bg-white p-3 sm:p-4 rounded-lg shadow">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-gray-600">Total Hostels</p>
-                                <p className="text-2xl font-bold">{stats?.overview.totalHostels}</p>
+                                <p className="text-xs sm:text-sm text-gray-600">Total Hostels</p>
+                                <p className="text-xl sm:text-2xl font-bold">{stats?.overview.totalHostels}</p>
                                 <p className="text-xs text-green-600">{stats?.overview.activeHostels} active</p>
                             </div>
-                            <Building2 className="w-10 h-10 text-blue-500" />
+                            <Building2 className="w-8 h-8 sm:w-10 sm:h-10 text-blue-500" />
                         </div>
                     </div>
-                    <div className="bg-white p-4 rounded-lg shadow">
+                    <div className="bg-white p-3 sm:p-4 rounded-lg shadow">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-gray-600">Managers</p>
-                                <p className="text-2xl font-bold">{stats?.overview.totalManagers}</p>
+                                <p className="text-xs sm:text-sm text-gray-600">Managers</p>
+                                <p className="text-xl sm:text-2xl font-bold">{stats?.overview.totalManagers}</p>
                             </div>
-                            <Users className="w-10 h-10 text-purple-500" />
+                            <Users className="w-8 h-8 sm:w-10 sm:h-10 text-purple-500" />
                         </div>
                     </div>
-                    <div className="bg-white p-4 rounded-lg shadow">
+                    <div className="bg-white p-3 sm:p-4 rounded-lg shadow">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-gray-600">Applications</p>
-                                <p className="text-2xl font-bold">{stats?.overview.totalApplications}</p>
+                                <p className="text-xs sm:text-sm text-gray-600">Applications</p>
+                                <p className="text-xl sm:text-2xl font-bold">{stats?.overview.totalApplications}</p>
                                 <p className="text-xs text-yellow-600">{stats?.overview.pendingApplications} pending</p>
                             </div>
-                            <FileText className="w-10 h-10 text-orange-500" />
+                            <FileText className="w-8 h-8 sm:w-10 sm:h-10 text-orange-500" />
                         </div>
                     </div>
-                    <div className="bg-white p-4 rounded-lg shadow">
+                    <div className="bg-white p-3 sm:p-4 rounded-lg shadow">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-gray-600">Students</p>
-                                <p className="text-2xl font-bold">{stats?.overview.totalStudents}</p>
+                                <p className="text-xs sm:text-sm text-gray-600">Students</p>
+                                <p className="text-xl sm:text-2xl font-bold">{stats?.overview.totalStudents}</p>
                             </div>
-                            <Activity className="w-10 h-10 text-green-500" />
+                            <Activity className="w-8 h-8 sm:w-10 sm:h-10 text-green-500" />
                         </div>
                     </div>
                 </div>
 
                 {/* Room Stats */}
-                <div className="bg-white p-4 rounded-lg shadow mb-6">
-                    <h2 className="text-lg font-bold mb-4">Room Statistics</h2>
-                    <div className="grid grid-cols-4 gap-4">
+                <div className="bg-white p-3 sm:p-4 rounded-lg shadow mb-6">
+                    <h2 className="text-base sm:text-lg font-bold mb-3 sm:mb-4">Room Statistics</h2>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                         {stats?.roomStats && Object.entries(stats.roomStats).map(([type, data]) => (
-                            <div key={type} className="border rounded p-3">
-                                <p className="font-semibold text-sm">{type}</p>
+                            <div key={type} className="border rounded p-2 sm:p-3">
+                                <p className="font-semibold text-xs sm:text-sm">{type}</p>
                                 <p className="text-xs text-gray-600">Total: {data.total}</p>
                                 <p className="text-xs text-gray-600">Occupied: {data.occupied}</p>
                                 <p className="text-xs text-green-600">Available: {data.available}</p>
@@ -171,13 +171,13 @@ const AdminDashboard = () => {
 
                 {/* Tabs */}
                 <div className="bg-white rounded-lg shadow mb-6">
-                    <div className="border-b">
-                        <div className="flex space-x-4 px-4">
+                    <div className="border-b overflow-x-auto">
+                        <div className="flex space-x-2 sm:space-x-4 px-2 sm:px-4 min-w-max">
                             {['overview', 'analytics', 'transactions', 'users', 'hostels', 'managers', 'register-manager', 'applications', 'logs'].map(tab => (
                                 <button
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
-                                    className={`py-3 px-4 font-medium capitalize ${activeTab === tab ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'}`}
+                                    className={`py-2 sm:py-3 px-2 sm:px-4 font-medium capitalize text-xs sm:text-base whitespace-nowrap ${activeTab === tab ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'}`}
                                 >
                                     {tab === 'register-manager' ? 'Register Manager' : tab}
                                 </button>
@@ -185,7 +185,7 @@ const AdminDashboard = () => {
                         </div>
                     </div>
 
-                    <div className="p-4">
+                    <div className="p-3 sm:p-4">
                         {activeTab === 'overview' && (
                             <div className="space-y-4">
                                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -231,64 +231,68 @@ const AdminDashboard = () => {
                         )}
 
                         {activeTab === 'hostels' && (
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Hostel</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Manager</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Rooms</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {hostels.map(hostel => (
-                                            <tr key={hostel._id}>
-                                                <td className="px-4 py-2 text-sm">{hostel.name}</td>
-                                                <td className="px-4 py-2 text-sm">{hostel.managerId?.name}</td>
-                                                <td className="px-4 py-2 text-sm">{hostel.roomTypes?.length} types</td>
-                                                <td className="px-4 py-2 text-sm">
-                                                    <span className={`px-2 py-1 text-xs rounded ${hostel.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                        {hostel.isActive ? 'Active' : 'Inactive'}
-                                                    </span>
-                                                    {hostel.isFlagged && <span className="ml-2 px-2 py-1 text-xs rounded bg-yellow-100 text-yellow-700">Flagged</span>}
-                                                </td>
-                                                <td className="px-4 py-2 text-sm">
-                                                    <button onClick={() => toggleHostelActive(hostel._id)} className="text-blue-600 hover:underline mr-2">Toggle</button>
-                                                    <button onClick={() => flagHostel(hostel._id)} className="text-orange-600 hover:underline">Flag</button>
-                                                </td>
+                            <div className="overflow-x-auto -mx-3 sm:mx-0">
+                                <div className="inline-block min-w-full align-middle">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Hostel</th>
+                                                <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Manager</th>
+                                                <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Rooms</th>
+                                                <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                                <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {hostels.map(hostel => (
+                                                <tr key={hostel._id}>
+                                                    <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">{hostel.name}</td>
+                                                    <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">{hostel.managerId?.name}</td>
+                                                    <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">{hostel.roomTypes?.length} types</td>
+                                                    <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">
+                                                        <span className={`px-2 py-1 text-xs rounded ${hostel.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                            {hostel.isActive ? 'Active' : 'Inactive'}
+                                                        </span>
+                                                        {hostel.isFlagged && <span className="ml-2 px-2 py-1 text-xs rounded bg-yellow-100 text-yellow-700">Flagged</span>}
+                                                    </td>
+                                                    <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">
+                                                        <button onClick={() => toggleHostelActive(hostel._id)} className="text-blue-600 hover:underline mr-2">Toggle</button>
+                                                        <button onClick={() => flagHostel(hostel._id)} className="text-orange-600 hover:underline">Flag</button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         )}
 
                         {activeTab === 'managers' && (
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Hostels</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Applications</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {managers.map(manager => (
-                                            <tr key={manager._id}>
-                                                <td className="px-4 py-2 text-sm">{manager.name}</td>
-                                                <td className="px-4 py-2 text-sm">{manager.email}</td>
-                                                <td className="px-4 py-2 text-sm">{manager.hostelCount}</td>
-                                                <td className="px-4 py-2 text-sm">{manager.applicationCount}</td>
-                                                <td className="px-4 py-2 text-sm">{new Date(manager.createdAt).toLocaleDateString()}</td>
+                            <div className="overflow-x-auto -mx-3 sm:mx-0">
+                                <div className="inline-block min-w-full align-middle">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                                <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                                <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Hostels</th>
+                                                <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Applications</th>
+                                                <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {managers.map(manager => (
+                                                <tr key={manager._id}>
+                                                    <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">{manager.name}</td>
+                                                    <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">{manager.email}</td>
+                                                    <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">{manager.hostelCount}</td>
+                                                    <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">{manager.applicationCount}</td>
+                                                    <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">{new Date(manager.createdAt).toLocaleDateString()}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         )}
 
