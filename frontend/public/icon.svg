@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <!-- Background -->
+  <rect width="32" height="32" fill="#2563eb" rx="6"/>
+  
+  <!-- House -->
+  <path d="M 6 16 L 16 8 L 26 16" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M 8 16 L 8 24 C 8 24.5 8.5 25 9 25 L 13 25 L 13 20 C 13 19.5 13.5 19 14 19 L 18 19 C 18.5 19 19 19.5 19 20 L 19 25 L 23 25 C 23.5 25 24 24.5 24 24 L 24 16" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  
+  <!-- Door knob -->
+  <circle cx="15.5" cy="22" r="0.8" fill="white"/>
+</svg>
