@@ -405,7 +405,13 @@ const AdminDashboard = () => {
                         )}
 
                         {activeTab === 'users' && (
-                            <UserManagementTable token={token} onAction={handleUserAction} />
+                            <div>
+                                {token ? (
+                                    <UserManagementTable token={token} onAction={handleUserAction} />
+                                ) : (
+                                    <div className="text-center py-8 text-red-600">No authentication token found</div>
+                                )}
+                            </div>
                         )}
 
                         {activeTab === 'analytics' && (
