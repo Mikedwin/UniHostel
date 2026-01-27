@@ -98,6 +98,196 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleUserAction = (action, user) => {
+        if (action === 'view') {
+            setSelectedUser(user);
+            setDetailsModalOpen(true);
+        } else if (action.startsWith('bulk-')) {
+            handleBulkAction(action.replace('bulk-', ''), user);
+        } else {
+            setModalAction(action);
+            setSelectedUser(user);
+            setModalOpen(true);
+        }
+    };
+
+    const handleActionConfirm = async (data) => {
+        setActionLoading(true);
+        try {
+            let endpoint = '';
+            let method = 'patch';
+            let payload = data;
+
+            switch (modalAction) {
+                case 'suspend':
+                    endpoint = `/api/admin/users/${selectedUser._id}/suspend`;
+                    break;
+                case 'ban':
+                    endpoint = `/api/admin/users/${selectedUser._id}/ban`;
+                    break;
+                case 'activate':
+                    endpoint = `/api/admin/users/${selectedUser._id}/activate`;
+                    break;
+                case 'verify':
+                    endpoint = `/api/admin/users/${selectedUser._id}/verify`;
+                    break;
+                case 'reject':
+                    endpoint = `/api/admin/users/${selectedUser._id}/reject`;
+                    break;
+                case 'reset-password':
+                    endpoint = `/api/admin/users/${selectedUser._id}/reset-password`;
+                    method = 'post';
+                    break;
+                case 'delete':
+                    endpoint = `/api/admin/users/${selectedUser._id}`;
+                    method = 'delete';
+                    break;
+                default:
+                    throw new Error('Unknown action');
+            }
+
+            const res = await axios[method](`${API_URL}${endpoint}`, payload, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (modalAction === 'reset-password' && res.data.temporaryPassword) {
+                alert(`Password reset successful!\n\nTemporary Password: ${res.data.temporaryPassword}\n\nPlease save this password and share it with the user securely.`);
+            }
+
+            showSuccess(res.data.message || 'Action completed successfully');
+            setModalOpen(false);
+            setSelectedUser(null);
+            setModalAction('');
+        } catch (err) {
+            alert(err.response?.data?.error || 'Action failed');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleBulkAction = async (action, userIds) => {
+        const reason = action === 'suspend' || action === 'ban' ? prompt(`Enter reason for bulk ${action}:`) : null;
+        if ((action === 'suspend' || action === 'ban') && !reason) return;
+
+        if (!window.confirm(`Are you sure you want to ${action} ${userIds.length} user(s)?`)) return;
+
+        try {
+            const res = await axios.post(`${API_URL}/api/admin/users/bulk-action`, {
+                userIds,
+                action,
+                reason
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            const { success, failed } = res.data.results;
+            let message = `Bulk action completed: ${success.length} succeeded`;
+            if (failed.length > 0) message += `, ${failed.length} failed`;
+            showSuccess(message);
+        } catch (err) {
+            alert(err.response?.data?.error || 'Bulk action failed');
+        }
+    };
+
+    const showSuccess = (message) => {
+        setSuccessMessage(message);
+        setTimeout(() => setSuccessMessage(''), 3000);
+    };
+
+    const handleApplicationAction = (action, app, refreshCallback) => {
+        if (action === 'view') {
+            setSelectedApp(app);
+            setAppDetailsModalOpen(true);
+        } else if (action.startsWith('bulk-')) {
+            handleBulkApplicationAction(action.replace('bulk-', ''), app, refreshCallback);
+        } else {
+            setAppModalAction(action);
+            setSelectedApp(app);
+            setAppModalOpen(true);
+        }
+    };
+
+    const handleAppActionConfirm = async (data) => {
+        setActionLoading(true);
+        try {
+            let endpoint = '';
+            let method = 'post';
+            let payload = data;
+
+            switch (appModalAction) {
+                case 'approve':
+                    endpoint = `/api/admin/applications/${selectedApp._id}/override`;
+                    method = 'patch';
+                    payload = { status: 'approved', reason: data.reason };
+                    break;
+                case 'reject':
+                    endpoint = `/api/admin/applications/${selectedApp._id}/override`;
+                    method = 'patch';
+                    payload = { status: 'rejected', reason: data.reason };
+                    break;
+                case 'note':
+                    endpoint = `/api/admin/applications/${selectedApp._id}/note`;
+                    payload = { note: data.note, visibleToManager: data.visibleToManager };
+                    break;
+                case 'dispute':
+                    endpoint = `/api/admin/applications/${selectedApp._id}/dispute`;
+                    payload = { disputeReason: data.disputeReason, disputeDetails: data.disputeDetails };
+                    break;
+                case 'resolve-dispute':
+                    endpoint = `/api/admin/applications/${selectedApp._id}/dispute/resolve`;
+                    method = 'patch';
+                    payload = { resolution: data.resolution, newStatus: data.newStatus };
+                    break;
+                case 'refund':
+                    endpoint = `/api/admin/applications/${selectedApp._id}/refund`;
+                    payload = { refundAmount: parseFloat(data.refundAmount), reason: data.reason };
+                    break;
+                default:
+                    throw new Error('Unknown action');
+            }
+
+            const res = await axios[method](`${API_URL}${endpoint}`, payload, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            showSuccess(res.data.message || 'Action completed successfully');
+            setAppModalOpen(false);
+            setSelectedApp(null);
+            setAppModalAction('');
+            fetchDashboardData();
+        } catch (err) {
+            alert(err.response?.data?.error || 'Action failed');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleBulkApplicationAction = async (action, appIds, refreshCallback) => {
+        const reason = prompt(`Enter reason for bulk ${action}:`);
+        if (!reason) return;
+
+        if (!window.confirm(`Are you sure you want to ${action} ${appIds.length} application(s)?`)) return;
+
+        try {
+            const res = await axios.post(`${API_URL}/api/admin/applications/bulk-action`, {
+                applicationIds: appIds,
+                action,
+                reason
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            const { success, failed } = res.data.results;
+            let message = `Bulk action completed: ${success.length} succeeded`;
+            if (failed.length > 0) message += `, ${failed.length} failed`;
+            showSuccess(message);
+            if (refreshCallback) refreshCallback();
+            fetchDashboardData();
+        } catch (err) {
+            alert(err.response?.data?.error || 'Bulk action failed');
+        }
+    };
+
     if (loading) {
         return <LoadingSpinner message="Loading admin dashboard..." fullScreen />;
     }
@@ -362,196 +552,6 @@ const AdminDashboard = () => {
             )}
         </div>
     );
-
-    function handleUserAction(action, user) {
-        if (action === 'view') {
-            setSelectedUser(user);
-            setDetailsModalOpen(true);
-        } else if (action.startsWith('bulk-')) {
-            handleBulkAction(action.replace('bulk-', ''), user);
-        } else {
-            setModalAction(action);
-            setSelectedUser(user);
-            setModalOpen(true);
-        }
-    }
-
-    async function handleActionConfirm(data) {
-        setActionLoading(true);
-        try {
-            let endpoint = '';
-            let method = 'patch';
-            let payload = data;
-
-            switch (modalAction) {
-                case 'suspend':
-                    endpoint = `/api/admin/users/${selectedUser._id}/suspend`;
-                    break;
-                case 'ban':
-                    endpoint = `/api/admin/users/${selectedUser._id}/ban`;
-                    break;
-                case 'activate':
-                    endpoint = `/api/admin/users/${selectedUser._id}/activate`;
-                    break;
-                case 'verify':
-                    endpoint = `/api/admin/users/${selectedUser._id}/verify`;
-                    break;
-                case 'reject':
-                    endpoint = `/api/admin/users/${selectedUser._id}/reject`;
-                    break;
-                case 'reset-password':
-                    endpoint = `/api/admin/users/${selectedUser._id}/reset-password`;
-                    method = 'post';
-                    break;
-                case 'delete':
-                    endpoint = `/api/admin/users/${selectedUser._id}`;
-                    method = 'delete';
-                    break;
-                default:
-                    throw new Error('Unknown action');
-            }
-
-            const res = await axios[method](`${API_URL}${endpoint}`, payload, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            if (modalAction === 'reset-password' && res.data.temporaryPassword) {
-                alert(`Password reset successful!\n\nTemporary Password: ${res.data.temporaryPassword}\n\nPlease save this password and share it with the user securely.`);
-            }
-
-            showSuccess(res.data.message || 'Action completed successfully');
-            setModalOpen(false);
-            setSelectedUser(null);
-            setModalAction('');
-        } catch (err) {
-            alert(err.response?.data?.error || 'Action failed');
-        } finally {
-            setActionLoading(false);
-        }
-    }
-
-    async function handleBulkAction(action, userIds) {
-        const reason = action === 'suspend' || action === 'ban' ? prompt(`Enter reason for bulk ${action}:`) : null;
-        if ((action === 'suspend' || action === 'ban') && !reason) return;
-
-        if (!window.confirm(`Are you sure you want to ${action} ${userIds.length} user(s)?`)) return;
-
-        try {
-            const res = await axios.post(`${API_URL}/api/admin/users/bulk-action`, {
-                userIds,
-                action,
-                reason
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            const { success, failed } = res.data.results;
-            let message = `Bulk action completed: ${success.length} succeeded`;
-            if (failed.length > 0) message += `, ${failed.length} failed`;
-            showSuccess(message);
-        } catch (err) {
-            alert(err.response?.data?.error || 'Bulk action failed');
-        }
-    }
-
-    function showSuccess(message) {
-        setSuccessMessage(message);
-        setTimeout(() => setSuccessMessage(''), 3000);
-    }
-
-    function handleApplicationAction(action, app, refreshCallback) {
-        if (action === 'view') {
-            setSelectedApp(app);
-            setAppDetailsModalOpen(true);
-        } else if (action.startsWith('bulk-')) {
-            handleBulkApplicationAction(action.replace('bulk-', ''), app, refreshCallback);
-        } else {
-            setAppModalAction(action);
-            setSelectedApp(app);
-            setAppModalOpen(true);
-        }
-    }
-
-    async function handleAppActionConfirm(data) {
-        setActionLoading(true);
-        try {
-            let endpoint = '';
-            let method = 'post';
-            let payload = data;
-
-            switch (appModalAction) {
-                case 'approve':
-                    endpoint = `/api/admin/applications/${selectedApp._id}/override`;
-                    method = 'patch';
-                    payload = { status: 'approved', reason: data.reason };
-                    break;
-                case 'reject':
-                    endpoint = `/api/admin/applications/${selectedApp._id}/override`;
-                    method = 'patch';
-                    payload = { status: 'rejected', reason: data.reason };
-                    break;
-                case 'note':
-                    endpoint = `/api/admin/applications/${selectedApp._id}/note`;
-                    payload = { note: data.note, visibleToManager: data.visibleToManager };
-                    break;
-                case 'dispute':
-                    endpoint = `/api/admin/applications/${selectedApp._id}/dispute`;
-                    payload = { disputeReason: data.disputeReason, disputeDetails: data.disputeDetails };
-                    break;
-                case 'resolve-dispute':
-                    endpoint = `/api/admin/applications/${selectedApp._id}/dispute/resolve`;
-                    method = 'patch';
-                    payload = { resolution: data.resolution, newStatus: data.newStatus };
-                    break;
-                case 'refund':
-                    endpoint = `/api/admin/applications/${selectedApp._id}/refund`;
-                    payload = { refundAmount: parseFloat(data.refundAmount), reason: data.reason };
-                    break;
-                default:
-                    throw new Error('Unknown action');
-            }
-
-            const res = await axios[method](`${API_URL}${endpoint}`, payload, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            showSuccess(res.data.message || 'Action completed successfully');
-            setAppModalOpen(false);
-            setSelectedApp(null);
-            setAppModalAction('');
-            fetchDashboardData();
-        } catch (err) {
-            alert(err.response?.data?.error || 'Action failed');
-        } finally {
-            setActionLoading(false);
-        }
-    }
-
-    async function handleBulkApplicationAction(action, appIds, refreshCallback) {
-        const reason = prompt(`Enter reason for bulk ${action}:`);
-        if (!reason) return;
-
-        if (!window.confirm(`Are you sure you want to ${action} ${appIds.length} application(s)?`)) return;
-
-        try {
-            const res = await axios.post(`${API_URL}/api/admin/applications/bulk-action`, {
-                applicationIds: appIds,
-                action,
-                reason
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            const { success, failed } = res.data.results;
-            let message = `Bulk action completed: ${success.length} succeeded`;
-            if (failed.length > 0) message += `, ${failed.length} failed`;
-            showSuccess(message);
-            if (refreshCallback) refreshCallback();
-            fetchDashboardData();
-        } catch (err) {
-            alert(err.response?.data?.error || 'Bulk action failed');
-        }
-    }
 };
 
 export default AdminDashboard;
