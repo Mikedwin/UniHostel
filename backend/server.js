@@ -25,6 +25,7 @@ const { validateImageUpload } = require('./middleware/imageValidation');
 const { cacheMiddleware } = require('./middleware/cache');
 const { scheduleDataRetentionCleanup } = require('./services/dataRetention');
 const cache = require('./services/cache');
+const { uploadImage } = require('./utils/cloudinary');
 const adminRoutes = require('./routes/admin');
 const authRoutes = require('./routes/auth');
 const paymentRoutes = require('./routes/payment');
@@ -780,32 +781,50 @@ app.post('/api/hostels', auth, csrfProtection, checkRole('manager'), validateIma
       return res.status(403).json({ message: 'Your account is pending admin verification. You cannot create hostels yet.' });
     }
     
-    console.log('Creating hostel with data:', {
-      ...req.body,
-      images: req.body.images ? `[${req.body.images.length} images]` : 'no images'
-    });
-    console.log('User ID:', req.user.id);
+    console.log('Creating hostel with Cloudinary upload');
     
     // Validate required fields
-    const { name, location, description, roomTypes } = req.body;
+    const { name, location, description, roomTypes, hostelViewImage } = req.body;
     if (!name || !location || !description || !roomTypes || roomTypes.length === 0) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
     
-    const newHostel = new Hostel({ ...req.body, managerId: req.user.id });
+    // Upload hostelViewImage to Cloudinary if provided
+    let hostelViewImageUrl = '';
+    if (hostelViewImage && hostelViewImage.startsWith('data:image')) {
+      console.log('Uploading hostel view image to Cloudinary...');
+      hostelViewImageUrl = await uploadImage(hostelViewImage, 'unihostel/hostels');
+      console.log('Hostel view image uploaded:', hostelViewImageUrl);
+    }
+    
+    // Upload room images to Cloudinary
+    const processedRoomTypes = await Promise.all(roomTypes.map(async (room) => {
+      if (room.roomImage && room.roomImage.startsWith('data:image')) {
+        console.log(`Uploading room image for ${room.type}...`);
+        const roomImageUrl = await uploadImage(room.roomImage, 'unihostel/rooms');
+        console.log(`Room image uploaded: ${roomImageUrl}`);
+        return { ...room, roomImage: roomImageUrl };
+      }
+      return room;
+    }));
+    
+    const hostelData = {
+      ...req.body,
+      hostelViewImage: hostelViewImageUrl,
+      roomTypes: processedRoomTypes,
+      managerId: req.user.id
+    };
+    
+    const newHostel = new Hostel(hostelData);
     const savedHostel = await newHostel.save();
     
     // Invalidate hostel list cache
     cache.invalidatePattern('cache:/api/hostels');
     
-    console.log('Hostel created successfully:', savedHostel._id);
+    console.log('Hostel created successfully with Cloudinary images:', savedHostel._id);
     res.status(201).json(savedHostel);
   } catch (err) {
     console.error('Error creating hostel:', err);
-    console.error('Error details:', err.message);
-    if (err.name === 'ValidationError') {
-      console.error('Validation errors:', err.errors);
-    }
     res.status(500).json({ message: err.message || 'Failed to create hostel' });
   }
 });
@@ -872,9 +891,6 @@ app.get('/api/hostels/:id', async (req, res) => {
 app.put('/api/hostels/:id', auth, checkRole('manager'), validateImageUpload, async (req, res) => {
   try {
     console.log('PUT /api/hostels/:id - Request received');
-    console.log('Hostel ID:', req.params.id);
-    console.log('User ID:', req.user.id);
-    console.log('Update data keys:', Object.keys(req.body));
     
     if (!isValidObjectId(req.params.id)) {
       return res.status(400).json({ message: 'Invalid hostel ID' });
@@ -889,22 +905,35 @@ app.put('/api/hostels/:id', auth, checkRole('manager'), validateImageUpload, asy
       return res.status(403).json({ message: 'Not authorized to edit this hostel' });
     }
     
-    // Build update object - only include fields that are provided
+    // Build update object
     const updateData = {};
     
     if (req.body.name) updateData.name = req.body.name;
     if (req.body.location) updateData.location = req.body.location;
     if (req.body.description) updateData.description = req.body.description;
-    if (req.body.roomTypes) updateData.roomTypes = req.body.roomTypes;
     if (req.body.facilities) updateData.facilities = req.body.facilities;
     if (req.body.isAvailable !== undefined) updateData.isAvailable = req.body.isAvailable;
     
-    // Only update hostelViewImage if provided (new upload or existing reference)
-    if (req.body.hostelViewImage) {
+    // Upload new hostelViewImage to Cloudinary if provided
+    if (req.body.hostelViewImage && req.body.hostelViewImage.startsWith('data:image')) {
+      console.log('Uploading new hostel view image to Cloudinary...');
+      updateData.hostelViewImage = await uploadImage(req.body.hostelViewImage, 'unihostel/hostels');
+    } else if (req.body.hostelViewImage) {
+      // Keep existing Cloudinary URL
       updateData.hostelViewImage = req.body.hostelViewImage;
     }
     
-    console.log('Updating with fields:', Object.keys(updateData));
+    // Process room types - upload new images to Cloudinary
+    if (req.body.roomTypes) {
+      updateData.roomTypes = await Promise.all(req.body.roomTypes.map(async (room) => {
+        if (room.roomImage && room.roomImage.startsWith('data:image')) {
+          console.log(`Uploading new room image for ${room.type}...`);
+          const roomImageUrl = await uploadImage(room.roomImage, 'unihostel/rooms');
+          return { ...room, roomImage: roomImageUrl };
+        }
+        return room;
+      }));
+    }
     
     const updatedHostel = await Hostel.findByIdAndUpdate(
       req.params.id,
@@ -925,8 +954,7 @@ app.put('/api/hostels/:id', auth, checkRole('manager'), validateImageUpload, asy
         const adminCommission = Math.round(hostelFee * (commissionPercent / 100));
         const totalAmount = hostelFee + adminCommission;
         
-        // Update only pending and approved_for_payment applications (not paid)
-        const result = await Application.updateMany(
+        await Application.updateMany(
           {
             hostelId: req.params.id,
             roomType: roomType.type,
@@ -934,25 +962,15 @@ app.put('/api/hostels/:id', auth, checkRole('manager'), validateImageUpload, asy
             paymentStatus: 'pending'
           },
           {
-            $set: {
-              hostelFee,
-              adminCommission,
-              totalAmount
-            }
+            $set: { hostelFee, adminCommission, totalAmount }
           }
         );
-        
-        if (result.modifiedCount > 0) {
-          console.log(`Updated ${result.modifiedCount} applications for ${roomType.type} with new price: ${hostelFee}`);
-        }
       }
     }
     
     res.json(updatedHostel);
   } catch (err) {
     console.error('Error updating hostel:', err);
-    console.error('Error stack:', err.stack);
-    logger.error('Hostel update error:', { error: err.message, stack: err.stack, hostelId: req.params.id });
     res.status(500).json({ message: err.message || 'Failed to update hostel' });
   }
 });
