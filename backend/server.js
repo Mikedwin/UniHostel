@@ -297,7 +297,7 @@ app.post('/api/auth/register', validateInput, async (req, res) => {
     const token = jwt.sign(
       { id: newUser._id, role: newUser.role, iat: Math.floor(Date.now() / 1000) }, 
       process.env.JWT_SECRET, 
-      { expiresIn: '7d', algorithm: 'HS256' }
+      { expiresIn: '30d', algorithm: 'HS256' }
     );
     res.json({ 
       token, 
@@ -452,7 +452,7 @@ app.post('/api/auth/login', validateInput, async (req, res) => {
     const token = jwt.sign(
       { id: user._id, role: user.role, iat: Math.floor(Date.now() / 1000) }, 
       process.env.JWT_SECRET, 
-      { expiresIn: '7d', algorithm: 'HS256' }
+      { expiresIn: '30d', algorithm: 'HS256' }
     );
     
     // Generate CSRF token
