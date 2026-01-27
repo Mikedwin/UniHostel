@@ -107,25 +107,79 @@ app.use(mongoSanitize());
 // 4. Prevent HTTP Parameter Pollution
 app.use(hpp());
 
-// Database Connection
+// Database Connection with Retry Logic
+let dbConnected = false;
+let dbConnectionAttempts = 0;
+const MAX_DB_RETRIES = 5;
+
 const connectDB = async () => {
   try {
+    dbConnectionAttempts++;
+    logger.info(`MongoDB connection attempt ${dbConnectionAttempts}/${MAX_DB_RETRIES}`);
+    
     await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/unihostel', {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      maxPoolSize: 10,
-      serverSelectionTimeoutMS: 3000,
-      socketTimeoutMS: 30000,
+      maxPoolSize: 50,
+      minPoolSize: 5,
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+      connectTimeoutMS: 30000,
+      heartbeatFrequencyMS: 10000,
+      retryWrites: true,
+      retryReads: true,
+      maxIdleTimeMS: 60000,
+      keepAlive: true,
+      keepAliveInitialDelay: 300000,
       family: 4
     });
+    
+    dbConnected = true;
+    dbConnectionAttempts = 0;
     logger.info('MongoDB Connected successfully');
     console.log('MongoDB Connected');
   } catch (err) {
-    logger.error('MongoDB Connection Error:', err);
-    console.log('MongoDB Error:', err);
-    process.exit(1);
+    logger.error(`MongoDB Connection Error (Attempt ${dbConnectionAttempts}/${MAX_DB_RETRIES}):`, err.message);
+    console.log(`MongoDB Error (Attempt ${dbConnectionAttempts}/${MAX_DB_RETRIES}):`, err.message);
+    
+    if (dbConnectionAttempts < MAX_DB_RETRIES) {
+      const retryDelay = Math.min(1000 * Math.pow(2, dbConnectionAttempts), 30000);
+      logger.info(`Retrying in ${retryDelay/1000} seconds...`);
+      console.log(`Retrying in ${retryDelay/1000} seconds...`);
+      setTimeout(connectDB, retryDelay);
+    } else {
+      logger.error('Max retry attempts reached. Exiting...');
+      console.log('Max retry attempts reached. Exiting...');
+      process.exit(1);
+    }
   }
 };
+
+// Monitor connection events
+mongoose.connection.on('connected', () => {
+  dbConnected = true;
+  logger.info('MongoDB connection established');
+  console.log('MongoDB connection established');
+});
+
+mongoose.connection.on('disconnected', () => {
+  dbConnected = false;
+  logger.warn('MongoDB disconnected. Attempting to reconnect...');
+  console.log('MongoDB disconnected. Attempting to reconnect...');
+});
+
+mongoose.connection.on('error', (err) => {
+  dbConnected = false;
+  logger.error('MongoDB connection error:', err);
+  console.log('MongoDB connection error:', err.message);
+});
+
+mongoose.connection.on('reconnected', () => {
+  dbConnected = true;
+  logger.info('MongoDB reconnected');
+  console.log('MongoDB reconnected');
+});
+
 connectDB();
 
 // Schedule data retention cleanup
@@ -150,9 +204,10 @@ app.get('/', (req, res) => {
     status: 'ok', 
     message: 'UniHostel API is running',
     timestamp: new Date().toISOString(),
-    version: '1.0.3-CORS-FIX',
+    version: '1.0.4-PRODUCTION-READY',
     documentation: '/api-docs',
-    corsEnabled: true
+    corsEnabled: true,
+    database: dbConnected ? 'connected' : 'disconnected'
   });
 });
 
@@ -162,13 +217,42 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customSiteTitle: 'UniHostel API Documentation'
 }));
 
+// Enhanced health check with detailed status
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok',
-    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-    environment: process.env.NODE_ENV || 'development'
+  const dbState = mongoose.connection.readyState;
+  const dbStatus = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting'
+  };
+  
+  const isHealthy = dbState === 1;
+  const statusCode = isHealthy ? 200 : 503;
+  
+  res.status(statusCode).json({ 
+    status: isHealthy ? 'healthy' : 'unhealthy',
+    database: {
+      status: dbStatus[dbState] || 'unknown',
+      connected: dbConnected,
+      readyState: dbState
+    },
+    environment: process.env.NODE_ENV || 'development',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString()
   });
 });
+
+// Database connection check middleware
+const checkDBConnection = (req, res, next) => {
+  if (!dbConnected || mongoose.connection.readyState !== 1) {
+    return res.status(503).json({ 
+      error: 'Database temporarily unavailable. Please try again in a moment.',
+      retryAfter: 5
+    });
+  }
+  next();
+};
 
 // Admin routes
 app.use('/api/admin', adminRoutes);
@@ -698,7 +782,7 @@ app.post('/api/auth/set-security-question', auth, csrfProtection, async (req, re
  *               items:
  *                 $ref: '#/components/schemas/Hostel'
  */
-app.get('/api/hostels', cacheMiddleware(300), async (req, res) => {
+app.get('/api/hostels', checkDBConnection, cacheMiddleware(300), async (req, res) => {
   try {
     const { location, maxPrice, search } = req.query;
     let query = { isAvailable: true };
@@ -773,7 +857,7 @@ app.get('/api/hostels', cacheMiddleware(300), async (req, res) => {
  *       403:
  *         description: Not authorized or unverified
  */
-app.post('/api/hostels', auth, csrfProtection, checkRole('manager'), validateImageUpload, async (req, res) => {
+app.post('/api/hostels', checkDBConnection, auth, csrfProtection, checkRole('manager'), validateImageUpload, async (req, res) => {
   try {
     // Check if manager is verified
     const manager = await User.findById(req.user.id);
@@ -829,7 +913,7 @@ app.post('/api/hostels', auth, csrfProtection, checkRole('manager'), validateIma
   }
 });
 
-app.get('/api/hostels/my-listings', auth, checkRole('manager'), async (req, res) => {
+app.get('/api/hostels/my-listings', checkDBConnection, auth, checkRole('manager'), async (req, res) => {
   try {
     console.log('Fetching hostels for manager:', req.user.id);
     const hostels = await Hostel.find({ managerId: req.user.id })
@@ -866,7 +950,7 @@ app.get('/api/hostels/my-listings', auth, checkRole('manager'), async (req, res)
  *       404:
  *         description: Hostel not found
  */
-app.get('/api/hostels/:id', async (req, res) => {
+app.get('/api/hostels/:id', checkDBConnection, async (req, res) => {
   try {
     if (!isValidObjectId(req.params.id)) {
       return res.status(400).json({ error: 'Invalid hostel ID' });
@@ -888,7 +972,7 @@ app.get('/api/hostels/:id', async (req, res) => {
   }
 });
 
-app.put('/api/hostels/:id', auth, checkRole('manager'), validateImageUpload, async (req, res) => {
+app.put('/api/hostels/:id', checkDBConnection, auth, checkRole('manager'), validateImageUpload, async (req, res) => {
   try {
     console.log('PUT /api/hostels/:id - Request received');
     
@@ -975,7 +1059,7 @@ app.put('/api/hostels/:id', auth, checkRole('manager'), validateImageUpload, asy
   }
 });
 
-app.delete('/api/hostels/:id', auth, csrfProtection, checkRole('manager'), async (req, res) => {
+app.delete('/api/hostels/:id', checkDBConnection, auth, csrfProtection, checkRole('manager'), async (req, res) => {
   try {
     if (!isValidObjectId(req.params.id)) {
       return res.status(400).json({ message: 'Invalid hostel ID' });
@@ -1035,7 +1119,7 @@ app.delete('/api/hostels/:id', auth, csrfProtection, checkRole('manager'), async
  *               $ref: '#/components/schemas/Application'
  */
 // Step 1: Student applies (no payment yet)
-app.post('/api/applications', auth, csrfProtection, checkRole('student'), async (req, res) => {
+app.post('/api/applications', checkDBConnection, auth, csrfProtection, checkRole('student'), async (req, res) => {
   try {
     const { hostelId, roomType, semester, studentName, contactNumber } = req.body;
     
@@ -1121,7 +1205,7 @@ app.post('/api/applications', auth, csrfProtection, checkRole('student'), async 
  *               items:
  *                 $ref: '#/components/schemas/Application'
  */
-app.get('/api/applications/student', auth, checkRole('student'), async (req, res) => {
+app.get('/api/applications/student', checkDBConnection, auth, checkRole('student'), async (req, res) => {
   try {
     const { archived } = req.query;
     const query = { studentId: req.user.id };
@@ -1144,7 +1228,7 @@ app.get('/api/applications/student', auth, checkRole('student'), async (req, res
   }
 });
 
-app.get('/api/applications/manager', auth, checkRole('manager'), async (req, res) => {
+app.get('/api/applications/manager', checkDBConnection, auth, checkRole('manager'), async (req, res) => {
   try {
     console.log('Fetching applications for manager:', req.user.id);
     const { archived } = req.query;
@@ -1174,7 +1258,7 @@ app.get('/api/applications/manager', auth, checkRole('manager'), async (req, res
 });
 
 // Get application statistics for a hostel
-app.get('/api/applications/hostel/:hostelId/stats', async (req, res) => {
+app.get('/api/applications/hostel/:hostelId/stats', checkDBConnection, async (req, res) => {
   try {
     const { hostelId } = req.params;
     
@@ -1207,7 +1291,7 @@ app.get('/api/applications/hostel/:hostelId/stats', async (req, res) => {
 });
 
 // Step 2 & 6: Manager approves for payment OR final approval
-app.patch('/api/applications/:id/status', auth, csrfProtection, checkRole('manager'), async (req, res) => {
+app.patch('/api/applications/:id/status', checkDBConnection, auth, csrfProtection, checkRole('manager'), async (req, res) => {
   try {
     if (!isValidObjectId(req.params.id)) {
       return res.status(400).json({ error: 'Invalid application ID' });
@@ -1322,7 +1406,7 @@ app.patch('/api/applications/:id/status', auth, csrfProtection, checkRole('manag
   }
 });
 
-app.delete('/api/applications/:id', auth, csrfProtection, checkRole('student'), async (req, res) => {
+app.delete('/api/applications/:id', checkDBConnection, auth, csrfProtection, checkRole('student'), async (req, res) => {
     try {
         if (!isValidObjectId(req.params.id)) {
             return res.status(400).json({ message: 'Invalid application ID' });
@@ -1351,7 +1435,7 @@ app.delete('/api/applications/:id', auth, csrfProtection, checkRole('student'), 
 });
 
 // Archive/Unarchive application (Manager or Student)
-app.patch('/api/applications/:id/archive', auth, csrfProtection, async (req, res) => {
+app.patch('/api/applications/:id/archive', checkDBConnection, auth, csrfProtection, async (req, res) => {
   try {
     if (!isValidObjectId(req.params.id)) {
       return res.status(400).json({ error: 'Invalid application ID' });
