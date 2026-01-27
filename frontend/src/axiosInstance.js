@@ -49,11 +49,14 @@ axiosInstance.interceptors.response.use(
       }
     }
 
-    // Handle 401 Unauthorized
+    // Handle 401 Unauthorized - Only logout on token expiration
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      const message = error.response?.data?.message || '';
+      if (message.includes('expired') || message.includes('Token expired')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login?session=expired';
+      }
     }
 
     return Promise.reject(error);

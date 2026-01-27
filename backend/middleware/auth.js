@@ -13,8 +13,7 @@ const auth = (req, res, next) => {
     }
 
     const verified = jwt.verify(token, process.env.JWT_SECRET, {
-      algorithms: ['HS256'],
-      maxAge: '8h'
+      algorithms: ['HS256']
     });
     
     if (!verified || !verified.id || !verified.role) {
@@ -25,7 +24,7 @@ const auth = (req, res, next) => {
     next();
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
-      return res.status(401).json({ message: 'Session expired. Please login again.' });
+      return res.status(401).json({ message: 'Token expired. Please login again.' });
     }
     if (err.name === 'JsonWebTokenError') {
       return res.status(401).json({ message: 'Invalid token. Please login again.' });
