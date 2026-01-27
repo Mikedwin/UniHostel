@@ -1,42 +1,21 @@
 import React from 'react';
 
-const Logo = ({ className = "w-8 h-8" }) => {
+const Logo = ({ className = "w-6 h-6" }) => {
   return (
     <svg 
       className={className} 
-      viewBox="0 0 100 100" 
+      viewBox="0 0 24 24" 
       fill="none" 
       xmlns="http://www.w3.org/2000/svg"
     >
-      {/* Building base */}
-      <rect x="20" y="35" width="60" height="55" fill="#2563eb" rx="2"/>
-      
-      {/* Roof */}
-      <path d="M15 35 L50 15 L85 35 Z" fill="#1e40af"/>
-      
-      {/* Windows - Row 1 */}
-      <rect x="28" y="42" width="10" height="10" fill="#fbbf24" rx="1"/>
-      <rect x="45" y="42" width="10" height="10" fill="#fbbf24" rx="1"/>
-      <rect x="62" y="42" width="10" height="10" fill="#fbbf24" rx="1"/>
-      
-      {/* Windows - Row 2 */}
-      <rect x="28" y="56" width="10" height="10" fill="#fbbf24" rx="1"/>
-      <rect x="45" y="56" width="10" height="10" fill="#fbbf24" rx="1"/>
-      <rect x="62" y="56" width="10" height="10" fill="#fbbf24" rx="1"/>
-      
-      {/* Windows - Row 3 */}
-      <rect x="28" y="70" width="10" height="10" fill="#fbbf24" rx="1"/>
-      <rect x="62" y="70" width="10" height="10" fill="#fbbf24" rx="1"/>
-      
-      {/* Door */}
-      <rect x="43" y="75" width="14" height="15" fill="#1e3a8a" rx="1"/>
-      <circle cx="54" cy="82" r="1" fill="#fbbf24"/>
-      
-      {/* Graduation cap on roof */}
-      <rect x="45" y="18" width="10" height="3" fill="#1e3a8a" rx="0.5"/>
-      <path d="M40 18 L50 13 L60 18 Z" fill="#1e3a8a"/>
-      <line x1="60" y1="18" x2="63" y2="25" stroke="#1e3a8a" strokeWidth="1"/>
-      <circle cx="63" cy="26" r="1.5" fill="#fbbf24"/>
+      {/* House base */}
+      <path 
+        d="M3 12L5 10M5 10L12 3L19 10M5 10V20C5 20.5523 5.44772 21 6 21H9M19 10L21 12M19 10V20C19 20.5523 18.5523 21 18 21H15M9 21C9.55228 21 10 20.5523 10 20V16C10 15.4477 10.4477 15 11 15H13C13.5523 15 14 15.4477 14 16V20C14 20.5523 14.4477 21 15 21M9 21H15" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+        strokeLinejoin="round"
+      />
     </svg>
   );
 };
