@@ -874,6 +874,7 @@ app.put('/api/hostels/:id', auth, checkRole('manager'), validateImageUpload, asy
     console.log('PUT /api/hostels/:id - Request received');
     console.log('Hostel ID:', req.params.id);
     console.log('User ID:', req.user.id);
+    console.log('Update data keys:', Object.keys(req.body));
     
     if (!isValidObjectId(req.params.id)) {
       return res.status(400).json({ message: 'Invalid hostel ID' });
@@ -888,22 +889,26 @@ app.put('/api/hostels/:id', auth, checkRole('manager'), validateImageUpload, asy
       return res.status(403).json({ message: 'Not authorized to edit this hostel' });
     }
     
-    // Handle room type migration
-    let updateData = { ...req.body, managerId: req.user.id };
-    if (updateData.roomType) {
-      const roomTypeMap = {
-        'Single': '1 in a Room',
-        'Double': '2 in a Room', 
-        'Shared': '3 in a Room'
-      };
-      if (roomTypeMap[updateData.roomType]) {
-        updateData.roomType = roomTypeMap[updateData.roomType];
-      }
+    // Build update object - only include fields that are provided
+    const updateData = {};
+    
+    if (req.body.name) updateData.name = req.body.name;
+    if (req.body.location) updateData.location = req.body.location;
+    if (req.body.description) updateData.description = req.body.description;
+    if (req.body.roomTypes) updateData.roomTypes = req.body.roomTypes;
+    if (req.body.facilities) updateData.facilities = req.body.facilities;
+    if (req.body.isAvailable !== undefined) updateData.isAvailable = req.body.isAvailable;
+    
+    // Only update hostelViewImage if provided (new upload or existing reference)
+    if (req.body.hostelViewImage) {
+      updateData.hostelViewImage = req.body.hostelViewImage;
     }
+    
+    console.log('Updating with fields:', Object.keys(updateData));
     
     const updatedHostel = await Hostel.findByIdAndUpdate(
       req.params.id,
-      updateData,
+      { $set: updateData },
       { new: true, runValidators: true }
     );
     
