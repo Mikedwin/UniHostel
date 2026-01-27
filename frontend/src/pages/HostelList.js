@@ -359,7 +359,9 @@ const HostelList = () => {
                           alt={hostel.name} 
                           className="h-48 w-full object-cover"
                           loading="eager"
-                          key={hostel._id}
+                          key={`${hostel._id}-${Math.random()}`}
+                          crossOrigin="anonymous"
+                          referrerPolicy="no-referrer"
                           onError={(e) => {
                             e.target.src = 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80';
                           }}
