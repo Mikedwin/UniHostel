@@ -15,10 +15,11 @@ const HostelList = () => {
   const [showRooms, setShowRooms] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  // Helper to generate unique image URL
+  // Helper to generate unique image URL with random component
   const getImageUrl = (imageData, uniqueId) => {
     if (!imageData) return 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80';
-    return `${imageData}#${uniqueId}-${Date.now()}`;
+    // Use random number to force browser to never cache
+    return `${imageData}#${uniqueId}-${Math.random().toString(36).substring(7)}`;
   };
 
   const fetchHostels = async (priceFilter = maxPrice, searchFilter = searchQuery) => {
