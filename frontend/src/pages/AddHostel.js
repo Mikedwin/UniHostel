@@ -213,9 +213,14 @@ const AddHostel = () => {
                                     onChange={async (e) => {
                                         const file = e.target.files[0];
                                         if (file) {
+                                            console.log('Hostel View Image - Selected file:', file.name, file.size, 'bytes');
                                             const compressed = await compressImage(file);
+                                            console.log('Hostel View Image - After compression:', compressed.size, 'bytes');
                                             const reader = new FileReader();
-                                            reader.onload = (event) => setHostelViewImage(event.target.result);
+                                            reader.onload = (event) => {
+                                                console.log('Hostel View Image - Loaded, length:', event.target.result.length);
+                                                setHostelViewImage(event.target.result);
+                                            };
                                             reader.readAsDataURL(compressed);
                                         }
                                     }}
@@ -330,9 +335,14 @@ const AddHostel = () => {
                                             onChange={async (e) => {
                                                 const file = e.target.files[0];
                                                 if (file) {
+                                                    console.log('Room Image - Selected file:', file.name, file.size, 'bytes');
                                                     const compressed = await compressImage(file);
+                                                    console.log('Room Image - After compression:', compressed.size, 'bytes');
                                                     const reader = new FileReader();
-                                                    reader.onload = (event) => setCurrentRoom({...currentRoom, roomImage: event.target.result});
+                                                    reader.onload = (event) => {
+                                                        console.log('Room Image - Loaded, length:', event.target.result.length);
+                                                        setCurrentRoom({...currentRoom, roomImage: event.target.result});
+                                                    };
                                                     reader.readAsDataURL(compressed);
                                                 }
                                             }}
