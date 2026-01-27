@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Home, User, LogOut, LayoutDashboard, ChevronDown, Menu, X } from 'lucide-react';
+import { User, LogOut, LayoutDashboard, ChevronDown, Menu, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import Logo from './Logo';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -20,9 +21,9 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <Link to="/" className="flex items-center text-primary-600 font-bold text-lg sm:text-xl hover:text-primary-700 transition-colors">
-              <Home className="mr-2 w-5 h-5 sm:w-6 sm:h-6" />
-              UniHostel
+            <Link to="/" className="flex items-center text-primary-600 font-bold text-lg sm:text-xl hover:text-primary-700 transition-colors group">
+              <Logo className="mr-2 w-7 h-7 sm:w-8 sm:h-8 transition-transform group-hover:scale-110" />
+              <span className="bg-gradient-to-r from-primary-600 to-blue-700 bg-clip-text text-transparent">UniHostel</span>
             </Link>
           </div>
           
