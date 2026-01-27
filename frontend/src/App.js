@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { setupAxiosInterceptors } from './utils/axiosInterceptor';
 import Navbar from './components/Navbar';
@@ -31,10 +31,16 @@ import ProtectedRoute from './components/ProtectedRoute';
 function AppContent() {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     setupAxiosInterceptors(logout, navigate);
   }, [logout, navigate]);
+
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen bg-gray-50">
