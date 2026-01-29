@@ -37,25 +37,35 @@ router.post('/initialize', auth, async (req, res) => {
     const { totalAmount, hostelFee, adminCommission } = application;
     console.log('Payment details:', { totalAmount, hostelFee, adminCommission });
 
+    // Get manager's subaccount for split payment
+    const manager = await User.findById(hostel.managerId);
+    const paymentData = {
+      email: user.email,
+      amount: totalAmount * 100,
+      reference: `UNI-${application._id}-${Date.now()}`,
+      callback_url: `${process.env.FRONTEND_URL}/payment/verify`,
+      channels: ['card', 'mobile_money'],
+      metadata: {
+        applicationId: application._id.toString(),
+        hostelName: hostel.name,
+        roomType: application.roomType,
+        semester: application.semester,
+        hostelFee,
+        adminCommission
+      }
+    };
+
+    // Add split payment if manager has Mobile Money setup
+    if (manager.paystackSubaccountCode && manager.payoutEnabled) {
+      paymentData.subaccount = manager.paystackSubaccountCode;
+      console.log('Split payment enabled for manager:', manager.email);
+    }
+
     // Initialize Paystack payment
     console.log('Calling Paystack API with email:', user.email);
     const paystackResponse = await axios.post(
       'https://api.paystack.co/transaction/initialize',
-      {
-        email: user.email,
-        amount: totalAmount * 100,
-        reference: `UNI-${application._id}-${Date.now()}`,
-        callback_url: `${process.env.FRONTEND_URL}/payment/verify`,
-        channels: ['card', 'mobile_money'],
-        metadata: {
-          applicationId: application._id.toString(),
-          hostelName: hostel.name,
-          roomType: application.roomType,
-          semester: application.semester,
-          hostelFee,
-          adminCommission
-        }
-      },
+      paymentData,
       {
         headers: {
           Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
@@ -74,7 +84,8 @@ router.post('/initialize', auth, async (req, res) => {
       reference: paystackResponse.data.data.reference,
       totalAmount,
       hostelFee,
-      adminCommission
+      adminCommission,
+      splitPaymentEnabled: !!manager.paystackSubaccountCode
     });
   } catch (error) {
     console.error('Payment initialization error:', {

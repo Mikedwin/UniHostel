@@ -26,6 +26,7 @@ import Privacy from './pages/Privacy';
 import Support from './pages/Support';
 import Contact from './pages/Contact';
 import GDPRSettings from './pages/GDPRSettings';
+import MoMoSettings from './pages/MoMoSettings';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function AppContent() {
@@ -113,6 +114,12 @@ function AppContent() {
         <Route path="/edit-hostel/:id" element={
           <ProtectedRoute role="manager">
             <EditHostelSimple />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/momo-settings" element={
+          <ProtectedRoute role="manager">
+            <MoMoSettings />
           </ProtectedRoute>
         } />
       </Routes>

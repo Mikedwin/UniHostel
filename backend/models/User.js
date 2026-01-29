@@ -33,6 +33,13 @@ const userSchema = new mongoose.Schema({
   tosAcceptedAt: { type: Date },
   privacyPolicyAccepted: { type: Boolean, default: false },
   privacyPolicyAcceptedAt: { type: Date },
+  // Mobile Money for Manager Payouts
+  momoProvider: { type: String, enum: ['MTN', 'Vodafone', 'AirtelTigo', null], default: null },
+  momoNumber: { type: String },
+  momoAccountName: { type: String },
+  paystackSubaccountCode: { type: String },
+  paystackSubaccountId: { type: String },
+  payoutEnabled: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now }
 });
 

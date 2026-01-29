@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Check, X, Plus, Edit, Trash2, Search, Eye, TrendingUp, Users, Home, Clock, BarChart3, CheckCircle, XCircle, DollarSign } from 'lucide-react';
+import { Check, X, Plus, Edit, Trash2, Search, Eye, TrendingUp, Users, Home, Clock, BarChart3, CheckCircle, XCircle, DollarSign, Wallet } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import API_URL from '../config';
 import ManagerAnalytics from '../components/manager/ManagerAnalytics';
@@ -344,10 +344,16 @@ const ManagerDashboard = () => {
                         </button>
                     </div>
                 </div>
-                <Link to="/add-hostel" className="w-full sm:w-auto bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 flex items-center justify-center">
-                    <Plus className="w-4 h-4 mr-2" />
-                    List New Hostel
-                </Link>
+                <div className="flex gap-3 w-full sm:w-auto">
+                    <Link to="/momo-settings" className="flex-1 sm:flex-none bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700 flex items-center justify-center">
+                        <Wallet className="w-4 h-4 mr-2" />
+                        MoMo Payouts
+                    </Link>
+                    <Link to="/add-hostel" className="flex-1 sm:flex-none bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 flex items-center justify-center">
+                        <Plus className="w-4 h-4 mr-2" />
+                        List New Hostel
+                    </Link>
+                </div>
             </div>
 
             {loading && (

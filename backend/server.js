@@ -34,6 +34,7 @@ const backupRoutes = require('./routes/backup');
 const gdprRoutes = require('./routes/gdpr');
 const dataRetentionRoutes = require('./routes/dataRetention');
 const cacheRoutes = require('./routes/cache');
+const payoutRoutes = require('./routes/payout');
 
 const app = express();
 
@@ -273,6 +274,9 @@ app.use('/api/data-retention', dataRetentionRoutes);
 
 // Cache management routes
 app.use('/api/cache', cacheRoutes);
+
+// Payout routes (Mobile Money setup)
+app.use('/api/payout', payoutRoutes);
 
 // --- AUTH ROUTES ---
 /**
