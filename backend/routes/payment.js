@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
-const Flutterwave = require('flutterwave-node-v3');
 const Application = require('../models/Application');
 const Hostel = require('../models/Hostel');
 const User = require('../models/User');
@@ -11,7 +10,13 @@ const { sendPaymentSuccessEmail } = require('../utils/emailService');
 const logger = require('../config/logger');
 
 const PAYMENT_PROVIDER = process.env.PAYMENT_PROVIDER || 'paystack';
-const flw = new Flutterwave(process.env.FLUTTERWAVE_PUBLIC_KEY, process.env.FLUTTERWAVE_SECRET_KEY);
+
+// Only initialize Flutterwave if it's the selected provider
+let flw = null;
+if (PAYMENT_PROVIDER === 'flutterwave' && process.env.FLUTTERWAVE_PUBLIC_KEY && process.env.FLUTTERWAVE_SECRET_KEY) {
+  const Flutterwave = require('flutterwave-node-v3');
+  flw = new Flutterwave(process.env.FLUTTERWAVE_PUBLIC_KEY, process.env.FLUTTERWAVE_SECRET_KEY);
+}
 
 // Step 4: Initialize payment (only for approved_for_payment applications)
 router.post('/initialize', auth, async (req, res) => {
