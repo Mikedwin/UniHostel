@@ -26,12 +26,24 @@ router.post('/setup-momo', auth, csrfProtection, checkRole('manager'), async (re
       return res.status(404).json({ message: 'Manager not found' });
     }
 
+    // Map provider to Paystack bank code
+    const bankCodeMap = {
+      'MTN': 'mtn-gh',
+      'Vodafone': 'vod-gh',
+      'AirtelTigo': 'tgo-gh'
+    };
+
+    const settlementBank = bankCodeMap[momoProvider];
+    if (!settlementBank) {
+      return res.status(400).json({ message: 'Invalid Mobile Money provider' });
+    }
+
     // Create Paystack Subaccount
     const response = await axios.post(
       'https://api.paystack.co/subaccount',
       {
         business_name: manager.name,
-        settlement_bank: momoProvider === 'MTN' ? 'MTN' : momoProvider === 'Vodafone' ? 'VDF' : 'ATL',
+        settlement_bank: settlementBank,
         account_number: cleanNumber,
         percentage_charge: parseFloat(process.env.ADMIN_COMMISSION_PERCENT) || 3,
         description: `Subaccount for ${manager.name}`,
@@ -93,12 +105,24 @@ router.put('/update-momo', auth, csrfProtection, checkRole('manager'), async (re
       return res.status(404).json({ message: 'No existing Mobile Money setup found' });
     }
 
+    // Map provider to Paystack bank code
+    const bankCodeMap = {
+      'MTN': 'mtn-gh',
+      'Vodafone': 'vod-gh',
+      'AirtelTigo': 'tgo-gh'
+    };
+
+    const settlementBank = bankCodeMap[momoProvider];
+    if (!settlementBank) {
+      return res.status(400).json({ message: 'Invalid Mobile Money provider' });
+    }
+
     // Update Paystack Subaccount
     const response = await axios.put(
       `https://api.paystack.co/subaccount/${manager.paystackSubaccountCode}`,
       {
         business_name: manager.name,
-        settlement_bank: momoProvider === 'MTN' ? 'MTN' : momoProvider === 'Vodafone' ? 'VDF' : 'ATL',
+        settlement_bank: settlementBank,
         account_number: cleanNumber,
         primary_contact_name: momoAccountName,
         primary_contact_phone: cleanNumber
