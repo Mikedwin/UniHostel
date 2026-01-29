@@ -6,7 +6,7 @@ const { csrfProtection } = require('../middleware/csrf');
 const User = require('../models/User');
 const logger = require('../config/logger');
 
-// Create Paystack Transfer Recipient for Manager Mobile Money
+// Store Mobile Money details for manual payouts
 router.post('/setup-momo', auth, checkRole('manager'), async (req, res) => {
   try {
     const { momoProvider, momoNumber, momoAccountName } = req.body;
@@ -26,58 +26,24 @@ router.post('/setup-momo', auth, checkRole('manager'), async (req, res) => {
       return res.status(404).json({ message: 'Manager not found' });
     }
 
-    // Map provider to Paystack Mobile Money bank code
-    const bankCodeMap = {
-      'MTN': 'MTN',
-      'Vodafone': 'VOD',
-      'AirtelTigo': 'ATL'
-    };
+    // Store Mobile Money details
+    manager.momoProvider = momoProvider;
+    manager.momoNumber = cleanNumber;
+    manager.momoAccountName = momoAccountName;
+    manager.payoutEnabled = true;
+    manager.paystackSubaccountCode = `MOMO_${manager._id}`;
+    await manager.save();
 
-    const bankCode = bankCodeMap[momoProvider];
-    if (!bankCode) {
-      return res.status(400).json({ message: 'Invalid Mobile Money provider' });
-    }
-
-    // Create Paystack Transfer Recipient for Mobile Money
-    const response = await axios.post(
-      'https://api.paystack.co/transferrecipient',
-      {
-        type: 'mobile_money',
-        name: momoAccountName,
-        account_number: cleanNumber,
-        bank_code: bankCode,
-        currency: 'GHS'
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-
-    if (response.data.status) {
-      manager.momoProvider = momoProvider;
-      manager.momoNumber = cleanNumber;
-      manager.momoAccountName = momoAccountName;
-      manager.paystackSubaccountCode = response.data.data.recipient_code;
-      manager.paystackSubaccountId = response.data.data.id;
-      manager.payoutEnabled = true;
-      await manager.save();
-
-      logger.info(`Transfer recipient created for manager: ${manager.email}`);
-      
-      res.json({ 
-        message: 'Mobile Money setup successful! You will receive automatic payouts after each payment.',
-        recipientCode: response.data.data.recipient_code
-      });
-    } else {
-      throw new Error(response.data.message || 'Failed to create transfer recipient');
-    }
+    logger.info(`Mobile Money details saved for manager: ${manager.email}`);
+    
+    res.json({ 
+      message: 'Mobile Money setup successful! Your payout details have been saved.',
+      info: 'When students pay, you will receive your share (97%) directly to this Mobile Money number within 24 hours.'
+    });
   } catch (err) {
-    logger.error('Transfer recipient creation error:', err.response?.data || err.message);
+    logger.error('Mobile Money setup error:', err);
     res.status(500).json({ 
-      message: err.response?.data?.message || 'Failed to setup Mobile Money. Please try again.' 
+      message: 'Failed to setup Mobile Money. Please try again.' 
     });
   }
 });
@@ -97,57 +63,21 @@ router.put('/update-momo', auth, checkRole('manager'), async (req, res) => {
     }
 
     const manager = await User.findById(req.user.id);
-    if (!manager || !manager.paystackSubaccountCode) {
-      return res.status(404).json({ message: 'No existing Mobile Money setup found' });
+    if (!manager) {
+      return res.status(404).json({ message: 'Manager not found' });
     }
 
-    // Map provider to Paystack Mobile Money bank code
-    const bankCodeMap = {
-      'MTN': 'MTN',
-      'Vodafone': 'VOD',
-      'AirtelTigo': 'ATL'
-    };
+    manager.momoProvider = momoProvider;
+    manager.momoNumber = cleanNumber;
+    manager.momoAccountName = momoAccountName;
+    await manager.save();
 
-    const bankCode = bankCodeMap[momoProvider];
-    if (!bankCode) {
-      return res.status(400).json({ message: 'Invalid Mobile Money provider' });
-    }
-
-    // Create new transfer recipient
-    const response = await axios.post(
-      'https://api.paystack.co/transferrecipient',
-      {
-        type: 'mobile_money',
-        name: momoAccountName,
-        account_number: cleanNumber,
-        bank_code: bankCode,
-        currency: 'GHS'
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-
-    if (response.data.status) {
-      manager.momoProvider = momoProvider;
-      manager.momoNumber = cleanNumber;
-      manager.momoAccountName = momoAccountName;
-      manager.paystackSubaccountCode = response.data.data.recipient_code;
-      manager.paystackSubaccountId = response.data.data.id;
-      await manager.save();
-
-      logger.info(`Transfer recipient updated for manager: ${manager.email}`);
-      res.json({ message: 'Mobile Money details updated successfully!' });
-    } else {
-      throw new Error(response.data.message || 'Failed to update transfer recipient');
-    }
+    logger.info(`Mobile Money details updated for manager: ${manager.email}`);
+    res.json({ message: 'Mobile Money details updated successfully!' });
   } catch (err) {
-    logger.error('Transfer recipient update error:', err.response?.data || err.message);
+    logger.error('Mobile Money update error:', err);
     res.status(500).json({ 
-      message: err.response?.data?.message || 'Failed to update Mobile Money details' 
+      message: 'Failed to update Mobile Money details' 
     });
   }
 });

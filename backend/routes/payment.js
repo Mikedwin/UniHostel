@@ -147,32 +147,6 @@ router.get('/verify/:reference', auth, async (req, res) => {
         application.paidAt = new Date();
         await application.save();
 
-        // Send automatic payout to manager's Mobile Money
-        const manager = await User.findById(application.hostelId.managerId);
-        if (manager.paystackSubaccountCode && manager.payoutEnabled) {
-          try {
-            const transferResponse = await axios.post(
-              'https://api.paystack.co/transfer',
-              {
-                source: 'balance',
-                amount: application.hostelFee * 100,
-                recipient: manager.paystackSubaccountCode,
-                reason: `Payout for ${application.hostelId.name} - ${application.roomType}`,
-                reference: `PAYOUT-${reference}`
-              },
-              {
-                headers: {
-                  Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-                  'Content-Type': 'application/json'
-                }
-              }
-            );
-            logger.info(`Automatic payout sent to manager ${manager.email}: GHS ${application.hostelFee}`);
-          } catch (transferErr) {
-            logger.error('Automatic payout error:', transferErr.response?.data || transferErr.message);
-          }
-        }
-
         const student = await User.findById(application.studentId);
         try {
           await sendPaymentSuccessEmail(
