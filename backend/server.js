@@ -118,8 +118,6 @@ const connectDB = async () => {
     logger.info(`MongoDB connection attempt ${dbConnectionAttempts}/${MAX_DB_RETRIES}`);
     
     await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/unihostel', {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
       maxPoolSize: 50,
       minPoolSize: 5,
       serverSelectionTimeoutMS: 30000,
@@ -129,8 +127,6 @@ const connectDB = async () => {
       retryWrites: true,
       retryReads: true,
       maxIdleTimeMS: 60000,
-      keepAlive: true,
-      keepAliveInitialDelay: 300000,
       family: 4
     });
     
