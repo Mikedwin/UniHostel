@@ -9,19 +9,10 @@ const { auth } = require('../middleware/auth');
 const { sendPaymentSuccessEmail } = require('../utils/emailService');
 const logger = require('../config/logger');
 
-const PAYMENT_PROVIDER = process.env.PAYMENT_PROVIDER || 'paystack';
-
-// Only initialize Flutterwave if it's the selected provider
-let flw = null;
-if (PAYMENT_PROVIDER === 'flutterwave' && process.env.FLUTTERWAVE_PUBLIC_KEY && process.env.FLUTTERWAVE_SECRET_KEY) {
-  const Flutterwave = require('flutterwave-node-v3');
-  flw = new Flutterwave(process.env.FLUTTERWAVE_PUBLIC_KEY, process.env.FLUTTERWAVE_SECRET_KEY);
-}
-
 // Step 4: Initialize payment (only for approved_for_payment applications)
 router.post('/initialize', auth, async (req, res) => {
   try {
-    console.log('Payment initialization request:', { applicationId: req.body.applicationId, userId: req.user.id, provider: PAYMENT_PROVIDER });
+    console.log('Payment initialization request:', { applicationId: req.body.applicationId, userId: req.user.id });
     const { applicationId } = req.body;
 
     const user = await User.findById(req.user.id);
@@ -46,25 +37,17 @@ router.post('/initialize', auth, async (req, res) => {
     const { totalAmount, hostelFee, adminCommission } = application;
     console.log('Payment details:', { totalAmount, hostelFee, adminCommission });
 
-    const reference = `UNI-${application._id}-${Date.now()}`;
-
-    if (PAYMENT_PROVIDER === 'flutterwave') {
-      // Flutterwave payment
-      const payload = {
-        tx_ref: reference,
-        amount: totalAmount,
-        currency: 'GHS',
-        redirect_url: `${process.env.FRONTEND_URL}/payment/verify`,
-        customer: {
-          email: user.email,
-          name: user.name
-        },
-        customizations: {
-          title: 'UniHostel Payment',
-          description: `Payment for ${hostel.name} - ${application.roomType}`,
-          logo: 'https://your-logo-url.com/logo.png'
-        },
-        meta: {
+    // Initialize Paystack payment
+    console.log('Calling Paystack API with email:', user.email);
+    const paystackResponse = await axios.post(
+      'https://api.paystack.co/transaction/initialize',
+      {
+        email: user.email,
+        amount: totalAmount * 100,
+        reference: `UNI-${application._id}-${Date.now()}`,
+        callback_url: `${process.env.FRONTEND_URL}/payment/verify`,
+        channels: ['card', 'mobile_money'],
+        metadata: {
           applicationId: application._id.toString(),
           hostelName: hostel.name,
           roomType: application.roomType,
@@ -72,64 +55,27 @@ router.post('/initialize', auth, async (req, res) => {
           hostelFee,
           adminCommission
         }
-      };
-
-      const response = await flw.Charge.card(payload);
-      
-      application.paymentReference = reference;
-      await application.save();
-
-      res.json({
-        applicationId: application._id,
-        authorizationUrl: response.data.link,
-        reference,
-        totalAmount,
-        hostelFee,
-        adminCommission,
-        provider: 'flutterwave'
-      });
-    } else {
-      // Paystack payment
-      console.log('Calling Paystack API with email:', user.email);
-      const paystackResponse = await axios.post(
-        'https://api.paystack.co/transaction/initialize',
-        {
-          email: user.email,
-          amount: totalAmount * 100,
-          reference,
-          callback_url: `${process.env.FRONTEND_URL}/payment/verify`,
-          channels: ['card', 'mobile_money'],
-          metadata: {
-            applicationId: application._id.toString(),
-            hostelName: hostel.name,
-            roomType: application.roomType,
-            semester: application.semester,
-            hostelFee,
-            adminCommission
-          }
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-            'Content-Type': 'application/json'
-          }
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+          'Content-Type': 'application/json'
         }
-      );
-      console.log('Paystack response received:', paystackResponse.data);
+      }
+    );
+    console.log('Paystack response received:', paystackResponse.data);
 
-      application.paymentReference = paystackResponse.data.data.reference;
-      await application.save();
+    application.paymentReference = paystackResponse.data.data.reference;
+    await application.save();
 
-      res.json({
-        applicationId: application._id,
-        authorizationUrl: paystackResponse.data.data.authorization_url,
-        reference: paystackResponse.data.data.reference,
-        totalAmount,
-        hostelFee,
-        adminCommission,
-        provider: 'paystack'
-      });
-    }
+    res.json({
+      applicationId: application._id,
+      authorizationUrl: paystackResponse.data.data.authorization_url,
+      reference: paystackResponse.data.data.reference,
+      totalAmount,
+      hostelFee,
+      adminCommission
+    });
   } catch (error) {
     console.error('Payment initialization error:', {
       message: error.message,
@@ -149,31 +95,18 @@ router.post('/initialize', auth, async (req, res) => {
 router.get('/verify/:reference', auth, async (req, res) => {
   try {
     const { reference } = req.params;
-    let status, metadata;
 
-    if (PAYMENT_PROVIDER === 'flutterwave') {
-      // Verify with Flutterwave
-      const response = await flw.Transaction.verify({ id: reference });
-      
-      if (response.data.status === 'successful') {
-        status = 'success';
-        metadata = response.data.meta;
-      } else {
-        return res.status(400).json({ success: false, message: 'Payment verification failed' });
-      }
-    } else {
-      // Verify with Paystack
-      const paystackResponse = await axios.get(
-        `https://api.paystack.co/transaction/verify/${reference}`,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
-          }
+    // Verify with Paystack
+    const paystackResponse = await axios.get(
+      `https://api.paystack.co/transaction/verify/${reference}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
         }
-      );
-      status = paystackResponse.data.data.status;
-      metadata = paystackResponse.data.data.metadata;
-    }
+      }
+    );
+
+    const { status, metadata } = paystackResponse.data.data;
 
     if (status === 'success') {
       const application = await Application.findById(metadata.applicationId).populate('hostelId');
