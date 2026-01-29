@@ -6,7 +6,7 @@ const { csrfProtection } = require('../middleware/csrf');
 const User = require('../models/User');
 const logger = require('../config/logger');
 
-// Create Paystack Subaccount for Manager
+// Create Paystack Transfer Recipient for Manager Mobile Money
 router.post('/setup-momo', auth, checkRole('manager'), async (req, res) => {
   try {
     const { momoProvider, momoNumber, momoAccountName } = req.body;
@@ -26,30 +26,15 @@ router.post('/setup-momo', auth, checkRole('manager'), async (req, res) => {
       return res.status(404).json({ message: 'Manager not found' });
     }
 
-    // Map provider to Paystack bank code
-    const bankCodeMap = {
-      'MTN': 'mtn-gh',
-      'Vodafone': 'vod-gh',
-      'AirtelTigo': 'tgo-gh'
-    };
-
-    const settlementBank = bankCodeMap[momoProvider];
-    if (!settlementBank) {
-      return res.status(400).json({ message: 'Invalid Mobile Money provider' });
-    }
-
-    // Create Paystack Subaccount
+    // Create Paystack Transfer Recipient for Mobile Money
     const response = await axios.post(
-      'https://api.paystack.co/subaccount',
+      'https://api.paystack.co/transferrecipient',
       {
-        business_name: manager.name,
-        settlement_bank: settlementBank,
+        type: 'mobile_money',
+        name: momoAccountName,
         account_number: cleanNumber,
-        percentage_charge: parseFloat(process.env.ADMIN_COMMISSION_PERCENT) || 3,
-        description: `Subaccount for ${manager.name}`,
-        primary_contact_email: manager.email,
-        primary_contact_name: momoAccountName,
-        primary_contact_phone: cleanNumber
+        bank_code: momoProvider,
+        currency: 'GHS'
       },
       {
         headers: {
@@ -60,26 +45,25 @@ router.post('/setup-momo', auth, checkRole('manager'), async (req, res) => {
     );
 
     if (response.data.status) {
-      // Save subaccount details
       manager.momoProvider = momoProvider;
       manager.momoNumber = cleanNumber;
       manager.momoAccountName = momoAccountName;
-      manager.paystackSubaccountCode = response.data.data.subaccount_code;
+      manager.paystackSubaccountCode = response.data.data.recipient_code;
       manager.paystackSubaccountId = response.data.data.id;
       manager.payoutEnabled = true;
       await manager.save();
 
-      logger.info(`Subaccount created for manager: ${manager.email}`);
+      logger.info(`Transfer recipient created for manager: ${manager.email}`);
       
       res.json({ 
-        message: 'Mobile Money setup successful! You will now receive automatic payouts.',
-        subaccountCode: response.data.data.subaccount_code
+        message: 'Mobile Money setup successful! You will receive automatic payouts after each payment.',
+        recipientCode: response.data.data.recipient_code
       });
     } else {
-      throw new Error(response.data.message || 'Failed to create subaccount');
+      throw new Error(response.data.message || 'Failed to create transfer recipient');
     }
   } catch (err) {
-    logger.error('Subaccount creation error:', err.response?.data || err.message);
+    logger.error('Transfer recipient creation error:', err.response?.data || err.message);
     res.status(500).json({ 
       message: err.response?.data?.message || 'Failed to setup Mobile Money. Please try again.' 
     });
@@ -105,27 +89,15 @@ router.put('/update-momo', auth, checkRole('manager'), async (req, res) => {
       return res.status(404).json({ message: 'No existing Mobile Money setup found' });
     }
 
-    // Map provider to Paystack bank code
-    const bankCodeMap = {
-      'MTN': 'mtn-gh',
-      'Vodafone': 'vod-gh',
-      'AirtelTigo': 'tgo-gh'
-    };
-
-    const settlementBank = bankCodeMap[momoProvider];
-    if (!settlementBank) {
-      return res.status(400).json({ message: 'Invalid Mobile Money provider' });
-    }
-
-    // Update Paystack Subaccount
-    const response = await axios.put(
-      `https://api.paystack.co/subaccount/${manager.paystackSubaccountCode}`,
+    // Create new transfer recipient
+    const response = await axios.post(
+      'https://api.paystack.co/transferrecipient',
       {
-        business_name: manager.name,
-        settlement_bank: settlementBank,
+        type: 'mobile_money',
+        name: momoAccountName,
         account_number: cleanNumber,
-        primary_contact_name: momoAccountName,
-        primary_contact_phone: cleanNumber
+        bank_code: momoProvider,
+        currency: 'GHS'
       },
       {
         headers: {
@@ -139,15 +111,17 @@ router.put('/update-momo', auth, checkRole('manager'), async (req, res) => {
       manager.momoProvider = momoProvider;
       manager.momoNumber = cleanNumber;
       manager.momoAccountName = momoAccountName;
+      manager.paystackSubaccountCode = response.data.data.recipient_code;
+      manager.paystackSubaccountId = response.data.data.id;
       await manager.save();
 
-      logger.info(`Subaccount updated for manager: ${manager.email}`);
+      logger.info(`Transfer recipient updated for manager: ${manager.email}`);
       res.json({ message: 'Mobile Money details updated successfully!' });
     } else {
-      throw new Error(response.data.message || 'Failed to update subaccount');
+      throw new Error(response.data.message || 'Failed to update transfer recipient');
     }
   } catch (err) {
-    logger.error('Subaccount update error:', err.response?.data || err.message);
+    logger.error('Transfer recipient update error:', err.response?.data || err.message);
     res.status(500).json({ 
       message: err.response?.data?.message || 'Failed to update Mobile Money details' 
     });
