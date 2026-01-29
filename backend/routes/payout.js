@@ -7,7 +7,7 @@ const User = require('../models/User');
 const logger = require('../config/logger');
 
 // Create Paystack Subaccount for Manager
-router.post('/setup-momo', auth, csrfProtection, checkRole('manager'), async (req, res) => {
+router.post('/setup-momo', auth, checkRole('manager'), async (req, res) => {
   try {
     const { momoProvider, momoNumber, momoAccountName } = req.body;
 
@@ -87,7 +87,7 @@ router.post('/setup-momo', auth, csrfProtection, checkRole('manager'), async (re
 });
 
 // Update Mobile Money Details
-router.put('/update-momo', auth, csrfProtection, checkRole('manager'), async (req, res) => {
+router.put('/update-momo', auth, checkRole('manager'), async (req, res) => {
   try {
     const { momoProvider, momoNumber, momoAccountName } = req.body;
 
