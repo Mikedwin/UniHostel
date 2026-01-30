@@ -877,8 +877,12 @@ app.get('/api/hostels', checkDBConnection, cacheMiddleware(300), async (req, res
  */
 app.post('/api/hostels', checkDBConnection, auth, checkRole('manager'), validateImageUpload, async (req, res) => {
   try {
+    console.log('=== HOSTEL CREATION START ===');
+    console.log('User ID:', req.user.id);
+    
     // Check if manager is verified
     const manager = await User.findById(req.user.id);
+    console.log('Manager found:', manager ? 'YES' : 'NO');
     if (!manager.isVerified || manager.accountStatus === 'pending_verification') {
       return res.status(403).json({ message: 'Your account is pending admin verification. You cannot create hostels yet.' });
     }
@@ -926,7 +930,9 @@ app.post('/api/hostels', checkDBConnection, auth, checkRole('manager'), validate
     console.log('Hostel created successfully with Cloudinary images:', savedHostel._id);
     res.status(201).json(savedHostel);
   } catch (err) {
-    console.error('Error creating hostel:', err);
+    console.error('=== HOSTEL CREATION ERROR ===');
+    console.error('Error message:', err.message);
+    console.error('Error stack:', err.stack);
     res.status(500).json({ message: err.message || 'Failed to create hostel' });
   }
 });
