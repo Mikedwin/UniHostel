@@ -162,21 +162,18 @@ const StudentDashboard = () => {
 
     const handleProceedToPayment = async (app) => {
         try {
-            // Debug: Log the application data
             console.log('Application data:', {
                 hostelFee: app.hostelFee,
                 adminCommission: app.adminCommission,
                 totalAmount: app.totalAmount
             });
             
-            // Calculate commission percentage for display
             const commissionPercent = app.hostelFee > 0 && app.adminCommission > 0 
                 ? ((app.adminCommission / app.hostelFee) * 100).toFixed(1) 
                 : '3.0';
             
             console.log('Commission percent:', commissionPercent);
             
-            // Show payment breakdown before proceeding
             const result = await Swal.fire({
                 title: 'Payment Breakdown',
                 html: `
@@ -222,8 +219,53 @@ const StudentDashboard = () => {
             );
             
             console.log('Payment response:', response.data);
-            const { authorizationUrl } = response.data;
-            window.location.href = authorizationUrl;
+            const { reference, totalAmount } = response.data;
+            
+            // Use Paystack inline popup instead of redirect
+            const handler = window.PaystackPop.setup({
+                key: 'pk_live_eb0f80d31cbab0aea6cbf905036e6b3a096d888c',
+                email: response.data.email || app.studentId?.email,
+                amount: totalAmount * 100,
+                ref: reference,
+                channels: ['card', 'mobile_money'],
+                onClose: function() {
+                    Swal.fire({
+                        title: 'Payment Cancelled',
+                        text: 'You closed the payment window',
+                        icon: 'info',
+                        confirmButtonColor: '#3b82f6'
+                    });
+                },
+                callback: async function(response) {
+                    console.log('Payment successful:', response);
+                    try {
+                        const verifyRes = await axios.get(
+                            `${API_URL}/api/payment/verify/${response.reference}`,
+                            { headers: { Authorization: `Bearer ${token}` } }
+                        );
+                        
+                        if (verifyRes.data.success) {
+                            await Swal.fire({
+                                title: 'Payment Successful!',
+                                text: 'Your payment has been confirmed. Awaiting final manager approval.',
+                                icon: 'success',
+                                confirmButtonColor: '#3b82f6'
+                            });
+                            fetchApps();
+                        }
+                    } catch (err) {
+                        console.error('Verification error:', err);
+                        Swal.fire({
+                            title: 'Verification Error',
+                            text: 'Payment may have succeeded but verification failed. Please check your dashboard.',
+                            icon: 'warning',
+                            confirmButtonColor: '#3b82f6'
+                        });
+                    }
+                }
+            });
+            
+            handler.openIframe();
         } catch (err) {
             console.error('Payment error:', err);
             const errorMsg = err.response?.data?.message || err.response?.data?.error || 'Payment initialization failed';

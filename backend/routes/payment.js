@@ -82,6 +82,7 @@ router.post('/initialize', auth, async (req, res) => {
       applicationId: application._id,
       authorizationUrl: paystackResponse.data.data.authorization_url,
       reference: paystackResponse.data.data.reference,
+      email: user.email,
       totalAmount,
       hostelFee,
       adminCommission,
