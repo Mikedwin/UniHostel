@@ -12,6 +12,7 @@ const InAppPasswordReset = () => {
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [userId, setUserId] = useState('');
+    const [userRole, setUserRole] = useState('student');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -24,6 +25,7 @@ const InAppPasswordReset = () => {
             const res = await axios.post(`${API_URL}/api/auth/reset-verify`, { email });
             setSecurityQuestion(res.data.securityQuestion);
             setUserId(res.data.userId);
+            setUserRole(res.data.role || 'student');
             setStep(2);
         } catch (err) {
             if (err.response?.data?.needsSetup) {
@@ -75,7 +77,7 @@ const InAppPasswordReset = () => {
                     <h2 className="text-2xl font-bold text-gray-900 mb-2">Password Reset Successful!</h2>
                     <p className="text-gray-600 mb-6">You can now login with your new password.</p>
                     <Link
-                        to="/student-login"
+                        to={userRole === 'manager' || userRole === 'admin' ? '/manager-login' : '/student-login'}
                         className="inline-block px-8 py-3 rounded-lg text-white font-semibold"
                         style={{ backgroundColor: '#23817A' }}
                     >

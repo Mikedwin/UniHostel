@@ -687,7 +687,8 @@ app.post('/api/auth/reset-verify', async (req, res) => {
     
     res.json({ 
       securityQuestion: user.securityQuestion,
-      userId: user._id 
+      userId: user._id,
+      role: user.role
     });
   } catch (err) {
     logger.error('Reset verify error:', err);
