@@ -215,7 +215,7 @@ app.get('/', (req, res) => {
     status: 'ok', 
     message: 'UniHostel API is running',
     timestamp: new Date().toISOString(),
-    version: '1.0.4-PRODUCTION-READY',
+    version: '1.0.5-CORS-FIX',
     documentation: '/api-docs',
     corsEnabled: true,
     database: dbConnected ? 'connected' : 'disconnected'
