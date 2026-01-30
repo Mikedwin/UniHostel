@@ -872,7 +872,7 @@ app.get('/api/hostels', checkDBConnection, cacheMiddleware(300), async (req, res
  *       403:
  *         description: Not authorized or unverified
  */
-app.post('/api/hostels', checkDBConnection, auth, csrfProtection, checkRole('manager'), validateImageUpload, async (req, res) => {
+app.post('/api/hostels', checkDBConnection, auth, checkRole('manager'), validateImageUpload, async (req, res) => {
   try {
     // Check if manager is verified
     const manager = await User.findById(req.user.id);
