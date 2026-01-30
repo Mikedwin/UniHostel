@@ -981,7 +981,7 @@ app.get('/api/hostels/:id', checkDBConnection, async (req, res) => {
     }
     
     const hostel = await Hostel.findById(req.params.id)
-      .select('name location hostelViewImage description roomTypes facilities isAvailable managerId createdAt')
+      .select('name location hostelViewImage hostelImages virtualTourUrl description roomTypes facilities isAvailable managerId createdAt')
       .populate('managerId', 'name email')
       .lean();
     
@@ -991,7 +991,7 @@ app.get('/api/hostels/:id', checkDBConnection, async (req, res) => {
     
     res.json(hostel);
   } catch (err) {
-    console.error('Error fetching hostel:', err);
+    console.error('Error fetching hostel:', err.message, err.stack);
     res.status(500).json({ error: 'Failed to fetch hostel' });
   }
 });
