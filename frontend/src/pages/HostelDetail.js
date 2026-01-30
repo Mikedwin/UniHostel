@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { MapPin, CheckCircle, MessageSquare, Wifi, Droplet, Zap, Shield, Car, Wind, Utensils, Tv, Users, Clock } from 'lucide-react';
+import { MapPin, CheckCircle, MessageSquare, Wifi, Droplet, Zap, Shield, Car, Wind, Utensils, Tv, Users, Clock, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import API_URL from '../config';
 import Swal from 'sweetalert2';
 import LoadingSpinner from '../components/LoadingSpinner';
+import ImageLightbox from '../components/ImageLightbox';
 
 const HostelDetail = () => {
   const { id } = useParams();
@@ -16,6 +17,7 @@ const HostelDetail = () => {
   const [loading, setLoading] = useState(true);
   const [appData, setAppData] = useState({ roomType: '', semester: 'First Semester', studentName: '', contactNumber: '' });
   const [applicationStats, setApplicationStats] = useState({});
+  const [lightbox, setLightbox] = useState({ open: false, images: [], currentIndex: 0 });
 
   useEffect(() => {
     const fetchHostel = async () => {
@@ -113,22 +115,60 @@ const HostelDetail = () => {
     return null;
   };
 
+  const openLightbox = (images, index = 0) => {
+    setLightbox({ open: true, images, currentIndex: index });
+  };
+
+  const closeLightbox = () => {
+    setLightbox({ open: false, images: [], currentIndex: 0 });
+  };
+
+  const navigateLightbox = (index) => {
+    setLightbox(prev => ({ ...prev, currentIndex: index }));
+  };
+
   if (loading) return <LoadingSpinner message="Loading hostel details..." fullScreen />;
   if (!hostel) return <div className="text-center py-20">Hostel not found.</div>;
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {lightbox.open && (
+        <ImageLightbox
+          images={lightbox.images}
+          currentIndex={lightbox.currentIndex}
+          onClose={closeLightbox}
+          onNavigate={navigateLightbox}
+        />
+      )}
       <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6 md:py-8">
         {/* Hostel View Image at the top */}
         <div className="mb-6 sm:mb-8 relative">
           <img 
             src={hostel.hostelViewImage || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=1200&q=80'} 
             alt={`${hostel.name} - Hostel View`} 
-            className="w-full h-48 sm:h-64 md:h-80 lg:h-96 object-cover rounded-lg sm:rounded-xl shadow-sm"
+            className="w-full h-48 sm:h-64 md:h-80 lg:h-96 object-cover rounded-lg sm:rounded-xl shadow-sm cursor-pointer hover:opacity-95 transition-opacity"
+            onClick={() => {
+              const allImages = hostel.hostelImages && hostel.hostelImages.length > 0 
+                ? hostel.hostelImages 
+                : [hostel.hostelViewImage || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=1200&q=80'];
+              openLightbox(allImages, 0);
+            }}
             key={hostel._id}
           />
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent rounded-b-lg sm:rounded-b-xl p-4 sm:p-6">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">{hostel.name}</h1>
+            {hostel.hostelImages && hostel.hostelImages.length > 1 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openLightbox(hostel.hostelImages, 0);
+                }}
+                className="mt-2 flex items-center gap-2 text-white bg-black bg-opacity-50 px-3 py-1 rounded-full text-sm hover:bg-opacity-70 transition-all"
+              >
+                <ImageIcon className="w-4 h-4" />
+                View all {hostel.hostelImages.length} photos
+              </button>
+            )}
           </div>
         </div>
         
@@ -145,6 +185,48 @@ const HostelDetail = () => {
                 <h2 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3">Description</h2>
                 <p className="text-sm sm:text-base text-gray-700 leading-relaxed">{hostel.description}</p>
               </div>
+
+              {/* Hostel Photo Gallery */}
+              {hostel.hostelImages && hostel.hostelImages.length > 0 && (
+                <div className="mb-4 sm:mb-6">
+                  <h2 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3">Photo Gallery</h2>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    {hostel.hostelImages.slice(0, 7).map((img, idx) => (
+                      <div
+                        key={idx}
+                        className="relative aspect-square cursor-pointer overflow-hidden rounded-lg hover:opacity-90 transition-opacity"
+                        onClick={() => openLightbox(hostel.hostelImages, idx)}
+                      >
+                        <img src={img} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                    {hostel.hostelImages.length > 7 && (
+                      <div
+                        className="relative aspect-square cursor-pointer overflow-hidden rounded-lg bg-gray-900 flex items-center justify-center hover:bg-gray-800 transition-colors"
+                        onClick={() => openLightbox(hostel.hostelImages, 7)}
+                      >
+                        <div className="text-white text-center">
+                          <ImageIcon className="w-8 h-8 mx-auto mb-1" />
+                          <p className="text-sm font-bold">+{hostel.hostelImages.length - 7}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Virtual Tour */}
+              {hostel.virtualTourUrl && (
+                <div className="mb-4 sm:mb-6">
+                  <h2 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3">360° Virtual Tour</h2>
+                  <iframe
+                    src={hostel.virtualTourUrl}
+                    className="w-full h-64 sm:h-96 rounded-lg"
+                    allowFullScreen
+                    title="Virtual Tour"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Available Room Types */}
@@ -162,11 +244,25 @@ const HostelDetail = () => {
                     
                     return (
                     <div key={index} className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                      <img 
-                        src={room.roomImage || 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=800&q=80'} 
-                        alt={room.type} 
-                        className="w-full h-48 object-cover"
-                      />
+                      <div className="relative">
+                        <img 
+                          src={room.roomImage || 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=800&q=80'} 
+                          alt={room.type} 
+                          className="w-full h-48 object-cover cursor-pointer hover:opacity-95 transition-opacity"
+                          onClick={() => {
+                            const roomImages = room.roomImages && room.roomImages.length > 0 
+                              ? room.roomImages 
+                              : [room.roomImage || 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=800&q=80'];
+                            openLightbox(roomImages, 0);
+                          }}
+                        />
+                        {room.roomImages && room.roomImages.length > 1 && (
+                          <div className="absolute top-2 right-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
+                            <ImageIcon className="w-3 h-3" />
+                            {room.roomImages.length}
+                          </div>
+                        )}
+                      </div>
                       <div className="p-4">
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="font-bold text-lg">{room.type}</h3>
@@ -272,11 +368,25 @@ const HostelDetail = () => {
                       
                       return (
                       <div key={index} className="flex-shrink-0 w-[85vw] border rounded-lg overflow-hidden shadow-md">
-                        <img 
-                          src={room.roomImage || 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=800&q=80'} 
-                          alt={room.type} 
-                          className="w-full h-48 object-cover"
-                        />
+                        <div className="relative">
+                          <img 
+                            src={room.roomImage || 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=800&q=80'} 
+                            alt={room.type} 
+                            className="w-full h-48 object-cover cursor-pointer hover:opacity-95 transition-opacity"
+                            onClick={() => {
+                              const roomImages = room.roomImages && room.roomImages.length > 0 
+                                ? room.roomImages 
+                                : [room.roomImage || 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=800&q=80'];
+                              openLightbox(roomImages, 0);
+                            }}
+                          />
+                          {room.roomImages && room.roomImages.length > 1 && (
+                            <div className="absolute top-2 right-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
+                              <ImageIcon className="w-3 h-3" />
+                              {room.roomImages.length}
+                            </div>
+                          )}
+                        </div>
                         <div className="p-4">
                           <div className="flex justify-between items-start mb-2">
                             <h3 className="font-bold text-lg">{room.type}</h3>
