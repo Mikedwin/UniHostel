@@ -9,7 +9,9 @@ const ManagerRegistrationForm = ({ token, onSuccess }) => {
         email: '',
         password: '',
         phone: '',
-        hostelName: ''
+        hostelName: '',
+        securityQuestion: 'What is your email address?',
+        securityAnswer: ''
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -42,7 +44,9 @@ const ManagerRegistrationForm = ({ token, onSuccess }) => {
                 email: '',
                 password: '',
                 phone: '',
-                hostelName: ''
+                hostelName: '',
+                securityQuestion: 'What is your email address?',
+                securityAnswer: ''
             });
 
             if (onSuccess) onSuccess();
@@ -168,6 +172,43 @@ const ManagerRegistrationForm = ({ token, onSuccess }) => {
                             className="w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             placeholder="Optional hostel name"
                         />
+                    </div>
+
+                    <div className="border-t pt-4">
+                        <h3 className="text-sm font-semibold text-gray-900 mb-3">Security Question (For Password Reset)</h3>
+                        
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Security Question *
+                            </label>
+                            <select
+                                required
+                                value={formData.securityQuestion}
+                                onChange={(e) => setFormData({ ...formData, securityQuestion: e.target.value })}
+                                className="w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                                <option value="What is your email address?">What is your email address?</option>
+                                <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
+                                <option value="What city were you born in?">What city were you born in?</option>
+                                <option value="What is your favorite color?">What is your favorite color?</option>
+                                <option value="What is your pet's name?">What is your pet's name?</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Security Answer *
+                            </label>
+                            <input
+                                type="text"
+                                required
+                                value={formData.securityAnswer}
+                                onChange={(e) => setFormData({ ...formData, securityAnswer: e.target.value })}
+                                className="w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Enter answer (case-insensitive)"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">This will be used for password recovery</p>
+                        </div>
                     </div>
 
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

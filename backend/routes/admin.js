@@ -802,7 +802,7 @@ router.post('/analytics/export', auth, checkAdmin, async (req, res) => {
 // MANAGER REGISTRATION BY ADMIN
 router.post('/managers/create', auth, checkAdmin, async (req, res) => {
   try {
-    const { name, email, password, phone, hostelName } = req.body;
+    const { name, email, password, phone, hostelName, securityQuestion, securityAnswer } = req.body;
     
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Name, email, and password are required' });
@@ -814,6 +814,8 @@ router.post('/managers/create', auth, checkAdmin, async (req, res) => {
     }
     
     const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedAnswer = securityAnswer ? await bcrypt.hash(securityAnswer.toLowerCase().trim(), 12) : null;
+    
     const newManager = new User({
       name,
       email,
@@ -822,7 +824,9 @@ router.post('/managers/create', auth, checkAdmin, async (req, res) => {
       phone,
       hostelName,
       isVerified: true,
-      accountStatus: 'active'
+      accountStatus: 'active',
+      securityQuestion: securityQuestion || 'What is your email address?',
+      securityAnswer: hashedAnswer || await bcrypt.hash(email.toLowerCase().trim(), 12)
     });
     
     await newManager.save();
