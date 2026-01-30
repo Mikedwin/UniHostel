@@ -474,6 +474,7 @@ const AdminDashboard = () => {
                                                 <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Hostels</th>
                                                 <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Applications</th>
                                                 <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
+                                                <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white divide-y divide-gray-200">
@@ -484,6 +485,14 @@ const AdminDashboard = () => {
                                                     <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">{manager.hostelCount}</td>
                                                     <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">{manager.applicationCount}</td>
                                                     <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">{new Date(manager.createdAt).toLocaleDateString()}</td>
+                                                    <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">
+                                                        <button 
+                                                            onClick={() => handleUserAction('delete', manager)}
+                                                            className="text-red-600 hover:text-red-800 hover:underline"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </td>
                                                 </tr>
                                             ))}
                                         </tbody>
