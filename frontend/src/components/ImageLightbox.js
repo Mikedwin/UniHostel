@@ -51,7 +51,12 @@ const ImageLightbox = ({ images, currentIndex, onClose, onNavigate }) => {
         <img
           src={images[currentIndex]}
           alt={`View ${currentIndex + 1}`}
-          className="max-w-full max-h-[90vh] object-contain mx-auto"
+          className="max-w-full max-h-[90vh] object-contain mx-auto cursor-pointer"
+          onClick={() => {
+            if (currentIndex < images.length - 1) {
+              onNavigate(currentIndex + 1);
+            }
+          }}
         />
         <div className="text-center text-white mt-4">
           {currentIndex + 1} / {images.length}
