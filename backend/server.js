@@ -38,6 +38,9 @@ const payoutRoutes = require('./routes/payout');
 
 const app = express();
 
+// Trust proxy - required for Railway/Heroku/production
+app.set('trust proxy', 1);
+
 // Create logs directory if it doesn't exist
 const logsDir = path.join(__dirname, 'logs');
 if (!fs.existsSync(logsDir)) {
