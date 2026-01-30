@@ -1,7 +1,28 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const ImageLightbox = ({ images, currentIndex, onClose, onNavigate }) => {
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
+
+  const handleTouchStart = (e) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStart - touchEnd > 50 && currentIndex < images.length - 1) {
+      // Swipe left - next image
+      onNavigate(currentIndex + 1);
+    }
+    if (touchStart - touchEnd < -50 && currentIndex > 0) {
+      // Swipe right - previous image
+      onNavigate(currentIndex - 1);
+    }
+  };
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') onClose();
@@ -57,6 +78,9 @@ const ImageLightbox = ({ images, currentIndex, onClose, onNavigate }) => {
               onNavigate(currentIndex + 1);
             }
           }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
         />
         <div className="text-center text-white mt-4">
           {currentIndex + 1} / {images.length}
