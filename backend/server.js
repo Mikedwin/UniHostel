@@ -457,7 +457,7 @@ app.get('/api/auth/verify-email/:token', async (req, res) => {
 app.post('/api/auth/login', validateInput, async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) return res.status(400).json({ message: 'User does not exist' });
 
     // Check if account is locked
