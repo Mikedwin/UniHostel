@@ -18,6 +18,8 @@ const AddHostel = () => {
     const [location, setLocation] = useState('');
     const [description, setDescription] = useState('');
     const [hostelViewImage, setHostelViewImage] = useState('');
+    const [hostelImages, setHostelImages] = useState([]);
+    const [virtualTourUrl, setVirtualTourUrl] = useState('');
     
     // Step 2: Room Types
     const [roomTypes, setRoomTypes] = useState([]);
@@ -25,6 +27,8 @@ const AddHostel = () => {
         type: '1 in a Room',
         price: '',
         roomImage: '',
+        roomImages: [],
+        virtualTourUrl: '',
         facilities: [],
         totalCapacity: ''
     });
@@ -75,6 +79,8 @@ const AddHostel = () => {
             type: '1 in a Room',
             price: '',
             roomImage: '',
+            roomImages: [],
+            virtualTourUrl: '',
             facilities: [],
             totalCapacity: ''
         });
@@ -105,6 +111,8 @@ const AddHostel = () => {
                 location: location.trim(),
                 description: description.trim(),
                 hostelViewImage,
+                hostelImages,
+                virtualTourUrl: virtualTourUrl.trim(),
                 roomTypes
             };
             
@@ -239,6 +247,71 @@ const AddHostel = () => {
                                     </div>
                                 )}
                             </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Additional Hostel Photos (Optional)
+                                </label>
+                                <p className="text-xs text-gray-500 mb-3">
+                                    📸 Upload multiple photos of your hostel (common areas, facilities, etc.)
+                                </p>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    onChange={async (e) => {
+                                        const files = Array.from(e.target.files);
+                                        if (files.length > 0) {
+                                            const newImages = [];
+                                            for (const file of files) {
+                                                const compressed = await compressImage(file);
+                                                const reader = new FileReader();
+                                                await new Promise((resolve) => {
+                                                    reader.onload = (event) => {
+                                                        newImages.push(event.target.result);
+                                                        resolve();
+                                                    };
+                                                    reader.readAsDataURL(compressed);
+                                                });
+                                            }
+                                            setHostelImages([...hostelImages, ...newImages]);
+                                        }
+                                    }}
+                                    className="w-full border-2 border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-blue-500 mb-3 text-base file:mr-4 file:py-3 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                />
+                                {hostelImages.length > 0 && (
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {hostelImages.map((img, idx) => (
+                                            <div key={idx} className="relative group border rounded-lg overflow-hidden">
+                                                <img src={img} alt={`Hostel ${idx + 1}`} className="w-full h-24 object-cover" />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setHostelImages(hostelImages.filter((_, i) => i !== idx))}
+                                                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 shadow-lg"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    360° Virtual Tour URL (Optional)
+                                </label>
+                                <p className="text-xs text-gray-500 mb-3">
+                                    🌐 Paste a link to your 360° virtual tour (e.g., Matterport, Google Street View)
+                                </p>
+                                <input 
+                                    type="url" 
+                                    className="w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-blue-500" 
+                                    placeholder="https://..."
+                                    value={virtualTourUrl}
+                                    onChange={e => setVirtualTourUrl(e.target.value)}
+                                />
+                            </div>
                             
                             <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-4">
                                 <button 
@@ -360,6 +433,68 @@ const AddHostel = () => {
                                                 </button>
                                             </div>
                                         )}
+                                    </div>
+
+                                    <div className="mb-4">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Additional Room Photos (Optional)
+                                        </label>
+                                        <p className="text-xs text-gray-500 mb-2">
+                                            📸 Upload multiple photos of this room type
+                                        </p>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            multiple
+                                            onChange={async (e) => {
+                                                const files = Array.from(e.target.files);
+                                                if (files.length > 0) {
+                                                    const newImages = [];
+                                                    for (const file of files) {
+                                                        const compressed = await compressImage(file);
+                                                        const reader = new FileReader();
+                                                        await new Promise((resolve) => {
+                                                            reader.onload = (event) => {
+                                                                newImages.push(event.target.result);
+                                                                resolve();
+                                                            };
+                                                            reader.readAsDataURL(compressed);
+                                                        });
+                                                    }
+                                                    setCurrentRoom({...currentRoom, roomImages: [...currentRoom.roomImages, ...newImages]});
+                                                }
+                                            }}
+                                            className="w-full border-2 border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-blue-500 mb-2 bg-white text-base file:mr-4 file:py-3 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                        />
+                                        {currentRoom.roomImages.length > 0 && (
+                                            <div className="grid grid-cols-4 gap-2">
+                                                {currentRoom.roomImages.map((img, idx) => (
+                                                    <div key={idx} className="relative group border rounded-lg overflow-hidden">
+                                                        <img src={img} alt={`Room ${idx + 1}`} className="w-full h-20 object-cover" />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setCurrentRoom({...currentRoom, roomImages: currentRoom.roomImages.filter((_, i) => i !== idx)})}
+                                                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 shadow-lg"
+                                                        >
+                                                            <X className="w-3 h-3" />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="mb-4">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            360° Virtual Tour URL (Optional)
+                                        </label>
+                                        <input 
+                                            type="url" 
+                                            className="w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-blue-500" 
+                                            placeholder="https://..."
+                                            value={currentRoom.virtualTourUrl}
+                                            onChange={e => setCurrentRoom({...currentRoom, virtualTourUrl: e.target.value})}
+                                        />
                                     </div>
                                     
                                     {/* Facilities */}
