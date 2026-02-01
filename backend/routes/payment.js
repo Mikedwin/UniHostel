@@ -90,9 +90,13 @@ router.post('/initialize', auth, async (req, res) => {
       }
     };
 
-    // NOTE: Split payment disabled - managers will receive manual payouts
-    // Paystack subaccounts require proper setup which we haven't implemented yet
-    console.log('Payment without split - manual payout will be processed later');
+    // Add split payment if manager has valid Paystack subaccount
+    if (manager.paystackSubaccountCode && manager.payoutEnabled && manager.paystackSubaccountCode.startsWith('ACCT_')) {
+      paymentData.subaccount = manager.paystackSubaccountCode;
+      console.log('Split payment enabled for manager:', manager.email, 'Subaccount:', manager.paystackSubaccountCode);
+    } else {
+      console.log('No valid subaccount - payment goes to main account');
+    }
 
     console.log('Calling Paystack API...');
     console.log('Payment data:', JSON.stringify(paymentData, null, 2));
@@ -126,7 +130,7 @@ router.post('/initialize', auth, async (req, res) => {
       totalAmount,
       hostelFee,
       adminCommission,
-      splitPaymentEnabled: false // Manual payouts for now
+      splitPaymentEnabled: !!(manager.paystackSubaccountCode && manager.paystackSubaccountCode.startsWith('ACCT_'))
     });
   } catch (error) {
     console.error('=== PAYMENT INITIALIZATION ERROR ===');

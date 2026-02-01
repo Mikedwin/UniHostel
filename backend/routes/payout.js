@@ -5,7 +5,42 @@ const { auth, checkRole } = require('../middleware/auth');
 const User = require('../models/User');
 const logger = require('../config/logger');
 
-// Store Mobile Money details for manual payouts
+// Create Paystack Subaccount
+const createPaystackSubaccount = async (businessName, accountNumber, bankCode, percentageCharge) => {
+  try {
+    const response = await axios.post(
+      'https://api.paystack.co/subaccount',
+      {
+        business_name: businessName,
+        settlement_bank: bankCode,
+        account_number: accountNumber,
+        percentage_charge: percentageCharge
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    return response.data.data;
+  } catch (error) {
+    logger.error('Paystack subaccount creation error:', error.response?.data);
+    throw error;
+  }
+};
+
+// Get bank code from Mobile Money provider
+const getBankCode = (provider) => {
+  const bankCodes = {
+    'MTN': 'MTN',
+    'Vodafone': 'VDF',
+    'AirtelTigo': 'ATL'
+  };
+  return bankCodes[provider] || 'MTN';
+};
+
+// Store Mobile Money details and create Paystack subaccount
 router.post('/setup-momo', auth, checkRole('manager'), async (req, res) => {
   try {
     const { momoProvider, momoNumber, momoAccountName } = req.body;
@@ -25,20 +60,50 @@ router.post('/setup-momo', auth, checkRole('manager'), async (req, res) => {
       return res.status(404).json({ message: 'Manager not found' });
     }
 
-    // Store Mobile Money details
-    manager.momoProvider = momoProvider;
-    manager.momoNumber = cleanNumber;
-    manager.momoAccountName = momoAccountName;
-    manager.payoutEnabled = true;
-    manager.paystackSubaccountCode = `MOMO_${manager._id}`;
-    await manager.save();
-
-    logger.info(`Mobile Money details saved for manager: ${manager.email}`);
+    // Create Paystack subaccount
+    logger.info(`Creating Paystack subaccount for manager: ${manager.email}`);
     
-    res.json({ 
-      message: 'Mobile Money setup successful! Your payout details have been saved.',
-      info: 'When students pay, you will receive your share (97%) directly to this Mobile Money number within 24 hours.'
-    });
+    const commissionPercent = parseFloat(process.env.ADMIN_COMMISSION_PERCENT) || 10;
+    const bankCode = getBankCode(momoProvider);
+    
+    try {
+      const subaccount = await createPaystackSubaccount(
+        momoAccountName,
+        cleanNumber,
+        bankCode,
+        commissionPercent // Platform takes this percentage
+      );
+      
+      // Store subaccount details
+      manager.momoProvider = momoProvider;
+      manager.momoNumber = cleanNumber;
+      manager.momoAccountName = momoAccountName;
+      manager.payoutEnabled = true;
+      manager.paystackSubaccountCode = subaccount.subaccount_code;
+      await manager.save();
+
+      logger.info(`Paystack subaccount created: ${subaccount.subaccount_code}`);
+      
+      res.json({ 
+        message: 'Mobile Money setup successful! Automatic payouts enabled.',
+        info: `When students pay, you automatically receive ${100 - commissionPercent}% directly to your Mobile Money within 24 hours.`,
+        subaccountCode: subaccount.subaccount_code
+      });
+    } catch (paystackError) {
+      logger.error('Paystack API error:', paystackError.response?.data);
+      
+      // If subaccount creation fails, still save details for manual processing
+      manager.momoProvider = momoProvider;
+      manager.momoNumber = cleanNumber;
+      manager.momoAccountName = momoAccountName;
+      manager.payoutEnabled = false;
+      await manager.save();
+      
+      return res.status(500).json({ 
+        message: 'Mobile Money details saved, but automatic payout setup failed. Contact support.',
+        error: paystackError.response?.data?.message || 'Paystack API error'
+      });
+    }
   } catch (err) {
     logger.error('Mobile Money setup error:', err);
     res.status(500).json({ 
