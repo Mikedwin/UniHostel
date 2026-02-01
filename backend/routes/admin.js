@@ -802,10 +802,14 @@ router.post('/analytics/export', auth, checkAdmin, async (req, res) => {
 // MANAGER REGISTRATION BY ADMIN
 router.post('/managers/create', auth, checkAdmin, async (req, res) => {
   try {
-    const { name, email, password, phone, hostelName, securityQuestion, securityAnswer } = req.body;
+    const { name, email, password, phone, hostelName, securityQuestion, securityAnswer, paystackSubaccountCode } = req.body;
     
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Name, email, and password are required' });
+    }
+    
+    if (paystackSubaccountCode && !paystackSubaccountCode.startsWith('ACCT_')) {
+      return res.status(400).json({ error: 'Invalid subaccount code format. Must start with ACCT_' });
     }
     
     const existingUser = await User.findOne({ email });
@@ -826,11 +830,13 @@ router.post('/managers/create', auth, checkAdmin, async (req, res) => {
       isVerified: true,
       accountStatus: 'active',
       securityQuestion: securityQuestion || 'What is your email address?',
-      securityAnswer: hashedAnswer || await bcrypt.hash(email.toLowerCase().trim(), 12)
+      securityAnswer: hashedAnswer || await bcrypt.hash(email.toLowerCase().trim(), 12),
+      paystackSubaccountCode: paystackSubaccountCode || null,
+      payoutEnabled: paystackSubaccountCode ? true : false
     });
     
     await newManager.save();
-    await logAdminAction(req.user.id, 'CREATE_MANAGER', 'user', newManager._id, `Created manager account: ${name} (${email})`);
+    await logAdminAction(req.user.id, 'CREATE_MANAGER', 'user', newManager._id, `Created manager account: ${name} (${email})${paystackSubaccountCode ? ' with subaccount: ' + paystackSubaccountCode : ''}`);
     
     res.status(201).json({ 
       message: 'Manager account created successfully', 
@@ -839,7 +845,9 @@ router.post('/managers/create', auth, checkAdmin, async (req, res) => {
         name: newManager.name, 
         email: newManager.email,
         phone: newManager.phone,
-        hostelName: newManager.hostelName
+        hostelName: newManager.hostelName,
+        paystackSubaccountCode: newManager.paystackSubaccountCode,
+        payoutEnabled: newManager.payoutEnabled
       } 
     });
   } catch (err) {
