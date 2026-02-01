@@ -75,8 +75,7 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
-  exposedHeaders: ['X-CSRF-Token']
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.options('*', cors());
@@ -218,7 +217,7 @@ app.get('/', (req, res) => {
     status: 'ok', 
     message: 'UniHostel API is running',
     timestamp: new Date().toISOString(),
-    version: '1.0.6-CSRF-REMOVED',
+    version: '1.0.7-NO-CSRF',
     documentation: '/api-docs',
     corsEnabled: true,
     database: dbConnected ? 'connected' : 'disconnected'

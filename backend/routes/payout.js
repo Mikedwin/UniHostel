@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const { auth, checkRole } = require('../middleware/auth');
-const { csrfProtection } = require('../middleware/csrf');
 const User = require('../models/User');
 const logger = require('../config/logger');
 
