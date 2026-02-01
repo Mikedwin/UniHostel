@@ -77,6 +77,7 @@ router.post('/initialize', auth, async (req, res) => {
     const paymentData = {
       email: user.email,
       amount: Math.round(totalAmount * 100), // Convert to kobo and ensure integer
+      currency: 'GHS', // Ghana Cedis
       reference: `UNI-${application._id}-${Date.now()}`,
       callback_url: `${process.env.FRONTEND_URL}/payment/verify`,
       channels: ['card', 'mobile_money'],

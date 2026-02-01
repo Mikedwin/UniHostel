@@ -232,6 +232,7 @@ const StudentDashboard = () => {
                 key: 'pk_live_eb0f80d31cbab0aea6cbf905036e6b3a096d888c',
                 email: response.data.email || updatedApp.studentId?.email || app.studentId?.email,
                 amount: totalAmount * 100,
+                currency: 'GHS',
                 ref: reference,
                 channels: ['card', 'mobile_money'],
                 onClose: function() {
