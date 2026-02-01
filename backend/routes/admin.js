@@ -889,4 +889,53 @@ router.post('/students/create', auth, checkAdmin, async (req, res) => {
   }
 });
 
+// UPDATE MANAGER'S PAYSTACK SUBACCOUNT CODE
+router.patch('/managers/:id/subaccount', auth, checkAdmin, async (req, res) => {
+  try {
+    const { paystackSubaccountCode } = req.body;
+    
+    if (!paystackSubaccountCode) {
+      return res.status(400).json({ error: 'Paystack subaccount code is required' });
+    }
+    
+    if (!paystackSubaccountCode.startsWith('ACCT_')) {
+      return res.status(400).json({ error: 'Invalid subaccount code format. Must start with ACCT_' });
+    }
+    
+    const manager = await User.findById(req.params.id);
+    if (!manager) {
+      return res.status(404).json({ error: 'Manager not found' });
+    }
+    
+    if (manager.role !== 'manager') {
+      return res.status(400).json({ error: 'User is not a manager' });
+    }
+    
+    manager.paystackSubaccountCode = paystackSubaccountCode;
+    manager.payoutEnabled = true;
+    await manager.save();
+    
+    await logAdminAction(
+      req.user.id, 
+      'UPDATE_SUBACCOUNT', 
+      'user', 
+      manager._id, 
+      `Updated Paystack subaccount for ${manager.name}: ${paystackSubaccountCode}`
+    );
+    
+    res.json({ 
+      message: 'Subaccount code updated successfully', 
+      manager: { 
+        id: manager._id, 
+        name: manager.name, 
+        email: manager.email,
+        paystackSubaccountCode: manager.paystackSubaccountCode,
+        payoutEnabled: manager.payoutEnabled
+      } 
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
