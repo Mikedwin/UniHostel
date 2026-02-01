@@ -242,24 +242,23 @@ const StudentDashboard = () => {
                         confirmButtonColor: '#3b82f6'
                     });
                 },
-                callback: async function(response) {
+                callback: function(response) {
                     console.log('Payment successful:', response);
-                    try {
-                        const verifyRes = await axios.get(
-                            `${API_URL}/api/payment/verify/${response.reference}`,
-                            { headers: { Authorization: `Bearer ${token}` } }
-                        );
-                        
+                    axios.get(
+                        `${API_URL}/api/payment/verify/${response.reference}`,
+                        { headers: { Authorization: `Bearer ${token}` } }
+                    ).then(verifyRes => {
                         if (verifyRes.data.success) {
-                            await Swal.fire({
+                            Swal.fire({
                                 title: 'Payment Successful!',
                                 text: 'Your payment has been confirmed. Awaiting final manager approval.',
                                 icon: 'success',
                                 confirmButtonColor: '#3b82f6'
+                            }).then(() => {
+                                fetchApps();
                             });
-                            fetchApps();
                         }
-                    } catch (err) {
+                    }).catch(err => {
                         console.error('Verification error:', err);
                         Swal.fire({
                             title: 'Verification Error',
@@ -267,7 +266,7 @@ const StudentDashboard = () => {
                             icon: 'warning',
                             confirmButtonColor: '#3b82f6'
                         });
-                    }
+                    });
                 }
             });
             
