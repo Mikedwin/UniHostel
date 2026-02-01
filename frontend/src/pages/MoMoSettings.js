@@ -24,12 +24,10 @@ const MoMoSettings = () => {
   const fetchMoMoDetails = async () => {
     try {
       const token = localStorage.getItem('token');
-      const csrfToken = localStorage.getItem('csrfToken');
       
       const response = await axios.get(`${API_URL}/api/payout/momo-details`, {
         headers: {
-          Authorization: `Bearer ${token}`,
-          'X-CSRF-Token': csrfToken
+          Authorization: `Bearer ${token}`
         }
       });
 
@@ -62,7 +60,6 @@ const MoMoSettings = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const csrfToken = localStorage.getItem('csrfToken');
       
       const endpoint = hasSetup ? '/api/payout/update-momo' : '/api/payout/setup-momo';
       
@@ -71,8 +68,7 @@ const MoMoSettings = () => {
         url: `${API_URL}${endpoint}`,
         data: formData,
         headers: {
-          Authorization: `Bearer ${token}`,
-          'X-CSRF-Token': csrfToken
+          Authorization: `Bearer ${token}`
         }
       });
 

@@ -20,7 +20,7 @@ const User = require('./models/User');
 const Hostel = require('./models/Hostel');
 const Application = require('./models/Application');
 const { auth, checkRole } = require('./middleware/auth');
-const { generateCsrfToken, csrfProtection, invalidateCsrfToken } = require('./middleware/csrf');
+
 const { validateImageUpload } = require('./middleware/imageValidation');
 const { cacheMiddleware } = require('./middleware/cache');
 const { scheduleDataRetentionCleanup } = require('./services/dataRetention');
@@ -277,8 +277,8 @@ app.use('/api/auth', authRoutes);
 // Payment routes - NO CSRF (already has JWT auth)
 app.use('/api/payment', auth, paymentRoutes);
 
-// Transaction routes - CSRF protected
-app.use('/api/transactions', auth, csrfProtection, transactionRoutes);
+// Transaction routes
+app.use('/api/transactions', auth, transactionRoutes);
 
 // Backup routes
 app.use('/api/backup', backupRoutes);
@@ -557,14 +557,10 @@ app.post('/api/auth/login', validateInput, async (req, res) => {
       { expiresIn: '30d', algorithm: 'HS256' }
     );
     
-    // Generate CSRF token
-    const csrfToken = generateCsrfToken(user._id.toString());
-    
     logger.info(`Successful login for user: ${user.email}`);
     
     res.json({ 
-      token, 
-      csrfToken,
+      token,
       user: { id: user._id, name: user.name, email: user.email, role: user.role },
       passwordResetRequired: user.passwordResetRequired
     });
@@ -647,7 +643,7 @@ app.post('/api/auth/reset-password/:token', async (req, res) => {
 });
 
 // Change password (authenticated)
-app.post('/api/auth/change-password', auth, csrfProtection, async (req, res) => {
+app.post('/api/auth/change-password', auth, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
     
@@ -748,7 +744,7 @@ app.post('/api/auth/reset-with-security', async (req, res) => {
 });
 
 // Set security question (authenticated)
-app.post('/api/auth/set-security-question', auth, csrfProtection, async (req, res) => {
+app.post('/api/auth/set-security-question', auth, async (req, res) => {
   try {
     const { securityQuestion, securityAnswer } = req.body;
     
@@ -1083,7 +1079,7 @@ app.put('/api/hostels/:id', checkDBConnection, auth, checkRole('manager'), valid
   }
 });
 
-app.delete('/api/hostels/:id', checkDBConnection, auth, csrfProtection, checkRole('manager'), async (req, res) => {
+app.delete('/api/hostels/:id', checkDBConnection, auth, checkRole('manager'), async (req, res) => {
   try {
     if (!isValidObjectId(req.params.id)) {
       return res.status(400).json({ message: 'Invalid hostel ID' });
@@ -1143,7 +1139,7 @@ app.delete('/api/hostels/:id', checkDBConnection, auth, csrfProtection, checkRol
  *               $ref: '#/components/schemas/Application'
  */
 // Step 1: Student applies (no payment yet)
-app.post('/api/applications', checkDBConnection, auth, csrfProtection, checkRole('student'), async (req, res) => {
+app.post('/api/applications', checkDBConnection, auth, checkRole('student'), async (req, res) => {
   try {
     const { hostelId, roomType, semester, studentName, contactNumber } = req.body;
     
@@ -1315,7 +1311,7 @@ app.get('/api/applications/hostel/:hostelId/stats', checkDBConnection, async (re
 });
 
 // Step 2 & 6: Manager approves for payment OR final approval
-app.patch('/api/applications/:id/status', checkDBConnection, auth, csrfProtection, checkRole('manager'), async (req, res) => {
+app.patch('/api/applications/:id/status', checkDBConnection, auth, checkRole('manager'), async (req, res) => {
   try {
     if (!isValidObjectId(req.params.id)) {
       return res.status(400).json({ error: 'Invalid application ID' });
@@ -1430,7 +1426,7 @@ app.patch('/api/applications/:id/status', checkDBConnection, auth, csrfProtectio
   }
 });
 
-app.delete('/api/applications/:id', checkDBConnection, auth, csrfProtection, checkRole('student'), async (req, res) => {
+app.delete('/api/applications/:id', checkDBConnection, auth, checkRole('student'), async (req, res) => {
     try {
         if (!isValidObjectId(req.params.id)) {
             return res.status(400).json({ message: 'Invalid application ID' });
@@ -1513,7 +1509,7 @@ app.patch('/api/applications/:id/recalculate', checkDBConnection, auth, async (r
 });
 
 // Archive/Unarchive application (Manager or Student)
-app.patch('/api/applications/:id/archive', checkDBConnection, auth, csrfProtection, async (req, res) => {
+app.patch('/api/applications/:id/archive', checkDBConnection, auth, async (req, res) => {
   try {
     if (!isValidObjectId(req.params.id)) {
       return res.status(400).json({ error: 'Invalid application ID' });
