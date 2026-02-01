@@ -274,14 +274,32 @@ const StudentDashboard = () => {
             handler.openIframe();
         } catch (err) {
             console.error('Payment error:', err);
+            console.error('Error response:', err.response);
+            console.error('Error data:', err.response?.data);
+            
             const errorMsg = err.response?.data?.message || err.response?.data?.error || 'Payment initialization failed';
+            const errorDetails = err.response?.data?.details || '';
+            const errorHint = err.response?.data?.hint || '';
+            
+            let fullErrorMsg = errorMsg;
+            if (errorDetails) {
+                fullErrorMsg += `\n\nDetails: ${JSON.stringify(errorDetails)}`;
+            }
+            if (errorHint) {
+                fullErrorMsg += `\n\n${errorHint}`;
+            }
             
             Swal.fire({
                 title: 'Payment Error',
-                text: errorMsg,
+                html: `<div style="text-align: left;">
+                    <p><strong>Error:</strong> ${errorMsg}</p>
+                    ${errorDetails ? `<p style="margin-top: 10px;"><strong>Details:</strong><br/><pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; font-size: 12px; overflow-x: auto;">${JSON.stringify(errorDetails, null, 2)}</pre></p>` : ''}
+                    ${errorHint ? `<p style="margin-top: 10px; color: #666;"><em>${errorHint}</em></p>` : ''}
+                </div>`,
                 icon: 'error',
                 confirmButtonColor: '#3b82f6',
-                confirmButtonText: 'OK'
+                confirmButtonText: 'OK',
+                width: '600px'
             });
         }
     };
