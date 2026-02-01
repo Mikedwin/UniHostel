@@ -12,36 +12,71 @@ const logger = require('../config/logger');
 // Step 4: Initialize payment (only for approved_for_payment applications)
 router.post('/initialize', auth, async (req, res) => {
   try {
-    console.log('Payment initialization request:', { applicationId: req.body.applicationId, userId: req.user.id });
+    console.log('=== PAYMENT INITIALIZATION START ===');
+    console.log('Request body:', req.body);
+    console.log('User ID:', req.user.id);
+    
     const { applicationId } = req.body;
 
+    if (!applicationId) {
+      console.error('No applicationId provided');
+      return res.status(400).json({ message: 'Application ID is required' });
+    }
+
     const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user) {
+      console.error('User not found:', req.user.id);
+      return res.status(404).json({ message: 'User not found' });
+    }
+    console.log('User found:', user.email);
 
     const application = await Application.findById(applicationId).populate('hostelId');
     if (!application) {
-      console.log('Application not found:', applicationId);
+      console.error('Application not found:', applicationId);
       return res.status(404).json({ message: 'Application not found' });
     }
-    
+    console.log('Application found:', application._id);
     console.log('Application status:', application.status);
+    console.log('Payment status:', application.paymentStatus);
+    
     if (application.status !== 'approved_for_payment') {
+      console.error('Invalid application status:', application.status);
       return res.status(400).json({ message: 'Application must be approved by manager before payment' });
     }
     
     if (application.paymentStatus === 'paid') {
+      console.error('Application already paid');
       return res.status(400).json({ message: 'Application already paid' });
     }
 
     const hostel = application.hostelId;
+    if (!hostel) {
+      console.error('Hostel not found for application');
+      return res.status(404).json({ message: 'Hostel not found' });
+    }
+    
     const { totalAmount, hostelFee, adminCommission } = application;
-    console.log('Payment details:', { totalAmount, hostelFee, adminCommission });
+    console.log('Payment amounts:', { totalAmount, hostelFee, adminCommission });
+    
+    // Validate payment amounts
+    if (!totalAmount || totalAmount <= 0) {
+      console.error('Invalid total amount:', totalAmount);
+      return res.status(400).json({ 
+        message: 'Invalid payment amount. Please contact support.',
+        debug: { totalAmount, hostelFee, adminCommission }
+      });
+    }
 
     // Get manager's subaccount for split payment
     const manager = await User.findById(hostel.managerId);
+    if (!manager) {
+      console.error('Manager not found:', hostel.managerId);
+      return res.status(404).json({ message: 'Hostel manager not found' });
+    }
+    
     const paymentData = {
       email: user.email,
-      amount: totalAmount * 100,
+      amount: Math.round(totalAmount * 100), // Convert to kobo and ensure integer
       reference: `UNI-${application._id}-${Date.now()}`,
       callback_url: `${process.env.FRONTEND_URL}/payment/verify`,
       channels: ['card', 'mobile_money'],
@@ -50,8 +85,8 @@ router.post('/initialize', auth, async (req, res) => {
         hostelName: hostel.name,
         roomType: application.roomType,
         semester: application.semester,
-        hostelFee,
-        adminCommission
+        hostelFee: hostelFee,
+        adminCommission: adminCommission
       }
     };
 
@@ -61,8 +96,10 @@ router.post('/initialize', auth, async (req, res) => {
       console.log('Split payment enabled for manager:', manager.email);
     }
 
+    console.log('Calling Paystack API...');
+    console.log('Payment data:', JSON.stringify(paymentData, null, 2));
+    
     // Initialize Paystack payment
-    console.log('Calling Paystack API with email:', user.email);
     const paystackResponse = await axios.post(
       'https://api.paystack.co/transaction/initialize',
       paymentData,
@@ -70,14 +107,19 @@ router.post('/initialize', auth, async (req, res) => {
         headers: {
           Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
           'Content-Type': 'application/json'
-        }
+        },
+        timeout: 30000 // 30 second timeout
       }
     );
-    console.log('Paystack response received:', paystackResponse.data);
+    
+    console.log('Paystack response status:', paystackResponse.status);
+    console.log('Paystack response data:', paystackResponse.data);
 
     application.paymentReference = paystackResponse.data.data.reference;
     await application.save();
+    console.log('Payment reference saved:', application.paymentReference);
 
+    console.log('=== PAYMENT INITIALIZATION SUCCESS ===');
     res.json({
       applicationId: application._id,
       authorizationUrl: paystackResponse.data.data.authorization_url,
@@ -89,16 +131,24 @@ router.post('/initialize', auth, async (req, res) => {
       splitPaymentEnabled: !!manager.paystackSubaccountCode
     });
   } catch (error) {
-    console.error('Payment initialization error:', {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status,
-      stack: error.stack
-    });
+    console.error('=== PAYMENT INITIALIZATION ERROR ===');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    
+    if (error.response) {
+      console.error('Paystack error response:', {
+        status: error.response.status,
+        data: error.response.data,
+        headers: error.response.headers
+      });
+    }
+    
     res.status(500).json({ 
       message: 'Payment initialization failed', 
       error: error.message,
-      details: error.response?.data 
+      details: error.response?.data,
+      hint: 'Check Railway logs for detailed error information'
     });
   }
 });
