@@ -90,11 +90,9 @@ router.post('/initialize', auth, async (req, res) => {
       }
     };
 
-    // Add split payment if manager has Mobile Money setup
-    if (manager.paystackSubaccountCode && manager.payoutEnabled) {
-      paymentData.subaccount = manager.paystackSubaccountCode;
-      console.log('Split payment enabled for manager:', manager.email);
-    }
+    // NOTE: Split payment disabled - managers will receive manual payouts
+    // Paystack subaccounts require proper setup which we haven't implemented yet
+    console.log('Payment without split - manual payout will be processed later');
 
     console.log('Calling Paystack API...');
     console.log('Payment data:', JSON.stringify(paymentData, null, 2));
@@ -128,7 +126,7 @@ router.post('/initialize', auth, async (req, res) => {
       totalAmount,
       hostelFee,
       adminCommission,
-      splitPaymentEnabled: !!manager.paystackSubaccountCode
+      splitPaymentEnabled: false // Manual payouts for now
     });
   } catch (error) {
     console.error('=== PAYMENT INITIALIZATION ERROR ===');
