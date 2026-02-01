@@ -281,14 +281,6 @@ const StudentDashboard = () => {
             const errorDetails = err.response?.data?.details || '';
             const errorHint = err.response?.data?.hint || '';
             
-            let fullErrorMsg = errorMsg;
-            if (errorDetails) {
-                fullErrorMsg += `\n\nDetails: ${JSON.stringify(errorDetails)}`;
-            }
-            if (errorHint) {
-                fullErrorMsg += `\n\n${errorHint}`;
-            }
-            
             Swal.fire({
                 title: 'Payment Error',
                 html: `<div style="text-align: left;">
