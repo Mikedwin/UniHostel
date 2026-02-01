@@ -274,8 +274,8 @@ app.use('/api/admin', adminRoutes);
 // Auth routes
 app.use('/api/auth', authRoutes);
 
-// Payment routes - CSRF protected
-app.use('/api/payment', auth, csrfProtection, paymentRoutes);
+// Payment routes - NO CSRF (already has JWT auth)
+app.use('/api/payment', auth, paymentRoutes);
 
 // Transaction routes - CSRF protected
 app.use('/api/transactions', auth, csrfProtection, transactionRoutes);
