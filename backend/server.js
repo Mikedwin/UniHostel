@@ -224,6 +224,37 @@ app.get('/', (req, res) => {
   });
 });
 
+// ONE-TIME: Update manager subaccount - DELETE AFTER USE
+app.get('/update-subaccount-now', async (req, res) => {
+  try {
+    const manager = await User.findOne({ 
+      email: '3mikedwin@gmail.com', 
+      role: 'manager' 
+    });
+
+    if (!manager) {
+      return res.json({ error: 'Manager not found' });
+    }
+
+    manager.paystackSubaccountCode = 'ACCT_os10xo60waln5n7';
+    manager.payoutEnabled = true;
+    await manager.save();
+
+    res.json({ 
+      success: true,
+      message: '✅ Subaccount updated successfully!',
+      manager: {
+        name: manager.name,
+        email: manager.email,
+        subaccountCode: manager.paystackSubaccountCode,
+        payoutEnabled: manager.payoutEnabled
+      }
+    });
+  } catch (error) {
+    res.json({ error: error.message });
+  }
+});
+
 // API Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
