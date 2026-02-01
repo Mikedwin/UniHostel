@@ -162,42 +162,48 @@ const StudentDashboard = () => {
 
     const handleProceedToPayment = async (app) => {
         try {
-            console.log('Application data:', {
-                hostelFee: app.hostelFee,
-                adminCommission: app.adminCommission,
-                totalAmount: app.totalAmount
+            // First, recalculate payment amounts to ensure they're up to date
+            console.log('Recalculating payment amounts...');
+            const recalcResponse = await axios.patch(
+                `${API_URL}/api/applications/${app._id}/recalculate`,
+                {},
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            
+            const updatedApp = recalcResponse.data.application;
+            console.log('Updated application data:', {
+                hostelFee: updatedApp.hostelFee,
+                adminCommission: updatedApp.adminCommission,
+                totalAmount: updatedApp.totalAmount,
+                commissionPercent: recalcResponse.data.commissionPercent
             });
             
-            const commissionPercent = app.hostelFee > 0 && app.adminCommission > 0 
-                ? ((app.adminCommission / app.hostelFee) * 100).toFixed(1) 
-                : '3.0';
-            
-            console.log('Commission percent:', commissionPercent);
+            const commissionPercent = recalcResponse.data.commissionPercent || '10.0';
             
             const result = await Swal.fire({
                 title: 'Payment Breakdown',
                 html: `
                     <div style="text-align: left; padding: 20px;">
                         <div style="margin-bottom: 15px;">
-                            <strong>Hostel:</strong> ${app.hostelId?.name || 'N/A'}<br/>
-                            <strong>Room Type:</strong> ${app.roomType}<br/>
-                            <strong>Semester:</strong> ${app.semester}
+                            <strong>Hostel:</strong> ${updatedApp.hostelId?.name || app.hostelId?.name || 'N/A'}<br/>
+                            <strong>Room Type:</strong> ${updatedApp.roomType}<br/>
+                            <strong>Semester:</strong> ${updatedApp.semester}
                         </div>
                         <hr style="margin: 15px 0;"/>
                         <div style="margin-bottom: 10px;">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                                 <span>Room Price:</span>
-                                <strong>GH₵${(app.hostelFee || 0).toFixed(2)}</strong>
+                                <strong>GH₵${(updatedApp.hostelFee || 0).toFixed(2)}</strong>
                             </div>
                             <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #666;">
                                 <span>Platform Fee (${commissionPercent}%):</span>
-                                <strong>GH₵${(app.adminCommission || 0).toFixed(2)}</strong>
+                                <strong>GH₵${(updatedApp.adminCommission || 0).toFixed(2)}</strong>
                             </div>
                         </div>
                         <hr style="margin: 15px 0;"/>
                         <div style="display: flex; justify-content: space-between; font-size: 18px;">
                             <strong>Total Amount:</strong>
-                            <strong style="color: #3b82f6;">GH₵${(app.totalAmount || 0).toFixed(2)}</strong>
+                            <strong style="color: #3b82f6;">GH₵${(updatedApp.totalAmount || 0).toFixed(2)}</strong>
                         </div>
                     </div>
                 `,
@@ -212,9 +218,9 @@ const StudentDashboard = () => {
             
             if (!result.isConfirmed) return;
             
-            console.log('Initializing payment for application:', app._id);
+            console.log('Initializing payment for application:', updatedApp._id);
             const response = await axios.post(`${API_URL}/api/payment/initialize`, 
-                { applicationId: app._id },
+                { applicationId: updatedApp._id },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             
@@ -224,7 +230,7 @@ const StudentDashboard = () => {
             // Use Paystack inline popup instead of redirect
             const handler = window.PaystackPop.setup({
                 key: 'pk_live_eb0f80d31cbab0aea6cbf905036e6b3a096d888c',
-                email: response.data.email || app.studentId?.email,
+                email: response.data.email || updatedApp.studentId?.email || app.studentId?.email,
                 amount: totalAmount * 100,
                 ref: reference,
                 channels: ['card', 'mobile_money'],

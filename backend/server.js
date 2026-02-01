@@ -1458,6 +1458,60 @@ app.delete('/api/applications/:id', checkDBConnection, auth, csrfProtection, che
     }
 });
 
+// Recalculate payment amounts for an application (when commission changes)
+app.patch('/api/applications/:id/recalculate', checkDBConnection, auth, async (req, res) => {
+  try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({ error: 'Invalid application ID' });
+    }
+    
+    const app = await Application.findById(req.params.id).populate('hostelId');
+    if (!app) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+    
+    // Only recalculate for pending or approved_for_payment applications
+    if (!['pending', 'approved_for_payment'].includes(app.status)) {
+      return res.status(400).json({ error: 'Cannot recalculate paid or completed applications' });
+    }
+    
+    const hostel = await Hostel.findById(app.hostelId._id);
+    const room = hostel.roomTypes.find(r => r.type === app.roomType);
+    
+    if (!room) {
+      return res.status(404).json({ error: 'Room type not found' });
+    }
+    
+    // Recalculate with current commission rate
+    const hostelFee = room.price;
+    const commissionPercent = parseFloat(process.env.ADMIN_COMMISSION_PERCENT) || 3;
+    const adminCommission = Math.round(hostelFee * (commissionPercent / 100));
+    const totalAmount = hostelFee + adminCommission;
+    
+    app.hostelFee = hostelFee;
+    app.adminCommission = adminCommission;
+    app.totalAmount = totalAmount;
+    await app.save();
+    
+    console.log('Application payment recalculated:', {
+      applicationId: app._id,
+      hostelFee,
+      adminCommission,
+      totalAmount,
+      commissionPercent
+    });
+    
+    res.json({ 
+      message: 'Payment amounts recalculated', 
+      application: app,
+      commissionPercent
+    });
+  } catch (err) {
+    console.error('Error recalculating application:', err);
+    res.status(500).json({ error: 'Failed to recalculate application' });
+  }
+});
+
 // Archive/Unarchive application (Manager or Student)
 app.patch('/api/applications/:id/archive', checkDBConnection, auth, csrfProtection, async (req, res) => {
   try {
