@@ -22,33 +22,6 @@ const ManagerAnalytics = ({ applications, hostels }) => {
         };
     }, [applications, dateRange]);
 
-    const applicationTrends = useMemo(() => {
-        const days = parseInt(dateRange);
-        const trends = [];
-        
-        for (let i = days - 1; i >= 0; i--) {
-            const date = new Date();
-            date.setDate(date.getDate() - i);
-            const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            
-            const dayApps = filteredData.applications.filter(app => {
-                const appDate = new Date(app.createdAt);
-                return appDate.toDateString() === date.toDateString();
-            });
-            
-            trends.push({
-                date: dateStr,
-                total: dayApps.length,
-                pending: dayApps.filter(a => a.status === 'pending').length,
-                approved: dayApps.filter(a => a.status === 'approved').length,
-                rejected: dayApps.filter(a => a.status === 'rejected').length
-            });
-        }
-        
-        return trends;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filteredData, dateRange]);
-
     const statusDistribution = useMemo(() => {
         const pending = filteredData.allApplications.filter(a => a.status === 'pending').length;
         const approvedForPayment = filteredData.allApplications.filter(a => a.status === 'approved_for_payment').length;
