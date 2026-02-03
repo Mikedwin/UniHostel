@@ -46,6 +46,7 @@ const ManagerAnalytics = ({ applications, hostels }) => {
         }
         
         return trends;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filteredData, dateRange]);
 
     const statusDistribution = useMemo(() => {

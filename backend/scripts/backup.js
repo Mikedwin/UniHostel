@@ -1,4 +1,4 @@
-const { exec } = require('child_process');
+const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
@@ -22,21 +22,31 @@ const performBackup = () => {
   console.log(`Starting backup at ${new Date().toISOString()}`);
   console.log(`Backup location: ${backupFile}`);
   
-  const command = `mongodump --uri="${MONGO_URI}" --archive="${backupFile}" --gzip`;
+  const mongodump = spawn('mongodump', [
+    `--uri=${MONGO_URI}`,
+    `--archive=${backupFile}`,
+    '--gzip'
+  ]);
   
-  exec(command, (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Backup failed: ${error.message}`);
-      return;
+  mongodump.stdout.on('data', (data) => {
+    console.log(`${data}`);
+  });
+  
+  mongodump.stderr.on('data', (data) => {
+    console.error(`${data}`);
+  });
+  
+  mongodump.on('close', (code) => {
+    if (code === 0) {
+      console.log(`Backup completed successfully: ${backupFile}`);
+      cleanOldBackups();
+    } else {
+      console.error(`Backup failed with code ${code}`);
     }
-    if (stderr) {
-      console.error(`Backup stderr: ${stderr}`);
-    }
-    
-    console.log(`Backup completed successfully: ${backupFile}`);
-    console.log(stdout);
-    
-    cleanOldBackups();
+  });
+  
+  mongodump.on('error', (error) => {
+    console.error(`Backup failed: ${error.message}`);
   });
 };
 

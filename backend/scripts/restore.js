@@ -8,6 +8,15 @@ const Hostel = require('../models/Hostel');
 const Application = require('../models/Application');
 const Transaction = require('../models/Transaction');
 
+const sanitizeData = (data) => {
+  return JSON.parse(JSON.stringify(data, (key, value) => {
+    if (typeof key === 'string' && key.startsWith('$')) {
+      return undefined;
+    }
+    return value;
+  }));
+};
+
 const restoreDatabase = async (backupFilePath) => {
   try {
     console.log('🔄 Starting database restore...\n');
@@ -52,23 +61,27 @@ const restoreDatabase = async (backupFilePath) => {
     console.log('📥 Restoring data...');
     
     if (backupData.collections.users.length > 0) {
-      await User.insertMany(backupData.collections.users);
-      console.log(`✅ Restored ${backupData.collections.users.length} users`);
+      const sanitizedUsers = sanitizeData(backupData.collections.users);
+      await User.insertMany(sanitizedUsers);
+      console.log(`✅ Restored ${sanitizedUsers.length} users`);
     }
 
     if (backupData.collections.hostels.length > 0) {
-      await Hostel.insertMany(backupData.collections.hostels);
-      console.log(`✅ Restored ${backupData.collections.hostels.length} hostels`);
+      const sanitizedHostels = sanitizeData(backupData.collections.hostels);
+      await Hostel.insertMany(sanitizedHostels);
+      console.log(`✅ Restored ${sanitizedHostels.length} hostels`);
     }
 
     if (backupData.collections.applications.length > 0) {
-      await Application.insertMany(backupData.collections.applications);
-      console.log(`✅ Restored ${backupData.collections.applications.length} applications`);
+      const sanitizedApplications = sanitizeData(backupData.collections.applications);
+      await Application.insertMany(sanitizedApplications);
+      console.log(`✅ Restored ${sanitizedApplications.length} applications`);
     }
 
     if (backupData.collections.transactions.length > 0) {
-      await Transaction.insertMany(backupData.collections.transactions);
-      console.log(`✅ Restored ${backupData.collections.transactions.length} transactions`);
+      const sanitizedTransactions = sanitizeData(backupData.collections.transactions);
+      await Transaction.insertMany(sanitizedTransactions);
+      console.log(`✅ Restored ${sanitizedTransactions.length} transactions`);
     }
 
     console.log('\n✅ Database restore completed successfully!');
