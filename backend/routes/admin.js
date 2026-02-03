@@ -507,9 +507,12 @@ router.patch('/applications/:id/override', auth, checkAdmin, async (req, res) =>
 
     const app = await Application.findById(req.params.id).populate('hostelId');
     if (!app) return res.status(404).json({ error: 'Application not found' });
+    if (!app.hostelId) return res.status(404).json({ error: 'Associated hostel not found or has been deleted' });
 
     const oldStatus = app.status;
     const hostel = await Hostel.findById(app.hostelId._id);
+    if (!hostel) return res.status(404).json({ error: 'Hostel not found' });
+    
     const roomIndex = hostel.roomTypes.findIndex(r => r.type === app.roomType);
 
     if (roomIndex === -1) return res.status(404).json({ error: 'Room type not found' });
@@ -590,11 +593,14 @@ router.patch('/applications/:id/dispute/resolve', auth, checkAdmin, async (req, 
     const app = await Application.findById(req.params.id).populate('hostelId');
     if (!app) return res.status(404).json({ error: 'Application not found' });
     if (!app.hasDispute) return res.status(400).json({ error: 'No active dispute' });
+    if (!app.hostelId) return res.status(404).json({ error: 'Associated hostel not found or has been deleted' });
 
     // Handle status change if provided
     if (newStatus && ['approved', 'rejected', 'pending'].includes(newStatus)) {
       const oldStatus = app.status;
       const hostel = await Hostel.findById(app.hostelId._id);
+      if (!hostel) return res.status(404).json({ error: 'Hostel not found' });
+      
       const roomIndex = hostel.roomTypes.findIndex(r => r.type === app.roomType);
 
       if (roomIndex !== -1) {
@@ -642,10 +648,13 @@ router.post('/applications/bulk-action', auth, checkAdmin, async (req, res) => {
       try {
         const app = await Application.findById(appId).populate('hostelId');
         if (!app) { results.failed.push({ appId, error: 'Application not found' }); continue; }
+        if (!app.hostelId) { results.failed.push({ appId, error: 'Associated hostel not found' }); continue; }
 
         const oldStatus = app.status;
         const newStatus = action === 'approve' ? 'approved' : 'rejected';
         const hostel = await Hostel.findById(app.hostelId._id);
+        if (!hostel) { results.failed.push({ appId, error: 'Hostel not found' }); continue; }
+        
         const roomIndex = hostel.roomTypes.findIndex(r => r.type === app.roomType);
 
         if (roomIndex !== -1) {
