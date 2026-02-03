@@ -1,15 +1,23 @@
 const nodemailer = require('nodemailer');
 const logger = require('../config/logger');
 
+// WARNING: Email credentials must be configured via environment variables
+// Never hardcode credentials in this file - use .env file instead
 const createTransporter = () => {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD || process.env.EMAIL_PASSWORD === 'your-gmail-app-password-here') {
+  const emailUser = process.env.EMAIL_USER;
+  const emailPassword = process.env.EMAIL_PASSWORD;
+  
+  // Validate email configuration
+  if (!emailUser || !emailPassword || emailPassword === 'your-gmail-app-password-here') {
+    logger.warn('Email service not configured. Set EMAIL_USER and EMAIL_PASSWORD in .env file');
     return null;
   }
+  
   return nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD
+      user: emailUser,
+      pass: emailPassword
     }
   });
 };

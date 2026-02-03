@@ -1,10 +1,15 @@
 const axios = require('axios');
+require('dotenv').config();
 
 const API_URL = 'https://uni-hostel-two.vercel.app/api';
 const LOCAL_URL = 'http://localhost:5000/api';
 
 // Use production URL for testing
 const BASE_URL = API_URL;
+
+// Test credentials from environment variables
+const TEST_EMAIL = process.env.TEST_EMAIL || 'pentest@example.com';
+const TEST_PASSWORD = process.env.TEST_PASSWORD || 'TestSecure123!';
 
 console.log('🔒 UniHostel Security Penetration Test\n');
 console.log('Target:', BASE_URL);
@@ -23,7 +28,7 @@ async function testNoSQLInjection() {
     const maliciousPayloads = [
       { email: { $ne: null }, password: { $ne: null } },
       { email: { $gt: '' }, password: { $gt: '' } },
-      { email: '1mikedwin@gmail.com\' OR \'1\'=\'1', password: 'anything' }
+      { email: `${TEST_EMAIL}\' OR \'1\'=\'1`, password: TEST_PASSWORD }
     ];
 
     for (const payload of maliciousPayloads) {
@@ -79,8 +84,8 @@ async function testRateLimiting() {
     for (let i = 0; i < 10; i++) {
       requests.push(
         axios.post(`${BASE_URL}/auth/login`, {
-          email: 'test@test.com',
-          password: 'wrongpassword'
+          email: TEST_EMAIL,
+          password: TEST_PASSWORD
         }, { validateStatus: () => true })
       );
     }
@@ -113,7 +118,9 @@ async function testXSSInjection() {
     const response = await axios.post(`${BASE_URL}/auth/register`, {
       name: xssPayloads[0],
       email: `xss${Date.now()}@test.com`,
-      password: 'TestPass123'
+      password: TEST_PASSWORD,
+      tosAccepted: true,
+      privacyPolicyAccepted: true
     }, { validateStatus: () => true });
 
     if (response.status === 201 && response.data.user?.name?.includes('<script>')) {
@@ -156,7 +163,9 @@ async function testPasswordStrength() {
       const response = await axios.post(`${BASE_URL}/auth/register`, {
         name: 'Test User',
         email: `test${Date.now()}@test.com`,
-        password: pwd
+        password: pwd,
+        tosAccepted: true,
+        privacyPolicyAccepted: true
       }, { validateStatus: () => true });
 
       if (response.status === 201) {
@@ -180,7 +189,9 @@ async function testEmailValidation() {
       const response = await axios.post(`${BASE_URL}/auth/register`, {
         name: 'Test User',
         email: email,
-        password: 'TestPass123'
+        password: TEST_PASSWORD,
+        tosAccepted: true,
+        privacyPolicyAccepted: true
       }, { validateStatus: () => true });
 
       if (response.status === 201) {
@@ -220,8 +231,10 @@ async function testPayloadSize() {
   try {
     const largePayload = {
       name: 'A'.repeat(10 * 1024 * 1024), // 10MB
-      email: 'test@test.com',
-      password: 'TestPass123'
+      email: TEST_EMAIL,
+      password: TEST_PASSWORD,
+      tosAccepted: true,
+      privacyPolicyAccepted: true
     };
 
     const response = await axios.post(`${BASE_URL}/auth/register`, largePayload, {

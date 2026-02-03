@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Download, Calendar, TrendingUp, Users, Home, CheckCircle, HelpCircle } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import Papa from 'papaparse';
 import { saveAs } from 'file-saver';
 
 const ManagerAnalytics = ({ applications, hostels }) => {
@@ -106,13 +106,11 @@ const ManagerAnalytics = ({ applications, hostels }) => {
         setExportLoading(true);
         
         try {
-            const wb = XLSX.utils.book_new();
-            
             const summaryData = [
                 ['Manager Analytics Report'],
                 ['Generated:', new Date().toLocaleString()],
                 ['Date Range:', `Last ${dateRange} days`],
-                [],
+                [''],
                 ['Key Metrics'],
                 ['Total Hostels', hostels.length],
                 ['Total Applications', filteredData.allApplications.length],
@@ -120,22 +118,6 @@ const ManagerAnalytics = ({ applications, hostels }) => {
                 ['Approved', filteredData.allApplications.filter(a => a.status === 'approved').length],
                 ['Rejected', filteredData.allApplications.filter(a => a.status === 'rejected').length]
             ];
-            const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
-            XLSX.utils.book_append_sheet(wb, summaryWs, 'Summary');
-            
-            const trendsData = [
-                ['Date', 'Total', 'Pending', 'Approved', 'Rejected'],
-                ...applicationTrends.map(t => [t.date, t.total, t.pending, t.approved, t.rejected])
-            ];
-            const trendsWs = XLSX.utils.aoa_to_sheet(trendsData);
-            XLSX.utils.book_append_sheet(wb, trendsWs, 'Trends');
-            
-            const performanceData = [
-                ['Hostel', 'Applications', 'Occupancy %', 'Capacity', 'Occupied'],
-                ...hostelPerformance.map(h => [h.fullName, h.applications, h.occupancy, h.capacity, h.occupied])
-            ];
-            const performanceWs = XLSX.utils.aoa_to_sheet(performanceData);
-            XLSX.utils.book_append_sheet(wb, performanceWs, 'Performance');
             
             const appsData = [
                 ['Date', 'Student', 'Email', 'Hostel', 'Room', 'Semester', 'Status'],
@@ -149,12 +131,11 @@ const ManagerAnalytics = ({ applications, hostels }) => {
                     app.status
                 ])
             ];
-            const appsWs = XLSX.utils.aoa_to_sheet(appsData);
-            XLSX.utils.book_append_sheet(wb, appsWs, 'Applications');
             
-            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-            const blob = new Blob([wbout], { type: 'application/octet-stream' });
-            saveAs(blob, `Analytics_${new Date().toISOString().split('T')[0]}.xlsx`);
+            const allData = [...summaryData, [''], ['Applications'], ...appsData];
+            const csv = Papa.unparse(allData);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            saveAs(blob, `Analytics_${new Date().toISOString().split('T')[0]}.csv`);
         } catch (error) {
             console.error('Export error:', error);
             alert('Failed to export');
@@ -206,7 +187,7 @@ const ManagerAnalytics = ({ applications, hostels }) => {
                         className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 text-sm"
                     >
                         <Download className="w-4 h-4" />
-                        {exportLoading ? 'Exporting...' : 'Export Excel'}
+                        {exportLoading ? 'Exporting...' : 'Export CSV'}
                     </button>
                 </div>
             </div>

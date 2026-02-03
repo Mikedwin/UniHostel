@@ -81,23 +81,20 @@ router.post('/initialize', auth, async (req, res) => {
       reference: `UNI-${application._id}-${Date.now()}`,
       callback_url: `${process.env.FRONTEND_URL}/payment/verify`,
       channels: ['card', 'mobile_money'],
+      split_code: process.env.PAYSTACK_SPLIT_CODE,
       metadata: {
         applicationId: application._id.toString(),
         hostelName: hostel.name,
         roomType: application.roomType,
         semester: application.semester,
         hostelFee: hostelFee,
-        adminCommission: adminCommission
+        adminCommission: adminCommission,
+        hostelId: hostel._id.toString(),
+        managerId: hostel.managerId.toString()
       }
     };
 
-    // Add split payment if manager has valid Paystack subaccount
-    if (manager.paystackSubaccountCode && manager.payoutEnabled && manager.paystackSubaccountCode.startsWith('ACCT_')) {
-      paymentData.subaccount = manager.paystackSubaccountCode;
-      console.log('Split payment enabled for manager:', manager.email, 'Subaccount:', manager.paystackSubaccountCode);
-    } else {
-      console.log('No valid subaccount - payment goes to main account');
-    }
+    console.log('Split payment enabled with code:', process.env.PAYSTACK_SPLIT_CODE);
 
     console.log('Calling Paystack API...');
     console.log('Payment data:', JSON.stringify(paymentData, null, 2));
@@ -131,7 +128,7 @@ router.post('/initialize', auth, async (req, res) => {
       totalAmount,
       hostelFee,
       adminCommission,
-      splitPaymentEnabled: !!(manager.paystackSubaccountCode && manager.paystackSubaccountCode.startsWith('ACCT_'))
+      splitPaymentEnabled: true
     });
   } catch (error) {
     console.error('=== PAYMENT INITIALIZATION ERROR ===');

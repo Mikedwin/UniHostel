@@ -206,9 +206,8 @@ const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // Utility: Generate secure access code
 const generateAccessCode = () => {
-  const timestamp = Date.now();
-  const randomBytes = crypto.randomBytes(4).toString('hex').toUpperCase();
-  return `UNI-${timestamp}-${randomBytes}`;
+  const randomChars = crypto.randomBytes(3).toString('hex').toUpperCase().substring(0, 5);
+  return `UNI-${randomChars}`;
 };
 
 // Health check endpoint

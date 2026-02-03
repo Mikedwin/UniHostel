@@ -1,8 +1,9 @@
 const axios = require('axios');
 
-const API_URL = 'http://localhost:5000';
-const TEST_EMAIL = 'test@example.com';
-const WRONG_PASSWORD = 'wrongpassword123';
+// WARNING: FOR TESTING ONLY - DO NOT USE IN PRODUCTION
+const API_URL = process.env.API_URL || 'http://localhost:5000';
+const TEST_EMAIL = process.env.TEST_EMAIL || 'test@example.com';
+const WRONG_PASSWORD = process.env.TEST_PASSWORD || 'TestWrong123!';
 
 async function testAccountLockout() {
   console.log('🧪 Testing Account Lockout Mechanism\n');

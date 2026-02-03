@@ -571,6 +571,7 @@ const ManagerDashboard = () => {
                                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room</th>
                                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Semester</th>
                                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Access Code</th>
                                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                         </tr>
                                     </thead>
@@ -625,6 +626,13 @@ const ManagerDashboard = () => {
                                                          app.status === 'paid_awaiting_final' ? 'PAID - AWAITING FINAL' :
                                                          app.status}
                                                     </span>
+                                                </td>
+                                                <td className="px-4 py-3 whitespace-nowrap text-sm">
+                                                    {app.accessCode ? (
+                                                        <code className="bg-green-50 text-green-700 px-2 py-1 rounded font-mono text-xs font-semibold">{app.accessCode}</code>
+                                                    ) : (
+                                                        <span className="text-gray-400 text-xs">-</span>
+                                                    )}
                                                 </td>
                                                 <td className="px-4 py-3 whitespace-nowrap text-sm">
                                                     <div className="flex space-x-2">

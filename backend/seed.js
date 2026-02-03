@@ -5,17 +5,20 @@ require('dotenv').config();
 const User = require('./models/User');
 const Hostel = require('./models/Hostel');
 
+// WARNING: FOR DEVELOPMENT/TESTING ONLY - DO NOT USE IN PRODUCTION
+const SEED_PASSWORD = process.env.SEED_PASSWORD || 'DevTest123!';
+
 const sampleUsers = [
   {
     name: 'John Manager',
     email: 'manager@test.com',
-    password: 'password123',
+    password: SEED_PASSWORD,
     role: 'manager'
   },
   {
     name: 'Jane Student',
     email: 'student@test.com',
-    password: 'password123',
+    password: SEED_PASSWORD,
     role: 'student'
   }
 ];
@@ -89,10 +92,10 @@ const seedDatabase = async () => {
     console.log('\n=== Sample Data Created ===');
     console.log('Manager Login:');
     console.log('Email: manager@test.com');
-    console.log('Password: password123');
+    console.log(`Password: ${SEED_PASSWORD}`);
     console.log('\nStudent Login:');
     console.log('Email: student@test.com');
-    console.log('Password: password123');
+    console.log(`Password: ${SEED_PASSWORD}`);
     console.log('========================\n');
 
     process.exit(0);
