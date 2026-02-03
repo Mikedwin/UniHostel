@@ -314,7 +314,12 @@ const HostelList = () => {
                     />
                     <div className="p-4">
                       <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-bold text-lg text-gray-900">{room.type}</h3>
+                        <div>
+                          <h3 className="font-bold text-lg text-gray-900">{room.type}</h3>
+                          <span className="inline-block mt-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+                            {room.gender} Only
+                          </span>
+                        </div>
                         <span className="text-primary-600 font-bold text-xl">GH₵{room.price}</span>
                       </div>
                       <p className="text-sm font-medium text-gray-700 mb-1">{room.hostelName}</p>

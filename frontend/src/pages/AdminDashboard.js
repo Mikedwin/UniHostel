@@ -81,6 +81,16 @@ const AdminDashboard = () => {
         }
     };
 
+    const deleteHostel = async (hostelId) => {
+        if (!window.confirm('Are you sure you want to DELETE this hostel? This action cannot be undone and will remove it from the browse section.')) return;
+        try {
+            await axios.delete(`${API_URL}/api/admin/hostels/${hostelId}`, { headers: { Authorization: `Bearer ${token}` } });
+            fetchDashboardData();
+        } catch (err) {
+            alert('Failed to delete hostel');
+        }
+    };
+
     // Reserved for future room management features
     // eslint-disable-next-line no-unused-vars
     const resetRoomCapacity = async (hostelId, roomType) => {
@@ -453,7 +463,8 @@ const AdminDashboard = () => {
                                                     </td>
                                                     <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">
                                                         <button onClick={() => toggleHostelActive(hostel._id)} className="text-blue-600 hover:underline mr-2">Toggle</button>
-                                                        <button onClick={() => flagHostel(hostel._id)} className="text-orange-600 hover:underline">Flag</button>
+                                                        <button onClick={() => flagHostel(hostel._id)} className="text-orange-600 hover:underline mr-2">Flag</button>
+                                                        <button onClick={() => deleteHostel(hostel._id)} className="text-red-600 hover:underline">Delete</button>
                                                     </td>
                                                 </tr>
                                             ))}

@@ -103,6 +103,19 @@ router.patch('/hostels/:id/flag', auth, checkAdmin, async (req, res) => {
   }
 });
 
+router.delete('/hostels/:id', auth, checkAdmin, async (req, res) => {
+  try {
+    const hostel = await Hostel.findById(req.params.id);
+    if (!hostel) return res.status(404).json({ error: 'Hostel not found' });
+
+    await Hostel.findByIdAndDelete(req.params.id);
+    await logAdminAction(req.user.id, 'DELETE_HOSTEL', 'hostel', hostel._id, `Deleted hostel: ${hostel.name}`);
+    res.json({ message: 'Hostel deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.patch('/hostels/:hostelId/rooms/:roomType/reset-capacity', auth, checkAdmin, async (req, res) => {
   try {
     const { hostelId, roomType } = req.params;
