@@ -107,9 +107,25 @@ if (!backupFile) {
   process.exit(1);
 }
 
+// Sanitize filename to prevent path traversal
+const sanitizeFilename = (filename) => {
+  // Remove any path separators and parent directory references
+  return path.basename(filename).replace(/\.\./g, '');
+};
+
 // If only filename provided, look in backups/manual folder
 const backupPath = path.isAbsolute(backupFile) 
   ? backupFile 
-  : path.join(__dirname, '../backups/manual', backupFile);
+  : path.join(__dirname, '../backups/manual', sanitizeFilename(backupFile));
+
+// Validate that the resolved path is within the allowed directory
+const allowedDir = path.resolve(__dirname, '../backups/manual');
+const resolvedPath = path.resolve(backupPath);
+
+if (!path.isAbsolute(backupFile) && !resolvedPath.startsWith(allowedDir)) {
+  console.error('❌ Security Error: Path traversal attempt detected');
+  console.error('Backup files must be in the backups/manual directory');
+  process.exit(1);
+}
 
 restoreDatabase(backupPath);

@@ -845,7 +845,7 @@ app.get('/api/hostels', checkDBConnection, cacheMiddleware(300), async (req, res
         { name: { $regex: escapedSearch, $options: 'i' } },
         { location: { $regex: escapedSearch, $options: 'i' } },
         { description: { $regex: escapedSearch, $options: 'i' } },
-        { facilities: { $in: [new RegExp(escapedSearch, 'i')] } }
+        { facilities: { $regex: escapedSearch, $options: 'i' } }
       ];
     }
 
