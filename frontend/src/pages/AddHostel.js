@@ -26,7 +26,6 @@ const AddHostel = () => {
     const [currentRoom, setCurrentRoom] = useState({
         type: '1 in a Room',
         price: '',
-        gender: '',
         roomImage: '',
         roomImages: [],
         virtualTourUrl: '',
@@ -79,7 +78,6 @@ const AddHostel = () => {
         setCurrentRoom({
             type: '1 in a Room',
             price: '',
-            gender: '',
             roomImage: '',
             roomImages: [],
             virtualTourUrl: '',
@@ -366,20 +364,6 @@ const AddHostel = () => {
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Gender
-                                            </label>
-                                            <select 
-                                                className="w-full border border-gray-300 rounded-md p-4 text-base focus:ring-2 focus:ring-blue-500 bg-white" 
-                                                value={currentRoom.gender}
-                                                onChange={e => setCurrentRoom({...currentRoom, gender: e.target.value})}
-                                            >
-                                                <option value="">Not Specified</option>
-                                                <option value="Male">Male</option>
-                                                <option value="Female">Female</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
                                                 Price per Semester (GH₵) <span className="text-red-500">*</span>
                                             </label>
                                             <input 
@@ -582,7 +566,7 @@ const AddHostel = () => {
                                                         <div className="flex items-center space-x-4">
                                                             <img src={room.roomImage} alt={room.type} className="w-16 h-16 object-cover rounded" />
                                                             <div>
-                                                                <p className="font-medium">{room.type} • {room.gender}</p>
+                                                                <p className="font-medium">{room.type}</p>
                                                                 <p className="text-sm text-gray-600">GH₵{room.price} / semester</p>
                                                                 <p className="text-xs text-gray-500">{room.facilities.length} facilities • Capacity: {room.totalCapacity} students</p>
                                                             </div>
