@@ -67,7 +67,7 @@ const AddHostel = () => {
     };
 
     const isRoomValid = () => {
-        return currentRoom.price && currentRoom.price > 0 && currentRoom.gender && currentRoom.roomImage && currentRoom.totalCapacity && currentRoom.totalCapacity > 0;
+        return currentRoom.price && currentRoom.price > 0 && currentRoom.roomImage && currentRoom.totalCapacity && currentRoom.totalCapacity > 0;
     };
 
     const addRoomType = () => {
@@ -366,7 +366,7 @@ const AddHostel = () => {
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Gender <span className="text-red-500">*</span>
+                                                Gender
                                             </label>
                                             <select 
                                                 className="w-full border border-gray-300 rounded-md p-4 text-base focus:ring-2 focus:ring-blue-500 bg-white" 
