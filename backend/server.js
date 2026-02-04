@@ -13,7 +13,9 @@ const fs = require('fs');
 const path = require('path');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swagger');
-require('dotenv').config();
+
+// Load .env from outside workspace (secure location)
+require('dotenv').config({ path: '../../hostel-hub-secrets.env' });
 
 const logger = require('./config/logger');
 const User = require('./models/User');
