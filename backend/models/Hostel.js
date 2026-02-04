@@ -4,6 +4,9 @@ const mongoose = require('mongoose');
 if (mongoose.models.Hostel) {
   delete mongoose.models.Hostel;
 }
+if (mongoose.connection.models.Hostel) {
+  delete mongoose.connection.models.Hostel;
+}
 
 const roomTypeSchema = new mongoose.Schema({
   type: { type: String, enum: ['1 in a Room', '2 in a Room', '3 in a Room', '4 in a Room'], required: true },
