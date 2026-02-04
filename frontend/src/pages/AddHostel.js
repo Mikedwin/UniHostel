@@ -26,7 +26,7 @@ const AddHostel = () => {
     const [currentRoom, setCurrentRoom] = useState({
         type: '1 in a Room',
         price: '',
-        gender: 'Male',
+        gender: '',
         roomImage: '',
         roomImages: [],
         virtualTourUrl: '',
@@ -79,7 +79,7 @@ const AddHostel = () => {
         setCurrentRoom({
             type: '1 in a Room',
             price: '',
-            gender: 'Male',
+            gender: '',
             roomImage: '',
             roomImages: [],
             virtualTourUrl: '',
@@ -373,6 +373,7 @@ const AddHostel = () => {
                                                 value={currentRoom.gender}
                                                 onChange={e => setCurrentRoom({...currentRoom, gender: e.target.value})}
                                             >
+                                                <option value="">Not Specified</option>
                                                 <option value="Male">Male</option>
                                                 <option value="Female">Female</option>
                                             </select>
