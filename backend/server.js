@@ -1580,7 +1580,7 @@ app.patch('/api/applications/:id/archive', checkDBConnection, auth, async (req, 
 
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, '0.0.0.0', () => {
-  logger.info(`Server started on port ${PORT}`);
+  logger.info(`Server started on port ${PORT} - v2`);
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`Server running on port ${PORT}`);
   console.log(`API available at http://localhost:${PORT}`);
