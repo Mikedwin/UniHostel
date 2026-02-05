@@ -11,6 +11,7 @@ if (mongoose.connection.models.Hostel) {
 const roomTypeSchema = new mongoose.Schema({
   type: { type: String, enum: ['1 in a Room', '2 in a Room', '3 in a Room', '4 in a Room'], required: true },
   price: { type: Number, required: true },
+  gender: { type: String, enum: ['Male', 'Female', 'Not Specified'], default: 'Not Specified', required: false },
   roomImage: { type: String, required: false },
   roomImages: [{ type: String }],
   virtualTourUrl: { type: String },
