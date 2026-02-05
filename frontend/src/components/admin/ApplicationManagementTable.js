@@ -125,6 +125,12 @@ const ApplicationManagementTable = ({ token, onAction }) => {
                             Bulk Reject
                         </button>
                         <button
+                            onClick={() => handleBulkAction('delete')}
+                            className="px-3 py-1 bg-red-700 text-white text-sm rounded hover:bg-red-800"
+                        >
+                            Bulk Delete
+                        </button>
+                        <button
                             onClick={() => setSelectedApps([])}
                             className="px-3 py-1 bg-gray-500 text-white text-sm rounded hover:bg-gray-600"
                         >

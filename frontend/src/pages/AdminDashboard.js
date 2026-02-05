@@ -311,6 +311,28 @@ const AdminDashboard = () => {
     };
 
     const handleBulkApplicationAction = async (action, appIds, refreshCallback) => {
+        if (action === 'delete') {
+            showConfirm(
+                `Are you sure you want to delete ${appIds.length} application(s)?\n\nThis action cannot be undone.`,
+                async () => {
+                    try {
+                        const deletePromises = appIds.map(id => 
+                            axios.delete(`${API_URL}/api/admin/applications/${id}`, {
+                                headers: { Authorization: `Bearer ${token}` }
+                            })
+                        );
+                        await Promise.all(deletePromises);
+                        showSuccess(`Successfully deleted ${appIds.length} application(s)`);
+                        if (refreshCallback) refreshCallback();
+                        fetchDashboardData();
+                    } catch (err) {
+                        showError(err.response?.data?.error || 'Bulk delete failed');
+                    }
+                }
+            );
+            return;
+        }
+
         const reason = prompt(`Enter reason for bulk ${action}:`);
         if (!reason) return;
 
@@ -332,7 +354,7 @@ const AdminDashboard = () => {
             if (refreshCallback) refreshCallback();
             fetchDashboardData();
         } catch (err) {
-            alert(err.response?.data?.error || 'Bulk action failed');
+            showError(err.response?.data?.error || 'Bulk action failed');
         }
     };
 
