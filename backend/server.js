@@ -17,6 +17,9 @@ const swaggerSpec = require('./swagger');
 // Load .env from outside workspace (secure location)
 require('dotenv').config({ path: '../../hostel-hub-secrets.env' });
 
+// Import IDS middleware (optional - controlled by env variable)
+const intrusionDetection = require('./middleware/intrusionDetection');
+
 const logger = require('./config/logger');
 const User = require('./models/User');
 const Hostel = require('./models/Hostel');
@@ -125,6 +128,17 @@ app.use(mongoSanitize());
 
 // 4. Prevent HTTP Parameter Pollution
 app.use(hpp());
+
+// 5. Intrusion Detection System (IDS) - Optional security layer
+// Set SECURITY_ENABLED=true in .env to activate
+// Set SECURITY_AUTO_BLOCK=true to auto-ban attackers
+if (process.env.SECURITY_ENABLED === 'true') {
+  app.use(intrusionDetection);
+  logger.info('🛡️ Intrusion Detection System ENABLED');
+  console.log('🛡️ IDS Active - Monitoring for attacks');
+} else {
+  logger.info('🔓 Intrusion Detection System DISABLED (set SECURITY_ENABLED=true to enable)');
+}
 
 // Database Connection with Retry Logic
 let dbConnected = false;
