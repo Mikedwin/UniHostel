@@ -27,6 +27,8 @@ const AdminDashboard = () => {
     const [actionLoading, setActionLoading] = useState(false);
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+    const [confirmDialog, setConfirmDialog] = useState({ open: false, message: '', onConfirm: null });
     const [appModalOpen, setAppModalOpen] = useState(false);
     const [appModalAction, setAppModalAction] = useState('');
     const [selectedApp, setSelectedApp] = useState(null);
@@ -204,6 +206,22 @@ const AdminDashboard = () => {
         setTimeout(() => setSuccessMessage(''), 3000);
     };
 
+    const showError = (message) => {
+        setErrorMessage(message);
+        setTimeout(() => setErrorMessage(''), 5000);
+    };
+
+    const showConfirm = (message, onConfirm) => {
+        setConfirmDialog({ open: true, message, onConfirm });
+    };
+
+    const handleConfirmClose = (confirmed) => {
+        if (confirmed && confirmDialog.onConfirm) {
+            confirmDialog.onConfirm();
+        }
+        setConfirmDialog({ open: false, message: '', onConfirm: null });
+    };
+
     const handleApplicationAction = (action, app, refreshCallback) => {
         if (action === 'view') {
             setSelectedApp(app);
@@ -220,18 +238,21 @@ const AdminDashboard = () => {
     };
 
     const handleDeleteApplication = async (app, refreshCallback) => {
-        if (!window.confirm(`Are you sure you want to delete this application from ${app.studentName}?\n\nThis action cannot be undone.`)) return;
-        
-        try {
-            await axios.delete(`${API_URL}/api/admin/applications/${app._id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            showSuccess('Application deleted successfully');
-            if (refreshCallback) refreshCallback();
-            fetchDashboardData();
-        } catch (err) {
-            alert(err.response?.data?.error || 'Failed to delete application');
-        }
+        showConfirm(
+            `Are you sure you want to delete this application from ${app.studentName}?\n\nThis action cannot be undone.`,
+            async () => {
+                try {
+                    await axios.delete(`${API_URL}/api/admin/applications/${app._id}`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    showSuccess('Application deleted successfully');
+                    if (refreshCallback) refreshCallback();
+                    fetchDashboardData();
+                } catch (err) {
+                    showError(err.response?.data?.error || 'Failed to delete application');
+                }
+            }
+        );
     };
 
     const handleAppActionConfirm = async (data) => {
@@ -589,8 +610,39 @@ const AdminDashboard = () => {
 
             {/* Success Message */}
             {successMessage && (
-                <div className="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg">
+                <div className="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50">
                     {successMessage}
+                </div>
+            )}
+
+            {/* Error Message */}
+            {errorMessage && (
+                <div className="fixed bottom-4 right-4 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg z-50">
+                    {errorMessage}
+                </div>
+            )}
+
+            {/* Confirm Dialog */}
+            {confirmDialog.open && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                        <h3 className="text-lg font-bold mb-4">Confirm Action</h3>
+                        <p className="text-gray-700 mb-6 whitespace-pre-line">{confirmDialog.message}</p>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => handleConfirmClose(false)}
+                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => handleConfirmClose(true)}
+                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                            >
+                                Confirm
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
