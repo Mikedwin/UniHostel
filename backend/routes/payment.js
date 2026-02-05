@@ -81,7 +81,6 @@ router.post('/initialize', auth, async (req, res) => {
       reference: `UNI-${application._id}-${Date.now()}`,
       callback_url: `${process.env.FRONTEND_URL}/payment/verify`,
       channels: ['card', 'mobile_money'],
-      split_code: process.env.PAYSTACK_SPLIT_CODE,
       metadata: {
         applicationId: application._id.toString(),
         hostelName: hostel.name,
@@ -94,7 +93,15 @@ router.post('/initialize', auth, async (req, res) => {
       }
     };
 
-    console.log('Split payment enabled with code:', process.env.PAYSTACK_SPLIT_CODE);
+    // Add subaccount for automatic split if manager has one configured
+    if (manager.paystackSubaccountCode && manager.payoutEnabled) {
+      paymentData.subaccount = manager.paystackSubaccountCode;
+      paymentData.transaction_charge = Math.round(adminCommission * 100); // Admin commission in kobo
+      console.log('Split payment enabled with subaccount:', manager.paystackSubaccountCode);
+      console.log('Transaction charge (admin commission):', adminCommission);
+    } else {
+      console.log('No subaccount configured for manager. Payment will go to main account.');
+    }
 
     console.log('Calling Paystack API...');
     console.log('Payment data:', JSON.stringify(paymentData, null, 2));
