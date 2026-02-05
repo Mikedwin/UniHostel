@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { DollarSign, Calendar, Filter, Download } from 'lucide-react';
+import { DollarSign, Calendar, Filter, Download, RotateCcw } from 'lucide-react';
 import API_URL from '../../config';
 
 const ManagerTransactions = ({ token, hostels }) => {
@@ -51,6 +51,20 @@ const ManagerTransactions = ({ token, hostels }) => {
   const clearFilters = () => {
     setFilters({ semester: '', hostelId: '', startDate: '', endDate: '' });
     setTimeout(() => fetchTransactions(), 100);
+  };
+
+  const handleResetTransactions = async () => {
+    if (!window.confirm('Are you sure you want to reset YOUR transactions?\n\nThis will only delete your hostel transactions and will not affect admin records.\n\nThis action cannot be undone.')) return;
+    
+    try {
+      const res = await axios.delete(`${API_URL}/api/transactions/manager/reset`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert(res.data.message);
+      fetchTransactions();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to reset transactions');
+    }
   };
 
   if (loading) {
@@ -182,6 +196,13 @@ const ManagerTransactions = ({ token, hostels }) => {
             className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
           >
             Clear
+          </button>
+          <button
+            onClick={handleResetTransactions}
+            className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 flex items-center gap-2 ml-auto"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Reset My Transactions
           </button>
         </div>
       </div>

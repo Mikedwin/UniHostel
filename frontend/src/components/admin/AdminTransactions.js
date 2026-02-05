@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { DollarSign, TrendingUp, Calendar, Filter, Download, PieChart } from 'lucide-react';
+import { DollarSign, TrendingUp, Calendar, Filter, Download, PieChart, RotateCcw } from 'lucide-react';
 import API_URL from '../../config';
 
 const AdminTransactions = ({ token }) => {
@@ -80,6 +80,20 @@ const AdminTransactions = ({ token }) => {
   const clearFilters = () => {
     setFilters({ semester: '', hostelId: '', managerId: '', startDate: '', endDate: '' });
     setTimeout(() => fetchData(), 100);
+  };
+
+  const handleResetTransactions = async () => {
+    if (!window.confirm('⚠️ WARNING: This will permanently delete ALL transactions from the system (including manager transactions).\n\nThis action cannot be undone. Are you absolutely sure?')) return;
+    
+    try {
+      const res = await axios.delete(`${API_URL}/api/transactions/admin/reset`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert(res.data.message);
+      fetchData();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to reset transactions');
+    }
   };
 
   if (loading) {
@@ -286,6 +300,13 @@ const AdminTransactions = ({ token }) => {
             className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
           >
             Clear
+          </button>
+          <button
+            onClick={handleResetTransactions}
+            className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 flex items-center gap-2 ml-auto"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Reset All Transactions
           </button>
         </div>
       </div>

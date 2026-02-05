@@ -119,4 +119,26 @@ router.get('/admin', auth, checkRole('admin'), async (req, res) => {
   }
 });
 
+// Admin: Reset all transactions (affects everyone)
+router.delete('/admin/reset', auth, checkRole('admin'), async (req, res) => {
+  try {
+    const result = await Transaction.deleteMany({});
+    res.json({ message: `All transactions reset. ${result.deletedCount} transactions deleted.` });
+  } catch (err) {
+    console.error('Admin reset transactions error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Manager: Reset only their transactions
+router.delete('/manager/reset', auth, checkRole('manager'), async (req, res) => {
+  try {
+    const result = await Transaction.deleteMany({ managerId: req.user.id });
+    res.json({ message: `Your transactions reset. ${result.deletedCount} transactions deleted.` });
+  } catch (err) {
+    console.error('Manager reset transactions error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
