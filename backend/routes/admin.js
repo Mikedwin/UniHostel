@@ -225,6 +225,17 @@ router.get('/logs', auth, checkAdmin, async (req, res) => {
   }
 });
 
+// Delete single log
+router.delete('/logs/:id', auth, checkAdmin, async (req, res) => {
+  try {
+    const log = await AdminLog.findByIdAndDelete(req.params.id);
+    if (!log) return res.status(404).json({ error: 'Log not found' });
+    res.json({ message: 'Log deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // USER MANAGEMENT ENDPOINTS
 router.get('/users', auth, checkAdmin, async (req, res) => {
   try {

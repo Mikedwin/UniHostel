@@ -33,6 +33,7 @@ const AdminDashboard = () => {
     const [appModalAction, setAppModalAction] = useState('');
     const [selectedApp, setSelectedApp] = useState(null);
     const [appDetailsModalOpen, setAppDetailsModalOpen] = useState(false);
+    const [selectedLogs, setSelectedLogs] = useState([]);
     const { token } = useAuth();
 
     useEffect(() => {
@@ -577,14 +578,80 @@ const AdminDashboard = () => {
                         )}
 
                         {activeTab === 'logs' && (
-                            <div className="space-y-2">
+                            <div className="space-y-4">
+                                {/* Bulk Actions */}
+                                {selectedLogs.length > 0 && (
+                                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+                                        <span className="text-sm font-medium">{selectedLogs.length} log(s) selected</span>
+                                        <button
+                                            onClick={() => {
+                                                showConfirm(
+                                                    `Delete ${selectedLogs.length} selected log(s)?\n\nThis action cannot be undone.`,
+                                                    async () => {
+                                                        try {
+                                                            await Promise.all(selectedLogs.map(id => 
+                                                                axios.delete(`${API_URL}/api/admin/logs/${id}`, {
+                                                                    headers: { Authorization: `Bearer ${token}` }
+                                                                })
+                                                            ));
+                                                            showSuccess(`Deleted ${selectedLogs.length} log(s)`);
+                                                            setSelectedLogs([]);
+                                                            fetchDashboardData();
+                                                        } catch (err) {
+                                                            showError('Failed to delete logs');
+                                                        }
+                                                    }
+                                                );
+                                            }}
+                                            className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+                                        >
+                                            Delete Selected
+                                        </button>
+                                    </div>
+                                )}
+                                
                                 {logs.map(log => (
-                                    <div key={log._id} className="border-l-4 border-blue-500 bg-gray-50 p-3">
-                                        <p className="text-sm font-medium">{log.action}</p>
-                                        <p className="text-xs text-gray-600">{log.details}</p>
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            By {log.adminId?.name} • {new Date(log.timestamp).toLocaleString()}
-                                        </p>
+                                    <div key={log._id} className="border-l-4 border-blue-500 bg-gray-50 p-3 flex items-start gap-3">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedLogs.includes(log._id)}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setSelectedLogs([...selectedLogs, log._id]);
+                                                } else {
+                                                    setSelectedLogs(selectedLogs.filter(id => id !== log._id));
+                                                }
+                                            }}
+                                            className="mt-1"
+                                        />
+                                        <div className="flex-1">
+                                            <p className="text-sm font-medium">{log.action}</p>
+                                            <p className="text-xs text-gray-600">{log.details}</p>
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                By {log.adminId?.name} • {new Date(log.timestamp).toLocaleString()}
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                showConfirm(
+                                                    'Delete this log?\n\nThis action cannot be undone.',
+                                                    async () => {
+                                                        try {
+                                                            await axios.delete(`${API_URL}/api/admin/logs/${log._id}`, {
+                                                                headers: { Authorization: `Bearer ${token}` }
+                                                            });
+                                                            showSuccess('Log deleted');
+                                                            fetchDashboardData();
+                                                        } catch (err) {
+                                                            showError('Failed to delete log');
+                                                        }
+                                                    }
+                                                );
+                                            }}
+                                            className="text-red-600 hover:text-red-800 text-sm"
+                                        >
+                                            Delete
+                                        </button>
                                     </div>
                                 ))}
                             </div>
