@@ -208,12 +208,29 @@ const AdminDashboard = () => {
         if (action === 'view') {
             setSelectedApp(app);
             setAppDetailsModalOpen(true);
+        } else if (action === 'delete') {
+            handleDeleteApplication(app, refreshCallback);
         } else if (action.startsWith('bulk-')) {
             handleBulkApplicationAction(action.replace('bulk-', ''), app, refreshCallback);
         } else {
             setAppModalAction(action);
             setSelectedApp(app);
             setAppModalOpen(true);
+        }
+    };
+
+    const handleDeleteApplication = async (app, refreshCallback) => {
+        if (!window.confirm(`Are you sure you want to delete this application from ${app.studentName}?\n\nThis action cannot be undone.`)) return;
+        
+        try {
+            await axios.delete(`${API_URL}/api/admin/applications/${app._id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            showSuccess('Application deleted successfully');
+            if (refreshCallback) refreshCallback();
+            fetchDashboardData();
+        } catch (err) {
+            alert(err.response?.data?.error || 'Failed to delete application');
         }
     };
 

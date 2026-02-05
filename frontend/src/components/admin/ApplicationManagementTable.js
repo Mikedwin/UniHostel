@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import API_URL from '../../config';
-import { Search, Filter, CheckCircle, XCircle, Eye, FileText, AlertTriangle } from 'lucide-react';
+import { Search, Filter, CheckCircle, XCircle, Eye, FileText, AlertTriangle, Trash2 } from 'lucide-react';
 
 const ApplicationManagementTable = ({ token, onAction }) => {
     const [applications, setApplications] = useState([]);
@@ -227,6 +227,13 @@ const ApplicationManagementTable = ({ token, onAction }) => {
                                             title="Add Note"
                                         >
                                             <FileText className="h-4 w-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => onAction('delete', app, fetchApplications)}
+                                            className="text-red-600 hover:text-red-800"
+                                            title="Delete Application"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
                                         </button>
                                         {app.hasDispute && (
                                             <button
