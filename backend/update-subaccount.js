@@ -8,7 +8,7 @@ const updateSubaccount = async () => {
     await mongoose.connect(process.env.MONGO_URI);
     console.log('Connected!');
 
-    const managerEmail = '3mikedwin@gmail.com';
+    const managerEmail = 'niiansahkendrick@gmail.com';
     const subaccountCode = 'ACCT_os10xo60waln5n7';
 
     console.log(`\nSearching for manager: ${managerEmail}`);

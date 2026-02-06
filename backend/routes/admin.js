@@ -8,6 +8,7 @@ const Application = require('../models/Application');
 const AdminLog = require('../models/AdminLog');
 const UserActivity = require('../models/UserActivity');
 const ImpersonationLog = require('../models/ImpersonationLog');
+const Visitor = require('../models/Visitor');
 const { auth, checkRole } = require('../middleware/auth');
 
 const checkAdmin = checkRole('admin');
@@ -1000,6 +1001,57 @@ router.patch('/managers/:id/subaccount', auth, checkAdmin, async (req, res) => {
         payoutEnabled: manager.payoutEnabled
       } 
     });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// VISITOR TRACKING ENDPOINTS
+router.get('/visitors', auth, checkAdmin, async (req, res) => {
+  try {
+    const { ip, userId, startDate, endDate, page = 1, limit = 100 } = req.query;
+    let query = {};
+    
+    if (ip) query.ip = { $regex: ip, $options: 'i' };
+    if (userId) query.userId = userId;
+    if (startDate && endDate) {
+      query.timestamp = { $gte: new Date(startDate), $lte: new Date(endDate) };
+    }
+    
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const [visitors, total] = await Promise.all([
+      Visitor.find(query)
+        .populate('userId', 'name email role')
+        .sort({ timestamp: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean(),
+      Visitor.countDocuments(query)
+    ]);
+    
+    res.json({ visitors, total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/visitors/stats', auth, checkAdmin, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    let dateQuery = {};
+    if (startDate && endDate) {
+      dateQuery = { timestamp: { $gte: new Date(startDate), $lte: new Date(endDate) } };
+    }
+    
+    const [totalVisits, uniqueIPs, deviceStats, browserStats, osStats] = await Promise.all([
+      Visitor.countDocuments(dateQuery),
+      Visitor.distinct('ip', dateQuery).then(ips => ips.length),
+      Visitor.aggregate([{ $match: dateQuery }, { $group: { _id: '$device', count: { $sum: 1 } } }]),
+      Visitor.aggregate([{ $match: dateQuery }, { $group: { _id: '$browser', count: { $sum: 1 } } }]),
+      Visitor.aggregate([{ $match: dateQuery }, { $group: { _id: '$os', count: { $sum: 1 } } }])
+    ]);
+    
+    res.json({ totalVisits, uniqueIPs, deviceStats, browserStats, osStats });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

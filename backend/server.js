@@ -20,6 +20,9 @@ require('dotenv').config({ path: '../../hostel-hub-secrets.env' });
 // Import IDS middleware (optional - controlled by env variable)
 const intrusionDetection = require('./middleware/intrusionDetection');
 
+// Import visitor tracking middleware
+const trackVisitor = require('./middleware/trackVisitor');
+
 const logger = require('./config/logger');
 const User = require('./models/User');
 const Hostel = require('./models/Hostel');
@@ -139,6 +142,11 @@ if (process.env.SECURITY_ENABLED === 'true') {
 } else {
   logger.info('🔓 Intrusion Detection System DISABLED (set SECURITY_ENABLED=true to enable)');
 }
+
+// 6. Visitor Tracking - Logs all platform access
+app.use(trackVisitor);
+logger.info('👁️ Visitor tracking enabled');
+console.log('👁️ Tracking all platform access');
 
 // Database Connection with Retry Logic
 let dbConnected = false;
