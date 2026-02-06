@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Eye, Monitor, Smartphone, Tablet, Globe, Search, Calendar } from 'lucide-react';
+import { Eye, Monitor, Smartphone, Tablet, Globe, Search } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import API_URL from '../../config';
 
@@ -19,6 +19,7 @@ const VisitorTracking = () => {
   useEffect(() => {
     fetchVisitors();
     fetchStats();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.page]);
 
   const fetchVisitors = async () => {
