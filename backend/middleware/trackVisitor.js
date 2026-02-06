@@ -1,4 +1,5 @@
 const Visitor = require('../models/Visitor');
+const jwt = require('jsonwebtoken');
 
 const parseUserAgent = (userAgent) => {
   if (!userAgent) return { device: 'Unknown', browser: 'Unknown', os: 'Unknown' };
@@ -48,10 +49,19 @@ const trackVisitor = async (req, res, next) => {
       method: req.method
     };
     
-    // Add user info if authenticated
-    if (req.user) {
-      visitorData.userId = req.user.id;
-      visitorData.userRole = req.user.role;
+    // Try to extract user info from JWT token
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.substring(7);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        if (decoded && decoded.id) {
+          visitorData.userId = decoded.id;
+          visitorData.userRole = decoded.role;
+        }
+      } catch (err) {
+        // Token invalid or expired - continue as guest
+      }
     }
     
     // Log visitor asynchronously (don't block request)
