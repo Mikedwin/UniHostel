@@ -12,6 +12,7 @@ import ApplicationActionModal from '../components/admin/ApplicationActionModal';
 import AnalyticsDashboard from '../components/admin/AnalyticsDashboard';
 import AdminTransactions from '../components/admin/AdminTransactions';
 import ManagerRegistrationForm from '../components/admin/ManagerRegistrationForm';
+import VisitorTracking from '../components/admin/VisitorTracking';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const AdminDashboard = () => {
@@ -434,7 +435,7 @@ const AdminDashboard = () => {
                 <div className="bg-white rounded-lg shadow mb-6">
                     <div className="border-b overflow-x-auto">
                         <div className="flex space-x-2 sm:space-x-4 px-2 sm:px-4 min-w-max">
-                            {['overview', 'analytics', 'transactions', 'users', 'hostels', 'managers', 'register-manager', 'applications', 'logs'].map(tab => (
+                            {['overview', 'analytics', 'transactions', 'visitors', 'users', 'hostels', 'managers', 'register-manager', 'applications', 'logs'].map(tab => (
                                 <button
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
@@ -491,6 +492,10 @@ const AdminDashboard = () => {
 
                         {activeTab === 'transactions' && (
                             <AdminTransactions token={token} />
+                        )}
+
+                        {activeTab === 'visitors' && (
+                            <VisitorTracking />
                         )}
 
                         {activeTab === 'applications' && (
