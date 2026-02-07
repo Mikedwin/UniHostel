@@ -875,7 +875,7 @@ app.get('/api/hostels', checkDBConnection, cacheMiddleware(300), async (req, res
 
     const hostels = await Hostel.find(query)
       .select('name location hostelViewImage description roomTypes facilities isAvailable managerId createdAt')
-      .populate('managerId', 'name email')
+      .populate('managerId', 'name')
       .sort({ createdAt: -1 })
       .limit(50)
       .lean();
@@ -1031,7 +1031,7 @@ app.get('/api/hostels/:id', checkDBConnection, async (req, res) => {
     
     const hostel = await Hostel.findById(req.params.id)
       .select('name location hostelViewImage hostelImages virtualTourUrl description roomTypes facilities isAvailable managerId createdAt')
-      .populate('managerId', 'name email')
+      .populate('managerId', 'name')
       .lean();
     
     if (!hostel) {
