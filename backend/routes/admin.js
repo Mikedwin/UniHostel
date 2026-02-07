@@ -159,7 +159,7 @@ router.get('/applications', auth, checkAdmin, async (req, res) => {
     const [applications, total] = await Promise.all([
       Application.find(query)
         .populate('hostelId', 'name location')
-        .populate('studentId', 'name email')
+        .populate('studentId', 'name email phone')
         .populate('overriddenBy', 'name email')
         .populate('adminNotes.adminId', 'name')
         .sort({ createdAt: -1 })

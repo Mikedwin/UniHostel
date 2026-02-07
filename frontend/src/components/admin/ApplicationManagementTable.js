@@ -154,6 +154,7 @@ const ApplicationManagementTable = ({ token, onAction }) => {
                                 />
                             </th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hostel</th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Room Type</th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
@@ -175,6 +176,9 @@ const ApplicationManagementTable = ({ token, onAction }) => {
                                 <td className="px-4 py-3 text-sm">
                                     <div>{app.studentName}</div>
                                     <div className="text-xs text-gray-500">{app.studentId?.email}</div>
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                    <div className="text-xs">{app.studentId?.phone || 'N/A'}</div>
                                 </td>
                                 <td className="px-4 py-3 text-sm">
                                     <div>{app.hostelId?.name}</div>

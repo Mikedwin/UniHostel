@@ -1291,9 +1291,18 @@ app.get('/api/applications/student', checkDBConnection, auth, checkRole('student
     
     const apps = await Application.find(query)
       .select('-__v -adminNotes')
-      .populate('hostelId', 'name location')
+      .populate('hostelId', 'name location managerId')
       .sort({ createdAt: -1 })
       .lean();
+    
+    // Populate manager contact for approved applications only
+    for (let app of apps) {
+      if (app.status === 'approved' && app.hostelId?.managerId) {
+        const manager = await User.findById(app.hostelId.managerId).select('name email phone').lean();
+        app.managerContact = manager;
+      }
+    }
+    
     res.json(apps);
   } catch (err) {
     console.error('Error fetching student applications:', err);

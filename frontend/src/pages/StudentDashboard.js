@@ -433,6 +433,14 @@ const StudentDashboard = () => {
                                             ) : (
                                                 <span className="text-gray-400">-</span>
                                             )}
+                                            {app.status === 'approved' && app.managerContact && (
+                                                <div className="mt-2 text-xs">
+                                                    <div className="font-semibold text-gray-700">Manager Contact:</div>
+                                                    <div className="text-gray-600">{app.managerContact.name}</div>
+                                                    {app.managerContact.phone && <div className="text-gray-600">{app.managerContact.phone}</div>}
+                                                    {app.managerContact.email && <div className="text-gray-600">{app.managerContact.email}</div>}
+                                                </div>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                                             {viewMode === 'history' ? (
@@ -515,6 +523,14 @@ const StudentDashboard = () => {
                                                 <Key className="w-3 h-3 text-green-600" />
                                                 <code className="bg-gray-100 px-2 py-1 rounded font-mono text-xs">{app.accessCode}</code>
                                             </div>
+                                        </div>
+                                    )}
+                                    {app.status === 'approved' && app.managerContact && (
+                                        <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                                            <div className="font-semibold text-green-800 text-sm mb-2">Manager Contact:</div>
+                                            <div className="text-sm text-green-700">{app.managerContact.name}</div>
+                                            {app.managerContact.phone && <div className="text-sm text-green-700">{app.managerContact.phone}</div>}
+                                            {app.managerContact.email && <div className="text-sm text-green-700">{app.managerContact.email}</div>}
                                         </div>
                                     )}
                                 </div>
