@@ -29,10 +29,13 @@ const parseUserAgent = (userAgent) => {
 };
 
 const trackVisitor = async (req, res, next) => {
+  // Skip tracking entirely - run in background without blocking
+  next();
+  
   try {
     // Skip tracking for health checks and static files
-    if (req.url === '/' || req.url === '/api/health' || req.url.includes('/api-docs')) {
-      return next();
+    if (req.url === '/' || req.url === '/api/health' || req.url.includes('/api-docs') || req.url.includes('/api/')) {
+      return;
     }
     
     const ip = req.ip || req.connection.remoteAddress;
@@ -66,12 +69,9 @@ const trackVisitor = async (req, res, next) => {
     
     // Log visitor asynchronously (don't block request)
     Visitor.create(visitorData).catch(err => console.error('Visitor tracking error:', err));
-    
-    next();
   } catch (error) {
     // Don't break the app if tracking fails
     console.error('Visitor tracking middleware error:', error);
-    next();
   }
 };
 
