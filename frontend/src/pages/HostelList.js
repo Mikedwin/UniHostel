@@ -147,6 +147,13 @@ const HostelList = () => {
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Find Your Perfect Hostel</h1>
           <p className="text-sm sm:text-base text-gray-600">Discover verified student accommodation within your budget</p>
+          
+          {/* Platform Fee Notice */}
+          <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p className="text-sm text-blue-800 text-center">
+              💡 <span className="font-medium">Prices shown are room fees only.</span> Platform service fee applies at checkout.
+            </p>
+          </div>
         </div>
 
         {/* Mobile Filter Button */}
@@ -272,13 +279,6 @@ const HostelList = () => {
             {error}
           </div>
         )}
-
-        {/* Platform Fee Notice */}
-        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-sm text-blue-800 text-center">
-            💡 <span className="font-medium">Prices shown are room fees only.</span> Platform service fee applies at checkout.
-          </p>
-        </div>
 
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
