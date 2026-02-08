@@ -273,6 +273,13 @@ const HostelList = () => {
           </div>
         )}
 
+        {/* Platform Fee Notice */}
+        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <p className="text-sm text-blue-800 text-center">
+            💡 <span className="font-medium">Prices shown are room fees only.</span> Platform service fee applies at checkout.
+          </p>
+        </div>
+
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
