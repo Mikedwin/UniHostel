@@ -282,6 +282,9 @@ const HostelDetail = () => {
                         <div className="text-primary-600 font-bold text-2xl mb-2">
                           GH₵{room.price} <span className="text-sm text-gray-500 font-normal">/ semester</span>
                         </div>
+                        <div className="text-xs text-gray-600 mb-2">
+                          + Platform fee (5%): ~GH₵{Math.round(room.price * 0.05)}
+                        </div>
                         <div className="mb-2">
                           <span className="inline-block px-3 py-1 text-sm font-semibold rounded-full bg-blue-100 text-blue-700">
                             {room.gender} Only
@@ -410,6 +413,9 @@ const HostelDetail = () => {
                           </div>
                           <div className="text-primary-600 font-bold text-2xl mb-3">
                             GH₵{room.price} <span className="text-sm text-gray-500 font-normal">/ semester</span>
+                          </div>
+                          <div className="text-xs text-gray-600 mb-3">
+                            + Platform fee (5%): ~GH₵{Math.round(room.price * 0.05)}
                           </div>
                           <div className="mb-3">
                             <span className="inline-block px-3 py-1 text-sm font-semibold rounded-full bg-blue-100 text-blue-700">
