@@ -1315,24 +1315,25 @@ app.get('/api/applications/manager', checkDBConnection, auth, checkRole('manager
     console.log('Fetching applications for manager:', req.user.id);
     const { archived } = req.query;
     
-    const query = { isArchived: archived === 'true' };
-
+    // Get manager's hostel IDs first
+    const managerHostels = await Hostel.find({ managerId: req.user.id }).select('_id').lean();
+    const hostelIds = managerHostels.map(h => h._id);
+    
+    // Query only applications for manager's hostels
+    const query = { 
+      hostelId: { $in: hostelIds },
+      isArchived: archived === 'true'
+    };
+    
     const apps = await Application.find(query)
-        .select('-__v -adminNotes')
-        .populate({
-          path: 'hostelId',
-          match: { managerId: req.user.id },
-          select: 'name location'
-        })
-        .populate('studentId', 'name email')
-        .sort({ createdAt: -1 })
-        .lean();
+      .select('-__v -adminNotes')
+      .populate('hostelId', 'name location')
+      .populate('studentId', 'name email')
+      .sort({ createdAt: -1 })
+      .lean();
     
-    // Filter out apps where hostelId is null (not manager's hostels)
-    const filteredApps = apps.filter(app => app.hostelId !== null);
-    
-    console.log(`Found ${filteredApps.length} applications`);
-    res.json(filteredApps);
+    console.log(`Found ${apps.length} applications`);
+    res.json(apps);
   } catch (err) {
     console.error('Error fetching manager applications:', err);
     res.status(500).json({ error: 'Failed to fetch applications' });
