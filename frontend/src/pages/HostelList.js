@@ -149,8 +149,8 @@ const HostelList = () => {
           <p className="text-sm sm:text-base text-gray-600">Discover verified student accommodation within your budget</p>
           
           {/* Platform Fee Notice */}
-          <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <p className="text-sm text-blue-800 text-center">
+          <div className="mt-4 bg-primary-50 border border-primary-200 rounded-lg p-3">
+            <p className="text-sm text-primary-800 text-center">
               💡 <span className="font-medium">Prices shown are room fees only.</span> Platform service fee applies at checkout.
             </p>
           </div>
