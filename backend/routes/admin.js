@@ -176,12 +176,39 @@ router.get('/applications', auth, checkAdmin, async (req, res) => {
 
 router.get('/managers', auth, checkAdmin, async (req, res) => {
   try {
-    const managers = await User.find({ role: 'manager' }).select('-password').sort({ createdAt: -1 }).lean();
-    const managersWithStats = await Promise.all(managers.map(async (manager) => {
-      const hostelCount = await Hostel.countDocuments({ managerId: manager._id });
-      const applicationCount = await Application.countDocuments({ hostelId: { $in: await Hostel.find({ managerId: manager._id }).distinct('_id') } });
-      return { ...manager, hostelCount, applicationCount };
+    const managers = await User.find({ role: 'manager' })
+      .select('name email createdAt')
+      .sort({ createdAt: -1 })
+      .lean();
+    
+    // Get counts in bulk using aggregation (much faster)
+    const managerIds = managers.map(m => m._id);
+    
+    const [hostelCounts, applicationCounts] = await Promise.all([
+      Hostel.aggregate([
+        { $match: { managerId: { $in: managerIds } } },
+        { $group: { _id: '$managerId', count: { $sum: 1 } } }
+      ]),
+      Hostel.aggregate([
+        { $match: { managerId: { $in: managerIds } } },
+        { $lookup: { from: 'applications', localField: '_id', foreignField: 'hostelId', as: 'applications' } },
+        { $group: { _id: '$managerId', count: { $sum: { $size: '$applications' } } } }
+      ])
+    ]);
+    
+    // Create lookup maps
+    const hostelCountMap = {};
+    const appCountMap = {};
+    hostelCounts.forEach(h => { hostelCountMap[h._id] = h.count; });
+    applicationCounts.forEach(a => { appCountMap[a._id] = a.count; });
+    
+    // Attach counts to managers
+    const managersWithStats = managers.map(manager => ({
+      ...manager,
+      hostelCount: hostelCountMap[manager._id] || 0,
+      applicationCount: appCountMap[manager._id] || 0
     }));
+    
     res.json(managersWithStats);
   } catch (err) {
     res.status(500).json({ error: err.message });
