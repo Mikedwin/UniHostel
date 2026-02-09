@@ -60,7 +60,7 @@ router.get('/dashboard/stats', auth, checkAdmin, async (req, res) => {
 router.get('/hostels', auth, checkAdmin, async (req, res) => {
   try {
     const { search, status, managerId } = req.query;
-    let query = {};
+    let query = { isDeleted: { $ne: true } };
     if (search) query.name = { $regex: search, $options: 'i' };
     if (status === 'active') query.isActive = true;
     if (status === 'inactive') query.isActive = false;
@@ -109,7 +109,11 @@ router.delete('/hostels/:id', auth, checkAdmin, async (req, res) => {
     const hostel = await Hostel.findById(req.params.id);
     if (!hostel) return res.status(404).json({ error: 'Hostel not found' });
 
-    await Hostel.findByIdAndDelete(req.params.id);
+    // Soft delete
+    hostel.isDeleted = true;
+    hostel.deletedAt = new Date();
+    hostel.deletedBy = req.user.id;
+    await hostel.save();
     await logAdminAction(req.user.id, 'DELETE_HOSTEL', 'hostel', hostel._id, `Deleted hostel: ${hostel.name}`);
     res.json({ message: 'Hostel deleted successfully' });
   } catch (err) {
@@ -176,7 +180,7 @@ router.get('/applications', auth, checkAdmin, async (req, res) => {
 
 router.get('/managers', auth, checkAdmin, async (req, res) => {
   try {
-    const managers = await User.find({ role: 'manager' })
+    const managers = await User.find({ role: 'manager', isDeleted: { $ne: true } })
       .select('name email createdAt')
       .sort({ createdAt: -1 })
       .lean();
@@ -268,7 +272,7 @@ router.delete('/logs/:id', auth, checkAdmin, async (req, res) => {
 router.get('/users', auth, checkAdmin, async (req, res) => {
   try {
     const { search, role, status, page = 1, limit = 50 } = req.query;
-    let query = {};
+    let query = { isDeleted: { $ne: true } };
     if (search) query.$or = [{ name: { $regex: search, $options: 'i' } }, { email: { $regex: search, $options: 'i' } }];
     if (role) query.role = role;
     if (status) query.accountStatus = status;
@@ -422,7 +426,11 @@ router.delete('/users/:id', auth, checkAdmin, async (req, res) => {
     if (!user) return res.status(404).json({ error: 'User not found' });
     if (user.role === 'admin') return res.status(403).json({ error: 'Cannot delete admin users' });
 
-    await User.findByIdAndDelete(req.params.id);
+    // Soft delete
+    user.isDeleted = true;
+    user.deletedAt = new Date();
+    user.deletedBy = req.user.id;
+    await user.save();
     await logAdminAction(req.user.id, 'DELETE_USER', 'user', user._id, `Deleted ${user.role}: ${user.name} (${user.email})`);
     res.json({ message: 'User deleted successfully' });
   } catch (err) {

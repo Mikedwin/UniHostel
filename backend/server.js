@@ -852,7 +852,7 @@ app.post('/api/auth/set-security-question', auth, async (req, res) => {
 app.get('/api/hostels', checkDBConnection, cacheMiddleware(300), async (req, res) => {
   try {
     const { location, maxPrice, search } = req.query;
-    let query = { isAvailable: true };
+    let query = { isAvailable: true, isDeleted: { $ne: true } };
     
     if (location) {
       const escapedLocation = escapeRegex(location);
@@ -989,7 +989,7 @@ app.post('/api/hostels', checkDBConnection, auth, checkRole('manager'), validate
 app.get('/api/hostels/my-listings', checkDBConnection, auth, checkRole('manager'), async (req, res) => {
   try {
     console.log('Fetching hostels for manager:', req.user.id);
-    const hostels = await Hostel.find({ managerId: req.user.id })
+    const hostels = await Hostel.find({ managerId: req.user.id, isDeleted: { $ne: true } })
       .select('name location hostelViewImage description roomTypes facilities isAvailable createdAt')
       .sort({ createdAt: -1 })
       .lean();
@@ -1147,7 +1147,11 @@ app.delete('/api/hostels/:id', checkDBConnection, auth, checkRole('manager'), as
       return res.status(403).json({ message: 'Not authorized to delete this hostel' });
     }
     
-    await Hostel.findByIdAndDelete(req.params.id);
+    // Soft delete
+    hostel.isDeleted = true;
+    hostel.deletedAt = new Date();
+    hostel.deletedBy = req.user.id;
+    await hostel.save();
     
     // Invalidate cache
     cache.invalidatePattern('cache:/api/hostels');

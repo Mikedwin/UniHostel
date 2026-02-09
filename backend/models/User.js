@@ -40,6 +40,9 @@ const userSchema = new mongoose.Schema({
   paystackSubaccountCode: { type: String },
   paystackSubaccountId: { type: String },
   payoutEnabled: { type: Boolean, default: false },
+  isDeleted: { type: Boolean, default: false },
+  deletedAt: { type: Date },
+  deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   createdAt: { type: Date, default: Date.now }
 });
 

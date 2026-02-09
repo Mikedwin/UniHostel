@@ -34,6 +34,9 @@ const hostelSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true },
   isFlagged: { type: Boolean, default: false },
   flagReason: { type: String },
+  isDeleted: { type: Boolean, default: false },
+  deletedAt: { type: Date },
+  deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   createdAt: { type: Date, default: Date.now }
 });
 
