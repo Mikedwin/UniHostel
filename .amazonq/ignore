@@ -1,0 +1,42 @@
+# Amazon Q Ignore File
+# Files and directories listed here will be excluded from Amazon Q's access
+
+# Environment files with secrets
+**/.env
+**/.env.local
+**/.env.production
+**/.env.development
+**/backend/.env
+**/frontend/.env
+
+# Backup files that might contain sensitive data
+**/backups/**
+**/*.backup
+**/*.bak
+
+# Database dumps
+**/*.sql
+**/*.dump
+**/*.db
+
+# Private keys and certificates
+**/*.pem
+**/*.key
+**/*.cert
+**/*.p12
+**/*.pfx
+
+# AWS credentials
+**/.aws/credentials
+**/.aws/config
+
+# SSH keys
+**/.ssh/id_rsa
+**/.ssh/id_ed25519
+
+# Logs that might contain sensitive info
+**/logs/**
+**/*.log
+
+# Node modules (performance)
+**/node_modules/**

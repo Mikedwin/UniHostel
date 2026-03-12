@@ -1,0 +1,139 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #F8FAFC;
+    color: #0F172A;
+  }
+}
+
+@layer utilities {
+  /* Background Colors */
+  .bg-gray-50 {
+    background-color: #F8FAFC !important;
+  }
+
+  .bg-gray-100 {
+    background-color: #F1F5F9 !important;
+  }
+
+  /* Text Colors */
+  .text-gray-900 {
+    color: #0F172A !important;
+  }
+
+  .text-gray-700 {
+    color: #334155 !important;
+  }
+
+  .text-gray-600 {
+    color: #475569 !important;
+  }
+
+  .text-gray-500 {
+    color: #64748B !important;
+  }
+
+  /* Border Colors */
+  .border-gray-200 {
+    border-color: #E5E7EB !important;
+  }
+
+  .border-gray-300 {
+    border-color: #D1D5DB !important;
+  }
+
+  /* Divider Colors */
+  .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+    border-color: #E5E7EB !important;
+  }
+
+  /* Semantic Color Utilities */
+  .bg-success {
+    background-color: #22C55E;
+  }
+
+  .text-success {
+    color: #22C55E;
+  }
+
+  .bg-warning {
+    background-color: #EAB308;
+  }
+
+  .text-warning {
+    color: #EAB308;
+  }
+
+  .bg-error {
+    background-color: #EF4444;
+  }
+
+  .text-error {
+    color: #EF4444;
+  }
+
+  .text-secondary {
+    color: #6366F1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
