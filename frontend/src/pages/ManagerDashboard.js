@@ -26,6 +26,7 @@ const ManagerDashboard = () => {
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [selectedApps, setSelectedApps] = useState([]);
     const [toast, setToast] = useState(null);
+    const [contextMenu, setContextMenu] = useState(null);
 
     const showToast = (message, type = 'success') => {
         setToast({ message, type });
