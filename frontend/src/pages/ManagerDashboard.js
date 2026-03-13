@@ -76,12 +76,15 @@ const ManagerDashboard = () => {
                 })
             ]);
             
-            setApplications(appRes.data || []);
-            setHostels(hostRes.data || []);
+            // Ensure data is always an array
+            setApplications(Array.isArray(appRes.data) ? appRes.data : []);
+            setHostels(Array.isArray(hostRes.data) ? hostRes.data : []);
             setUserInfo(user);
         } catch (err) {
             console.error('Dashboard fetch error:', err);
             setError(err.response?.data?.error || err.message || 'Failed to load dashboard data');
+            setApplications([]);
+            setHostels([]);
         } finally {
             setLoading(false);
         }

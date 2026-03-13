@@ -24,9 +24,11 @@ const StudentDashboard = () => {
             const res = await axios.get(API_ENDPOINTS.STUDENT_APPLICATIONS + `?archived=${archived}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setApplications(res.data);
+            // Ensure data is always an array
+            setApplications(Array.isArray(res.data) ? res.data : []);
         } catch (err) {
             console.error(err);
+            setApplications([]);
         } finally {
             setLoading(false);
         }
