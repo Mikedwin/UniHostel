@@ -100,6 +100,7 @@ const ManagerDashboard = () => {
         return () => {
             document.removeEventListener('click', handleClick);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token, viewMode]);
 
     const handleArchive = async (id, archive) => {
