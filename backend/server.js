@@ -1118,15 +1118,24 @@ app.put('/api/hostels/:id', checkDBConnection, auth, checkRole('manager'), valid
       updateData.hostelViewImage = req.body.hostelViewImage;
     }
     
-    // Process room types - upload new images to Cloudinary
+    // Process room types - upload new images to Cloudinary and recalculate availability
     if (req.body.roomTypes) {
       updateData.roomTypes = await Promise.all(req.body.roomTypes.map(async (room) => {
+        let processedRoom = { ...room };
+        
+        // Upload new image if provided
         if (room.roomImage && room.roomImage.startsWith('data:image')) {
           logger.info(`Uploading new room image for ${room.type}`);
           const roomImageUrl = await uploadImage(room.roomImage, 'unihostel/rooms');
-          return { ...room, roomImage: roomImageUrl };
+          processedRoom.roomImage = roomImageUrl;
         }
-        return room;
+        
+        // Recalculate availability based on capacity
+        const occupiedCapacity = processedRoom.occupiedCapacity || 0;
+        const totalCapacity = processedRoom.totalCapacity || 0;
+        processedRoom.available = occupiedCapacity < totalCapacity;
+        
+        return processedRoom;
       }));
     }
     
@@ -1134,11 +1143,13 @@ app.put('/api/hostels/:id', checkDBConnection, auth, checkRole('manager'), valid
       req.params.id,
       { $set: updateData },
       { new: true, runValidators: true }
-    );
+    ).lean();
     
-    // Invalidate cache
+    // Invalidate cache for this specific hostel and list
     cache.invalidatePattern('cache:/api/hostels');
     cache.del(`cache:/api/hostels/${req.params.id}`);
+    
+    logger.info(`Hostel updated: ${req.params.id}, room availability recalculated`);
     
     // Auto-update pending applications with new prices
     if (updateData.roomTypes) {
