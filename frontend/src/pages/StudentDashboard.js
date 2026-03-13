@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { Clock, CheckCircle, XCircle, X, CreditCard, Key, Archive, RotateCcw, Trash2, Settings } from 'lucide-react';
+import { CreditCard, Archive } from 'lucide-react';
 import { API_ENDPOINTS, PAYSTACK_PUBLIC_KEY } from '../config/api';
 import Swal from 'sweetalert2';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -10,12 +9,9 @@ import LoadingSpinner from '../components/LoadingSpinner';
 const StudentDashboard = () => {
     const [applications, setApplications] = useState([]);
     const { token, user } = useAuth();
-    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState('active');
     const [toast, setToast] = useState(null);
-    const [contextMenu, setContextMenu] = useState(null);
-    const [newUpdates, setNewUpdates] = useState(0);
 
     const showToast = (message, type = 'success') => {
         setToast({ message, type });
@@ -38,12 +34,7 @@ const StudentDashboard = () => {
 
     useEffect(() => {
         fetchApps();
-        const handleClick = () => {
-            setContextMenu(null);
-            setNewUpdates(0);
-        };
-        document.addEventListener('click', handleClick);
-        return () => document.removeEventListener('click', handleClick);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token, viewMode]);
 
     const handleProceedToPayment = async (app) => {
