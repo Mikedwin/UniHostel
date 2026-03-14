@@ -1092,6 +1092,51 @@ router.get('/visitors/stats', auth, checkAdmin, async (req, res) => {
   }
 });
 
+// FIX ROOM AVAILABILITY ENDPOINT (TEMPORARY)
+router.post('/fix-room-availability', auth, checkAdmin, async (req, res) => {
+  try {
+    const hostels = await Hostel.find({ isDeleted: { $ne: true } });
+    let updatedCount = 0;
+    const fixes = [];
+    
+    for (const hostel of hostels) {
+      let needsUpdate = false;
+      
+      hostel.roomTypes.forEach(room => {
+        const occupiedCapacity = room.occupiedCapacity || 0;
+        const totalCapacity = room.totalCapacity || 0;
+        const shouldBeAvailable = occupiedCapacity < totalCapacity;
+        
+        if (room.available !== shouldBeAvailable) {
+          fixes.push({
+            hostel: hostel.name,
+            roomType: room.type,
+            occupancy: `${occupiedCapacity}/${totalCapacity}`,
+            wasAvailable: room.available,
+            nowAvailable: shouldBeAvailable
+          });
+          room.available = shouldBeAvailable;
+          needsUpdate = true;
+        }
+      });
+      
+      if (needsUpdate) {
+        await hostel.save();
+        updatedCount++;
+      }
+    }
+    
+    await logAdminAction(req.user.id, 'FIX_ROOM_AVAILABILITY', 'system', null, `Fixed ${updatedCount} hostel(s) with incorrect room availability`);
+    res.json({ 
+      message: `Fixed ${updatedCount} hostel(s)`, 
+      updatedCount,
+      fixes 
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
 
 
