@@ -42,9 +42,24 @@ const hostelSchema = new mongoose.Schema({
 
 hostelSchema.index({ managerId: 1, createdAt: -1 });
 
-// Middleware to auto-update availability based on capacity
-roomTypeSchema.pre('save', function(next) {
-  this.available = this.occupiedCapacity < this.totalCapacity;
+// Middleware to auto-update availability based on capacity before saving
+hostelSchema.pre('save', function(next) {
+  if (this.roomTypes && this.roomTypes.length > 0) {
+    this.roomTypes.forEach(room => {
+      room.available = (room.occupiedCapacity || 0) < (room.totalCapacity || 0);
+    });
+  }
+  next();
+});
+
+// Also update before findOneAndUpdate
+hostelSchema.pre('findOneAndUpdate', function(next) {
+  const update = this.getUpdate();
+  if (update.$set && update.$set.roomTypes) {
+    update.$set.roomTypes.forEach(room => {
+      room.available = (room.occupiedCapacity || 0) < (room.totalCapacity || 0);
+    });
+  }
   next();
 });
 
