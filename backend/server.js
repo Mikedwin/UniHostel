@@ -1286,18 +1286,21 @@ app.post('/api/applications', checkDBConnection, auth, checkRole('student'), asy
     
     logger.info('Application created', { applicationId: application._id, hostelFee, adminCommission, totalAmount });
     
-    // Send email notifications
+    // Send response immediately
+    res.status(201).json(application);
+    
+    // Send email notifications in background (don't wait)
     const student = await User.findById(req.user.id);
     const manager = await User.findById(hostel.managerId);
     
-    try {
-      await sendApplicationSubmittedEmail(student.email, student.name, hostel.name, roomType, semester);
-      await sendNewApplicationNotificationToManager(manager.email, manager.name, student.name, hostel.name, roomType);
-    } catch (emailErr) {
-      logger.error('Email notification error:', emailErr);
-    }
-    
-    res.status(201).json(application);
+    setImmediate(async () => {
+      try {
+        await sendApplicationSubmittedEmail(student.email, student.name, hostel.name, roomType, semester);
+        await sendNewApplicationNotificationToManager(manager.email, manager.name, student.name, hostel.name, roomType);
+      } catch (emailErr) {
+        logger.error('Email notification error:', emailErr);
+      }
+    });
   } catch (err) {
     console.error('Error creating application:', err);
     res.status(500).json({ error: 'Failed to create application' });
