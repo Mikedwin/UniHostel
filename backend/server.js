@@ -1286,13 +1286,14 @@ app.post('/api/applications', checkDBConnection, auth, checkRole('student'), asy
     
     logger.info('Application created', { applicationId: application._id, hostelFee, adminCommission, totalAmount });
     
+    // Fetch user data for emails before responding
+    const student = await User.findById(req.user.id);
+    const manager = await User.findById(hostel.managerId);
+    
     // Send response immediately
     res.status(201).json(application);
     
     // Send email notifications in background (don't wait)
-    const student = await User.findById(req.user.id);
-    const manager = await User.findById(hostel.managerId);
-    
     setImmediate(async () => {
       try {
         await sendApplicationSubmittedEmail(student.email, student.name, hostel.name, roomType, semester);
