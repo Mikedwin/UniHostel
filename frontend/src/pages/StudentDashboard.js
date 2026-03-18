@@ -145,6 +145,14 @@ const StudentDashboard = () => {
                                     </button>
                                 </div>
                             )}
+                            {(app.status === 'pending' || app.status === 'rejected') && viewMode === 'active' && (
+                                <div className="mt-3">
+                                    <button onClick={() => handleMoveToHistory(app._id)}
+                                        className="w-full bg-gray-200 text-gray-700 py-2 rounded flex items-center justify-center gap-2 hover:bg-gray-300">
+                                        <Archive size={16} /> Move to History
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>

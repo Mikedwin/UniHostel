@@ -35,7 +35,7 @@ const ManagerDashboard = () => {
 
     const handleContextMenu = (e, app) => {
         e.preventDefault();
-        if (viewMode === 'active' && (app.status === 'approved' || app.status === 'rejected')) {
+        if (viewMode === 'active' && (app.status === 'approved' || app.status === 'rejected' || app.status === 'approved_for_payment')) {
             setContextMenu({
                 x: e.pageX,
                 y: e.pageY,
@@ -684,7 +684,7 @@ const ManagerDashboard = () => {
                                                                 Final Approve
                                                             </button>
                                                         )}
-                                                        {viewMode === 'active' && (app.status === 'approved' || app.status === 'rejected') && (
+                                                        {viewMode === 'active' && (app.status === 'approved' || app.status === 'rejected' || app.status === 'approved_for_payment') && (
                                                             <button 
                                                                 onClick={async () => {
                                                                     const result = await Swal.fire({
