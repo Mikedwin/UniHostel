@@ -1,6 +1,14 @@
-// Render API Configuration for UniHostel Frontend
+// API Configuration for UniHostel Frontend
+// Automatically detects environment and uses appropriate API URL
 
-const API_BASE_URL = 'https://unihostel.onrender.com/api';
+const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+const API_BASE_URL = isDevelopment 
+  ? 'http://localhost:5000/api'  // Local development
+  : 'https://unihostel.onrender.com/api';  // Production
+
+console.log('API Base URL:', API_BASE_URL);
+console.log('Environment:', isDevelopment ? 'Development' : 'Production');
 
 export const API_ENDPOINTS = {
   // Auth

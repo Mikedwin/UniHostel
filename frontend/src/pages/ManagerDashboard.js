@@ -122,10 +122,26 @@ const ManagerDashboard = () => {
 
     const handleStatusUpdate = async (id, action) => {
         try {
-            const response = await axios.patch(API_ENDPOINTS.APPLICATION_STATUS(id), 
+            console.log('=== Status Update Request ===');
+            console.log('Application ID:', id);
+            console.log('Action:', action);
+            console.log('Token exists:', !!token);
+            console.log('API Endpoint:', API_ENDPOINTS.APPLICATION_STATUS(id));
+            
+            const response = await axios.patch(
+                API_ENDPOINTS.APPLICATION_STATUS(id), 
                 { action }, 
-                { headers: { Authorization: `Bearer ${token}` } }
+                { 
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    } 
+                }
             );
+            
+            console.log('=== Response Received ===');
+            console.log('Status:', response.status);
+            console.log('Data:', response.data);
             
             if (response.data.error) {
                 Swal.fire({
@@ -139,15 +155,42 @@ const ManagerDashboard = () => {
             
             if (action === 'final_approve' && response.data.accessCode) {
                 showToast(`Application approved! Access Code: ${response.data.accessCode}`);
+            } else if (action === 'approve_for_payment') {
+                showToast('Application approved for payment!');
+            } else if (action === 'reject') {
+                showToast('Application rejected');
             } else {
                 showToast('Application updated successfully');
             }
             
             fetchData();
         } catch (err) {
-            console.error(err);
-            const errorMsg = err.response?.data?.error || 'Failed to update application status';
-            showToast(errorMsg, 'error');
+            console.error('=== Status Update Error ===');
+            console.error('Error object:', err);
+            console.error('Error message:', err.message);
+            console.error('Error response:', err.response);
+            console.error('Response status:', err.response?.status);
+            console.error('Response data:', err.response?.data);
+            
+            let errorMsg = 'Failed to update application status';
+            
+            if (err.response) {
+                // Server responded with error
+                errorMsg = err.response.data?.error || err.response.data?.message || `Server error: ${err.response.status}`;
+            } else if (err.request) {
+                // Request made but no response
+                errorMsg = 'No response from server. Please check your connection.';
+            } else {
+                // Error setting up request
+                errorMsg = err.message;
+            }
+            
+            Swal.fire({
+                title: 'Error',
+                text: errorMsg,
+                icon: 'error',
+                confirmButtonColor: '#3b82f6'
+            });
         }
     };
 

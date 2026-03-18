@@ -1426,69 +1426,113 @@ app.get('/api/applications/hostel/:hostelId/stats', checkDBConnection, async (re
 // Step 2 & 6: Manager approves for payment OR final approval
 app.patch('/api/applications/:id/status', checkDBConnection, auth, checkRole('manager'), async (req, res) => {
   try {
+    console.log('=== Application Status Update Request ===');
+    console.log('Application ID:', req.params.id);
+    console.log('Request body:', req.body);
+    console.log('User ID:', req.user.id);
+    console.log('User role:', req.user.role);
+    
     if (!isValidObjectId(req.params.id)) {
+      console.log('Invalid ObjectId');
       return res.status(400).json({ error: 'Invalid application ID' });
     }
     
-    const { action } = req.body; // 'approve_for_payment', 'reject', 'final_approve'
+    const { action } = req.body;
+    console.log('Action:', action);
+    
+    if (!action) {
+      return res.status(400).json({ error: 'Action is required' });
+    }
+    
     const app = await Application.findById(req.params.id).populate('hostelId');
     
     if (!app) {
+      console.log('Application not found');
       return res.status(404).json({ error: 'Application not found' });
     }
     
+    console.log('Application found:', app._id);
+    console.log('Current status:', app.status);
+    console.log('Hostel ID:', app.hostelId._id);
+    
     const hostel = await Hostel.findById(app.hostelId._id);
+    
+    if (!hostel) {
+      console.log('Hostel not found');
+      return res.status(404).json({ error: 'Hostel not found' });
+    }
+    
+    // Verify manager owns this hostel
+    if (hostel.managerId.toString() !== req.user.id) {
+      console.log('Manager not authorized. Hostel manager:', hostel.managerId, 'Request user:', req.user.id);
+      return res.status(403).json({ error: 'Not authorized to manage this application' });
+    }
+    
     const roomIndex = hostel.roomTypes.findIndex(r => r.type === app.roomType);
     
     if (roomIndex === -1) {
+      console.log('Room type not found:', app.roomType);
       return res.status(404).json({ error: 'Room type not found' });
     }
     
     const room = hostel.roomTypes[roomIndex];
+    console.log('Room found:', room.type, 'Capacity:', room.occupiedCapacity, '/', room.totalCapacity);
     
     if (action === 'approve_for_payment') {
+      console.log('Processing approve_for_payment');
       // Step 2: Approve for payment (no room allocation yet)
       if (app.status !== 'pending') {
-        return res.status(400).json({ error: 'Can only approve pending applications' });
+        console.log('Cannot approve - status is not pending:', app.status);
+        return res.status(400).json({ error: `Can only approve pending applications. Current status: ${app.status}` });
       }
       app.status = 'approved_for_payment';
       await app.save();
+      console.log('Application approved for payment');
       
       // Send approval email to student
       const student = await User.findById(app.studentId);
       try {
         await sendApplicationApprovedForPaymentEmail(student.email, student.name, hostel.name, app.roomType, app.totalAmount);
+        console.log('Approval email sent to:', student.email);
       } catch (emailErr) {
         logger.error('Email notification error:', emailErr);
+        console.log('Email failed but continuing');
       }
       
       return res.json({ message: 'Application approved for payment', application: app });
     }
     
     if (action === 'reject') {
+      console.log('Processing reject');
       // Reject application
       app.status = 'rejected';
       await app.save();
+      console.log('Application rejected');
       
       // Send rejection email to student
       const student = await User.findById(app.studentId);
       try {
         await sendApplicationRejectedEmail(student.email, student.name, hostel.name, app.roomType);
+        console.log('Rejection email sent to:', student.email);
       } catch (emailErr) {
         logger.error('Email notification error:', emailErr);
+        console.log('Email failed but continuing');
       }
       
       return res.json({ message: 'Application rejected', application: app });
     }
     
     if (action === 'final_approve') {
+      console.log('Processing final_approve');
       // Step 6: Final approval after payment - allocate room
       if (app.status !== 'paid_awaiting_final') {
-        return res.status(400).json({ error: 'Can only final approve paid applications' });
+        console.log('Cannot final approve - status is not paid_awaiting_final:', app.status);
+        return res.status(400).json({ error: `Can only final approve paid applications. Current status: ${app.status}` });
       }
       
       // Check room capacity
       if (room.occupiedCapacity >= room.totalCapacity) {
+        console.log('Room at full capacity');
         return res.status(400).json({ 
           error: 'Cannot approve: Room is at full capacity',
           currentOccupancy: room.occupiedCapacity,
@@ -1503,6 +1547,7 @@ app.patch('/api/applications/:id/status', checkDBConnection, auth, checkRole('ma
       );
       hostel.roomTypes[roomIndex].available = hostel.roomTypes[roomIndex].occupiedCapacity < room.totalCapacity;
       await hostel.save();
+      console.log('Room occupancy updated:', hostel.roomTypes[roomIndex].occupiedCapacity);
       
       // Generate secure access code
       const accessCode = generateAccessCode();
@@ -1511,13 +1556,16 @@ app.patch('/api/applications/:id/status', checkDBConnection, auth, checkRole('ma
       app.accessCodeIssuedAt = new Date();
       app.finalApprovedAt = new Date();
       await app.save();
+      console.log('Access code generated:', accessCode);
       
       // Send final approval email with access code
       const student = await User.findById(app.studentId);
       try {
         await sendFinalApprovalEmail(student.email, student.name, hostel.name, app.roomType, accessCode);
+        console.log('Final approval email sent to:', student.email);
       } catch (emailErr) {
         logger.error('Email notification error:', emailErr);
+        console.log('Email failed but continuing');
       }
       
       return res.json({ 
@@ -1532,10 +1580,14 @@ app.patch('/api/applications/:id/status', checkDBConnection, auth, checkRole('ma
       });
     }
     
-    res.status(400).json({ error: 'Invalid action' });
+    console.log('Invalid action received:', action);
+    res.status(400).json({ error: `Invalid action: ${action}. Valid actions are: approve_for_payment, reject, final_approve` });
   } catch (err) {
-    console.error('Error updating application status:', err);
-    res.status(500).json({ error: 'Failed to update application status' });
+    console.error('=== Error updating application status ===');
+    console.error('Error:', err.message);
+    console.error('Stack:', err.stack);
+    logger.error('Error updating application status:', err);
+    res.status(500).json({ error: 'Failed to update application status: ' + err.message });
   }
 });
 
