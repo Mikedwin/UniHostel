@@ -122,12 +122,6 @@ const ManagerDashboard = () => {
 
     const handleStatusUpdate = async (id, action) => {
         try {
-            console.log('=== Status Update Request ===');
-            console.log('Application ID:', id);
-            console.log('Action:', action);
-            console.log('Token exists:', !!token);
-            console.log('API Endpoint:', API_ENDPOINTS.APPLICATION_STATUS(id));
-            
             const response = await axios.patch(
                 API_ENDPOINTS.APPLICATION_STATUS(id), 
                 { action }, 
@@ -138,10 +132,6 @@ const ManagerDashboard = () => {
                     } 
                 }
             );
-            
-            console.log('=== Response Received ===');
-            console.log('Status:', response.status);
-            console.log('Data:', response.data);
             
             if (response.data.error) {
                 Swal.fire({
@@ -165,23 +155,15 @@ const ManagerDashboard = () => {
             
             fetchData();
         } catch (err) {
-            console.error('=== Status Update Error ===');
-            console.error('Error object:', err);
-            console.error('Error message:', err.message);
-            console.error('Error response:', err.response);
-            console.error('Response status:', err.response?.status);
-            console.error('Response data:', err.response?.data);
+            console.error('Status update error:', err);
             
             let errorMsg = 'Failed to update application status';
             
             if (err.response) {
-                // Server responded with error
                 errorMsg = err.response.data?.error || err.response.data?.message || `Server error: ${err.response.status}`;
             } else if (err.request) {
-                // Request made but no response
                 errorMsg = 'No response from server. Please check your connection.';
             } else {
-                // Error setting up request
                 errorMsg = err.message;
             }
             
