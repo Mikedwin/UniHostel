@@ -519,7 +519,60 @@ const AdminDashboard = () => {
                         )}
 
                         {activeTab === 'applications' && (
-                            <ApplicationManagementTable token={token} onAction={handleApplicationAction} />
+                            <div>
+                                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <h4 className="font-semibold text-blue-900 mb-2">Payment Verification Tool</h4>
+                                    <p className="text-sm text-blue-800 mb-3">Use this tool to manually verify payments that may have been processed but not updated in the system.</p>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            placeholder="Application ID"
+                                            className="flex-1 px-3 py-2 border rounded-md text-sm"
+                                            id="verifyAppId"
+                                        />
+                                        <input
+                                            type="text"
+                                            placeholder="Payment Reference (optional)"
+                                            className="flex-1 px-3 py-2 border rounded-md text-sm"
+                                            id="verifyPayRef"
+                                        />
+                                        <button
+                                            onClick={async () => {
+                                                const appId = document.getElementById('verifyAppId').value;
+                                                const payRef = document.getElementById('verifyPayRef').value;
+                                                
+                                                if (!appId) {
+                                                    showError('Application ID is required');
+                                                    return;
+                                                }
+                                                
+                                                try {
+                                                    const res = await axios.post(`${API_URL}/api/payment/admin/verify-payment`, {
+                                                        applicationId: appId,
+                                                        paymentReference: payRef || undefined
+                                                    }, {
+                                                        headers: { Authorization: `Bearer ${token}` }
+                                                    });
+                                                    
+                                                    if (res.data.success) {
+                                                        showSuccess(`Payment verified! Paystack: ${res.data.paystackAmount} GHS, App: ${res.data.applicationAmount} GHS`);
+                                                        document.getElementById('verifyAppId').value = '';
+                                                        document.getElementById('verifyPayRef').value = '';
+                                                    } else {
+                                                        showError(res.data.message);
+                                                    }
+                                                } catch (err) {
+                                                    showError(err.response?.data?.message || 'Verification failed');
+                                                }
+                                            }}
+                                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
+                                        >
+                                            Verify Payment
+                                        </button>
+                                    </div>
+                                </div>
+                                <ApplicationManagementTable token={token} onAction={handleApplicationAction} />
+                            </div>
                         )}
 
                         {activeTab === 'hostels' && (

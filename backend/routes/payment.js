@@ -48,6 +48,37 @@ router.post('/initialize', auth, async (req, res) => {
       console.error('Application already paid');
       return res.status(400).json({ message: 'Application already paid' });
     }
+    
+    // NEW: Check if there's already a successful payment for this application
+    if (application.paymentReference) {
+      try {
+        const existingPaymentCheck = await axios.get(
+          `https://api.paystack.co/transaction/verify/${application.paymentReference}`,
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
+            }
+          }
+        );
+        
+        if (existingPaymentCheck.data.data.status === 'success') {
+          console.error('Payment already successful on Paystack but not updated in system');
+          // Auto-update the payment status
+          application.paymentStatus = 'paid';
+          application.status = 'paid_awaiting_final';
+          application.paidAt = new Date();
+          await application.save();
+          
+          return res.status(400).json({ 
+            message: 'Payment already completed for this application',
+            autoFixed: true
+          });
+        }
+      } catch (paystackError) {
+        console.log('Could not verify existing payment reference:', paystackError.message);
+        // Continue with new payment initialization if verification fails
+      }
+    }
 
     const hostel = application.hostelId;
     if (!hostel) {
@@ -302,6 +333,164 @@ router.post('/webhook', async (req, res) => {
   } catch (error) {
     console.error('Webhook error:', error);
     res.sendStatus(500);
+  }
+});
+
+// NEW: Check payment status for application (prevents duplicate payments)
+router.get('/status/:applicationId', auth, async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    
+    const application = await Application.findById(applicationId);
+    if (!application) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+    
+    // If application has payment reference, check with Paystack
+    if (application.paymentReference && application.paymentStatus !== 'paid') {
+      try {
+        const paystackResponse = await axios.get(
+          `https://api.paystack.co/transaction/verify/${application.paymentReference}`,
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
+            }
+          }
+        );
+        
+        const { status, metadata } = paystackResponse.data.data;
+        
+        if (status === 'success') {
+          // Payment was successful but not updated in our system
+          const existingTransaction = await Transaction.findOne({ paymentReference: application.paymentReference });
+          
+          if (!existingTransaction) {
+            const transaction = new Transaction({
+              applicationId: application._id,
+              studentId: application.studentId,
+              hostelId: application.hostelId,
+              managerId: application.hostelId,
+              hostelFee: application.hostelFee,
+              adminCommission: application.adminCommission,
+              totalAmount: application.totalAmount,
+              roomType: application.roomType,
+              semester: application.semester,
+              paymentReference: application.paymentReference,
+              paymentStatus: 'paid',
+              paidAt: new Date()
+            });
+            await transaction.save();
+          }
+          
+          application.paymentStatus = 'paid';
+          application.status = 'paid_awaiting_final';
+          application.paidAt = new Date();
+          await application.save();
+          
+          logger.info(`Auto-fixed payment status for application ${applicationId}`);
+        }
+      } catch (paystackError) {
+        logger.error('Paystack verification error:', paystackError.message);
+      }
+    }
+    
+    res.json({
+      applicationId: application._id,
+      paymentStatus: application.paymentStatus,
+      status: application.status,
+      paymentReference: application.paymentReference,
+      paidAt: application.paidAt,
+      canPay: application.status === 'approved_for_payment' && application.paymentStatus !== 'paid'
+    });
+  } catch (error) {
+    logger.error('Payment status check error:', error);
+    res.status(500).json({ message: 'Failed to check payment status' });
+  }
+});
+
+// NEW: Admin endpoint to manually verify payment
+router.post('/admin/verify-payment', auth, async (req, res) => {
+  try {
+    const { applicationId, paymentReference } = req.body;
+    
+    if (!applicationId) {
+      return res.status(400).json({ message: 'Application ID is required' });
+    }
+    
+    const application = await Application.findById(applicationId).populate('hostelId');
+    if (!application) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+    
+    const referenceToCheck = paymentReference || application.paymentReference;
+    if (!referenceToCheck) {
+      return res.status(400).json({ message: 'Payment reference is required' });
+    }
+    
+    // Verify with Paystack
+    const paystackResponse = await axios.get(
+      `https://api.paystack.co/transaction/verify/${referenceToCheck}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
+        }
+      }
+    );
+    
+    const { status, metadata, amount } = paystackResponse.data.data;
+    
+    if (status === 'success') {
+      // Check if transaction already exists
+      const existingTransaction = await Transaction.findOne({ paymentReference: referenceToCheck });
+      
+      if (!existingTransaction) {
+        const transaction = new Transaction({
+          applicationId: application._id,
+          studentId: application.studentId,
+          hostelId: application.hostelId._id,
+          managerId: application.hostelId.managerId,
+          hostelFee: application.hostelFee,
+          adminCommission: application.adminCommission,
+          totalAmount: application.totalAmount,
+          roomType: application.roomType,
+          semester: application.semester,
+          paymentReference: referenceToCheck,
+          paymentStatus: 'paid',
+          paidAt: new Date()
+        });
+        await transaction.save();
+      }
+      
+      application.paymentStatus = 'paid';
+      application.status = 'paid_awaiting_final';
+      application.paidAt = new Date();
+      if (!application.paymentReference) {
+        application.paymentReference = referenceToCheck;
+      }
+      await application.save();
+      
+      logger.info(`Admin manually verified payment for application ${applicationId}`);
+      
+      res.json({
+        success: true,
+        message: 'Payment verified and updated successfully',
+        application,
+        paystackAmount: amount / 100, // Convert from kobo
+        applicationAmount: application.totalAmount
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: 'Payment not successful on Paystack',
+        paystackStatus: status
+      });
+    }
+  } catch (error) {
+    logger.error('Admin payment verification error:', error);
+    res.status(500).json({
+      message: 'Payment verification failed',
+      error: error.response?.data || error.message
+    });
   }
 });
 

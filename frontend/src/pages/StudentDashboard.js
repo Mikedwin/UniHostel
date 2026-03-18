@@ -26,7 +26,25 @@ const StudentDashboard = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             // Ensure data is always an array
-            setApplications(Array.isArray(res.data) ? res.data : []);
+            const apps = Array.isArray(res.data) ? res.data : [];
+            
+            // Check payment status for approved_for_payment applications
+            const updatedApps = await Promise.all(apps.map(async (app) => {
+                if (app.status === 'approved_for_payment' && app.paymentStatus !== 'paid') {
+                    try {
+                        const statusRes = await axios.get(`${API_ENDPOINTS.PAYMENT_VERIFY.replace('/verify', '')}/status/${app._id}`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        });
+                        return { ...app, ...statusRes.data };
+                    } catch (err) {
+                        console.log('Payment status check failed for app:', app._id);
+                        return app;
+                    }
+                }
+                return app;
+            }));
+            
+            setApplications(updatedApps);
         } catch (err) {
             console.error(err);
             setApplications([]);
@@ -42,6 +60,17 @@ const StudentDashboard = () => {
 
     const handleProceedToPayment = async (app) => {
         try {
+            // First check if payment status has changed
+            const statusCheck = await axios.get(`${API_ENDPOINTS.PAYMENT_VERIFY.replace('/verify', '')}/status/${app._id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            if (!statusCheck.data.canPay) {
+                Swal.fire('Payment Already Processed', 'This application has already been paid for.', 'info');
+                fetchApps(); // Refresh to show updated status
+                return;
+            }
+            
             const response = await axios.post(API_ENDPOINTS.PAYMENT_INITIALIZE, 
                 { applicationId: app._id, email: user.email, amount: app.totalAmount },
                 { headers: { Authorization: `Bearer ${token}` } }
@@ -66,7 +95,12 @@ const StudentDashboard = () => {
             });
             handler.openIframe();
         } catch (err) {
-            Swal.fire('Payment Error', err.response?.data?.message || 'Failed', 'error');
+            if (err.response?.data?.message === 'Application already paid') {
+                Swal.fire('Payment Already Processed', 'This application has already been paid for.', 'info');
+                fetchApps(); // Refresh to show updated status
+            } else {
+                Swal.fire('Payment Error', err.response?.data?.message || 'Failed', 'error');
+            }
         }
     };
 
