@@ -43,7 +43,7 @@ const StudentDashboard = () => {
     const handleProceedToPayment = async (app) => {
         try {
             const response = await axios.post(API_ENDPOINTS.PAYMENT_INITIALIZE, 
-                { application_id: app._id, email: user.email, amount: app.totalAmount },
+                { applicationId: app._id, email: user.email, amount: app.totalAmount },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             
