@@ -120,6 +120,50 @@ const ManagerDashboard = () => {
         }
     };
 
+    const handlePermanentDelete = async (id, studentName, hostelName) => {
+        const result = await Swal.fire({
+            title: 'Delete Permanently?',
+            html: `<p>Are you sure you want to <strong>permanently delete</strong> this application?</p>
+                   <p class="text-sm text-gray-600 mt-2">Student: <strong>${studentName}</strong></p>
+                   <p class="text-sm text-gray-600">Hostel: <strong>${hostelName}</strong></p>
+                   <p class="text-red-600 font-semibold mt-3">⚠️ This action cannot be undone!</p>`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, Delete Permanently',
+            cancelButtonText: 'Cancel',
+            customClass: {
+                confirmButton: 'px-4 py-2 rounded-md font-medium',
+                cancelButton: 'px-4 py-2 rounded-md font-medium'
+            }
+        });
+        
+        if (result.isConfirmed) {
+            try {
+                await axios.delete(API_ENDPOINTS.APPLICATIONS + `/${id}/permanent`, 
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                Swal.fire({
+                    title: 'Deleted!',
+                    text: 'Application has been permanently deleted.',
+                    icon: 'success',
+                    confirmButtonColor: '#23817A',
+                    timer: 2000
+                });
+                fetchData();
+            } catch (err) {
+                console.error(err);
+                Swal.fire({
+                    title: 'Error',
+                    text: err.response?.data?.error || 'Failed to delete application',
+                    icon: 'error',
+                    confirmButtonColor: '#ef4444'
+                });
+            }
+        }
+    };
+
     const handleStatusUpdate = async (id, action) => {
         try {
             const response = await axios.patch(
@@ -707,15 +751,23 @@ const ManagerDashboard = () => {
                                                             </button>
                                                         )}
                                                         {viewMode === 'history' && (
-                                                            <button 
-                                                                onClick={() => handleArchive(app._id, false)}
-                                                                className="px-3 py-1 rounded text-xs" 
-                                                                style={{ color: '#23817A', backgroundColor: 'rgba(35, 129, 122, 0.1)' }}
-                                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(35, 129, 122, 0.2)'}
-                                                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(35, 129, 122, 0.1)'}
-                                                                title="Restore to Active">
-                                                                Restore
-                                                            </button>
+                                                            <>
+                                                                <button 
+                                                                    onClick={() => handleArchive(app._id, false)}
+                                                                    className="px-3 py-1 rounded text-xs" 
+                                                                    style={{ color: '#23817A', backgroundColor: 'rgba(35, 129, 122, 0.1)' }}
+                                                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(35, 129, 122, 0.2)'}
+                                                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(35, 129, 122, 0.1)'}
+                                                                    title="Restore to Active">
+                                                                    Restore
+                                                                </button>
+                                                                <button 
+                                                                    onClick={() => handlePermanentDelete(app._id, app.studentName || app.studentId?.name, app.hostelId?.name)}
+                                                                    className="px-3 py-1 rounded text-xs bg-red-100 text-red-700 hover:bg-red-200" 
+                                                                    title="Delete Permanently">
+                                                                    Delete Permanently
+                                                                </button>
+                                                            </>
                                                         )}
                                                     </div>
                                                 </td>

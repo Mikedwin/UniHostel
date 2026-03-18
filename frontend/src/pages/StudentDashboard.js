@@ -82,6 +82,48 @@ const StudentDashboard = () => {
         }
     };
 
+    const handlePermanentDelete = async (appId, hostelName) => {
+        const result = await Swal.fire({
+            title: 'Delete Permanently?',
+            html: `<p>Are you sure you want to <strong>permanently delete</strong> this application?</p>
+                   <p class="text-sm text-gray-600 mt-2">Hostel: <strong>${hostelName}</strong></p>
+                   <p class="text-red-600 font-semibold mt-3">⚠️ This action cannot be undone!</p>`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, Delete Permanently',
+            cancelButtonText: 'Cancel',
+            customClass: {
+                confirmButton: 'px-4 py-2 rounded-md font-medium',
+                cancelButton: 'px-4 py-2 rounded-md font-medium'
+            }
+        });
+        
+        if (result.isConfirmed) {
+            try {
+                await axios.delete(`${API_ENDPOINTS.APPLICATIONS}/${appId}/permanent`, 
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                Swal.fire({
+                    title: 'Deleted!',
+                    text: 'Application has been permanently deleted.',
+                    icon: 'success',
+                    confirmButtonColor: '#23817A',
+                    timer: 2000
+                });
+                fetchApps();
+            } catch (err) {
+                Swal.fire({
+                    title: 'Error',
+                    text: err.response?.data?.error || 'Failed to delete application',
+                    icon: 'error',
+                    confirmButtonColor: '#ef4444'
+                });
+            }
+        }
+    };
+
     const getStatusStyle = (status) => {
         switch(status) {
             case 'approved': return 'bg-green-100 text-green-700';
@@ -133,7 +175,7 @@ const StudentDashboard = () => {
                                     {app.status}
                                 </span>
                             </div>
-                            {app.status === 'approved_for_payment' && (
+                            {app.status === 'approved_for_payment' && viewMode === 'active' && (
                                 <div className="mt-3 flex gap-2">
                                     <button onClick={() => handleProceedToPayment(app)}
                                         className="flex-1 bg-primary-600 text-white py-2 rounded flex items-center justify-center gap-2">
@@ -150,6 +192,21 @@ const StudentDashboard = () => {
                                     <button onClick={() => handleMoveToHistory(app._id)}
                                         className="w-full bg-gray-200 text-gray-700 py-2 rounded flex items-center justify-center gap-2 hover:bg-gray-300">
                                         <Archive size={16} /> Move to History
+                                    </button>
+                                </div>
+                            )}
+                            {viewMode === 'history' && (
+                                <div className="mt-3 flex gap-2">
+                                    <button onClick={() => handleMoveToHistory(app._id)}
+                                        className="flex-1 py-2 rounded flex items-center justify-center gap-2"
+                                        style={{ color: '#23817A', backgroundColor: 'rgba(35, 129, 122, 0.1)' }}
+                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(35, 129, 122, 0.2)'}
+                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(35, 129, 122, 0.1)'}>
+                                        Restore
+                                    </button>
+                                    <button onClick={() => handlePermanentDelete(app._id, app.hostelId?.name)}
+                                        className="flex-1 bg-red-100 text-red-700 py-2 rounded hover:bg-red-200 font-medium">
+                                        Delete Permanently
                                     </button>
                                 </div>
                             )}

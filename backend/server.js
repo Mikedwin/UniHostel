@@ -1702,6 +1702,50 @@ app.patch('/api/applications/:id/archive', checkDBConnection, auth, async (req, 
   }
 });
 
+// Permanently delete application (Manager or Student) - Only for archived applications
+app.delete('/api/applications/:id/permanent', checkDBConnection, auth, async (req, res) => {
+  try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({ error: 'Invalid application ID' });
+    }
+    
+    const app = await Application.findById(req.params.id).lean();
+    
+    if (!app) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+    
+    // Only allow deletion of archived applications
+    if (!app.isArchived) {
+      return res.status(400).json({ error: 'Can only permanently delete archived applications' });
+    }
+    
+    // Check authorization - either manager of the hostel or the student
+    const isManager = req.user.role === 'manager';
+    const isStudent = req.user.role === 'student' && app.studentId.toString() === req.user.id;
+    
+    if (isManager) {
+      const hostel = await Hostel.findById(app.hostelId).lean();
+      if (!hostel || hostel.managerId.toString() !== req.user.id) {
+        return res.status(403).json({ error: 'Not authorized' });
+      }
+    } else if (!isStudent) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+    
+    // Permanently delete from database
+    await Application.deleteOne({ _id: req.params.id });
+    
+    logger.info(`Application permanently deleted: ${req.params.id} by user: ${req.user.id}`);
+    
+    res.json({ message: 'Application permanently deleted' });
+  } catch (err) {
+    console.error('Error permanently deleting application:', err);
+    logger.error('Permanent delete error:', err);
+    res.status(500).json({ error: 'Failed to permanently delete application' });
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, '0.0.0.0', () => {
   logger.info(`Server started on port ${PORT} - v2`);
