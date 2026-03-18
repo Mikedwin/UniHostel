@@ -35,6 +35,8 @@ const AdminDashboard = () => {
     const [selectedApp, setSelectedApp] = useState(null);
     const [appDetailsModalOpen, setAppDetailsModalOpen] = useState(false);
     const [selectedLogs, setSelectedLogs] = useState([]);
+    const [selectedHistoryLogs, setSelectedHistoryLogs] = useState([]);
+    const [historyLogs, setHistoryLogs] = useState([]);
     const { token } = useAuth();
 
     useEffect(() => {
@@ -61,6 +63,18 @@ const AdminDashboard = () => {
             console.error('Admin dashboard error:', err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchHistoryLogs = async () => {
+        try {
+            const res = await axios.get(`${API_URL}/api/admin/logs/history?limit=50`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setHistoryLogs(res.data);
+        } catch (err) {
+            console.error('Failed to fetch history logs:', err);
+            showError('Failed to fetch history logs');
         }
     };
 
@@ -435,13 +449,19 @@ const AdminDashboard = () => {
                 <div className="bg-white rounded-lg shadow mb-6">
                     <div className="border-b overflow-x-auto">
                         <div className="flex space-x-2 sm:space-x-4 px-2 sm:px-4 min-w-max">
-                            {['overview', 'analytics', 'transactions', 'visitors', 'users', 'hostels', 'managers', 'register-manager', 'applications', 'logs', 'trash'].map(tab => (
+                            {['overview', 'analytics', 'transactions', 'visitors', 'users', 'hostels', 'managers', 'register-manager', 'applications', 'logs', 'logs-history', 'trash'].map(tab => (
                                 <button
                                     key={tab}
-                                    onClick={() => setActiveTab(tab)}
+                                    onClick={() => {
+                                        setActiveTab(tab);
+                                        if (tab === 'logs-history') {
+                                            fetchHistoryLogs();
+                                        }
+                                    }}
                                     className={`py-2 sm:py-3 px-2 sm:px-4 font-medium capitalize text-xs sm:text-base whitespace-nowrap ${activeTab === tab ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'}`}
                                 >
-                                    {tab === 'register-manager' ? 'Register Manager' : tab}
+                                    {tab === 'register-manager' ? 'Register Manager' : 
+                                     tab === 'logs-history' ? 'Logs History' : tab}
                                 </button>
                             ))}
                         </div>
@@ -582,6 +602,162 @@ const AdminDashboard = () => {
                             <ManagerRegistrationForm token={token} onSuccess={() => { showSuccess('Manager registered successfully'); fetchDashboardData(); }} />
                         )}
 
+                        {activeTab === 'logs-history' && (
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-lg font-bold">Archived Logs</h3>
+                                    <button
+                                        onClick={() => setActiveTab('logs')}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                    >
+                                        Back to Active Logs
+                                    </button>
+                                </div>
+
+                                {/* Bulk Actions for History */}
+                                {selectedHistoryLogs.length > 0 && (
+                                    <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
+                                        <span className="text-sm font-medium">{selectedHistoryLogs.length} archived log(s) selected</span>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    showConfirm(
+                                                        `Restore ${selectedHistoryLogs.length} selected log(s) from history?\n\nThey will be moved back to active logs.`,
+                                                        async () => {
+                                                            try {
+                                                                const res = await axios.patch(`${API_URL}/api/admin/logs/restore`, {
+                                                                    logIds: selectedHistoryLogs
+                                                                }, {
+                                                                    headers: { Authorization: `Bearer ${token}` }
+                                                                });
+                                                                showSuccess(`Restored ${res.data.count} log(s) from history`);
+                                                                setSelectedHistoryLogs([]);
+                                                                fetchHistoryLogs();
+                                                            } catch (err) {
+                                                                showError('Failed to restore logs from history');
+                                                            }
+                                                        }
+                                                    );
+                                                }}
+                                                className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+                                            >
+                                                Restore Selected
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    showConfirm(
+                                                        `Permanently delete ${selectedHistoryLogs.length} selected log(s)?\n\nThis action cannot be undone.`,
+                                                        async () => {
+                                                            try {
+                                                                await Promise.all(selectedHistoryLogs.map(id => 
+                                                                    axios.delete(`${API_URL}/api/admin/logs/${id}`, {
+                                                                        headers: { Authorization: `Bearer ${token}` }
+                                                                    })
+                                                                ));
+                                                                showSuccess(`Permanently deleted ${selectedHistoryLogs.length} log(s)`);
+                                                                setSelectedHistoryLogs([]);
+                                                                fetchHistoryLogs();
+                                                            } catch (err) {
+                                                                showError('Failed to delete logs');
+                                                            }
+                                                        }
+                                                    );
+                                                }}
+                                                className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+                                            >
+                                                Delete Permanently
+                                            </button>
+                                            <button
+                                                onClick={() => setSelectedHistoryLogs([])}
+                                                className="px-3 py-1 bg-gray-600 text-white text-sm rounded hover:bg-gray-700"
+                                            >
+                                                Clear
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {historyLogs.length === 0 ? (
+                                    <div className="text-center py-8 text-gray-500">
+                                        No archived logs found
+                                    </div>
+                                ) : (
+                                    historyLogs.map(log => (
+                                        <div key={log._id} className="border-l-4 border-gray-400 bg-gray-50 p-3 flex items-start gap-3">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedHistoryLogs.includes(log._id)}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setSelectedHistoryLogs([...selectedHistoryLogs, log._id]);
+                                                    } else {
+                                                        setSelectedHistoryLogs(selectedHistoryLogs.filter(id => id !== log._id));
+                                                    }
+                                                }}
+                                                className="mt-1"
+                                            />
+                                            <div className="flex-1">
+                                                <p className="text-sm font-medium text-gray-700">{log.action}</p>
+                                                <p className="text-xs text-gray-600">{log.details}</p>
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    By {log.adminId?.name} • {new Date(log.timestamp).toLocaleString()}
+                                                </p>
+                                                <p className="text-xs text-orange-600 mt-1">
+                                                    Archived: {new Date(log.archivedAt).toLocaleString()} by {log.archivedBy?.name}
+                                                </p>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => {
+                                                        showConfirm(
+                                                            'Restore this log from history?\n\nIt will be moved back to active logs.',
+                                                            async () => {
+                                                                try {
+                                                                    await axios.patch(`${API_URL}/api/admin/logs/restore`, {
+                                                                        logIds: [log._id]
+                                                                    }, {
+                                                                        headers: { Authorization: `Bearer ${token}` }
+                                                                    });
+                                                                    showSuccess('Log restored from history');
+                                                                    fetchHistoryLogs();
+                                                                } catch (err) {
+                                                                    showError('Failed to restore log from history');
+                                                                }
+                                                            }
+                                                        );
+                                                    }}
+                                                    className="text-green-600 hover:text-green-800 text-sm"
+                                                >
+                                                    Restore
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        showConfirm(
+                                                            'Permanently delete this log?\n\nThis action cannot be undone.',
+                                                            async () => {
+                                                                try {
+                                                                    await axios.delete(`${API_URL}/api/admin/logs/${log._id}`, {
+                                                                        headers: { Authorization: `Bearer ${token}` }
+                                                                    });
+                                                                    showSuccess('Log permanently deleted');
+                                                                    fetchHistoryLogs();
+                                                                } catch (err) {
+                                                                    showError('Failed to delete log');
+                                                                }
+                                                            }
+                                                        );
+                                                    }}
+                                                    className="text-red-600 hover:text-red-800 text-sm"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        )}
+
                         {activeTab === 'trash' && (
                             <div className="space-y-6">
                                 <div>
@@ -599,34 +775,85 @@ const AdminDashboard = () => {
 
                         {activeTab === 'logs' && (
                             <div className="space-y-4">
+                                {/* View Toggle */}
+                                <div className="flex gap-2 mb-4">
+                                    <button
+                                        onClick={() => {
+                                            setActiveTab('logs');
+                                            fetchDashboardData();
+                                        }}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                    >
+                                        Active Logs
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('logs-history')}
+                                        className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+                                    >
+                                        View History
+                                    </button>
+                                </div>
+
                                 {/* Bulk Actions */}
                                 {selectedLogs.length > 0 && (
                                     <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
                                         <span className="text-sm font-medium">{selectedLogs.length} log(s) selected</span>
-                                        <button
-                                            onClick={() => {
-                                                showConfirm(
-                                                    `Delete ${selectedLogs.length} selected log(s)?\n\nThis action cannot be undone.`,
-                                                    async () => {
-                                                        try {
-                                                            await Promise.all(selectedLogs.map(id => 
-                                                                axios.delete(`${API_URL}/api/admin/logs/${id}`, {
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    showConfirm(
+                                                        `Move ${selectedLogs.length} selected log(s) to history?\n\nThey can be restored later if needed.`,
+                                                        async () => {
+                                                            try {
+                                                                const res = await axios.patch(`${API_URL}/api/admin/logs/archive`, {
+                                                                    logIds: selectedLogs
+                                                                }, {
                                                                     headers: { Authorization: `Bearer ${token}` }
-                                                                })
-                                                            ));
-                                                            showSuccess(`Deleted ${selectedLogs.length} log(s)`);
-                                                            setSelectedLogs([]);
-                                                            fetchDashboardData();
-                                                        } catch (err) {
-                                                            showError('Failed to delete logs');
+                                                                });
+                                                                showSuccess(`Moved ${res.data.count} log(s) to history`);
+                                                                setSelectedLogs([]);
+                                                                fetchDashboardData();
+                                                            } catch (err) {
+                                                                showError('Failed to move logs to history');
+                                                            }
                                                         }
-                                                    }
-                                                );
-                                            }}
-                                            className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
-                                        >
-                                            Delete Selected
-                                        </button>
+                                                    );
+                                                }}
+                                                className="px-3 py-1 bg-orange-600 text-white text-sm rounded hover:bg-orange-700"
+                                            >
+                                                Move Selected to History
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    showConfirm(
+                                                        `Delete ${selectedLogs.length} selected log(s)?\n\nThis action cannot be undone.`,
+                                                        async () => {
+                                                            try {
+                                                                await Promise.all(selectedLogs.map(id => 
+                                                                    axios.delete(`${API_URL}/api/admin/logs/${id}`, {
+                                                                        headers: { Authorization: `Bearer ${token}` }
+                                                                    })
+                                                                ));
+                                                                showSuccess(`Deleted ${selectedLogs.length} log(s)`);
+                                                                setSelectedLogs([]);
+                                                                fetchDashboardData();
+                                                            } catch (err) {
+                                                                showError('Failed to delete logs');
+                                                            }
+                                                        }
+                                                    );
+                                                }}
+                                                className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+                                            >
+                                                Delete Selected
+                                            </button>
+                                            <button
+                                                onClick={() => setSelectedLogs([])}
+                                                className="px-3 py-1 bg-gray-600 text-white text-sm rounded hover:bg-gray-700"
+                                            >
+                                                Clear
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
                                 
@@ -651,27 +878,52 @@ const AdminDashboard = () => {
                                                 By {log.adminId?.name} • {new Date(log.timestamp).toLocaleString()}
                                             </p>
                                         </div>
-                                        <button
-                                            onClick={() => {
-                                                showConfirm(
-                                                    'Delete this log?\n\nThis action cannot be undone.',
-                                                    async () => {
-                                                        try {
-                                                            await axios.delete(`${API_URL}/api/admin/logs/${log._id}`, {
-                                                                headers: { Authorization: `Bearer ${token}` }
-                                                            });
-                                                            showSuccess('Log deleted');
-                                                            fetchDashboardData();
-                                                        } catch (err) {
-                                                            showError('Failed to delete log');
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    showConfirm(
+                                                        'Move this log to history?\n\nIt can be restored later if needed.',
+                                                        async () => {
+                                                            try {
+                                                                await axios.patch(`${API_URL}/api/admin/logs/archive`, {
+                                                                    logIds: [log._id]
+                                                                }, {
+                                                                    headers: { Authorization: `Bearer ${token}` }
+                                                                });
+                                                                showSuccess('Log moved to history');
+                                                                fetchDashboardData();
+                                                            } catch (err) {
+                                                                showError('Failed to move log to history');
+                                                            }
                                                         }
-                                                    }
-                                                );
-                                            }}
-                                            className="text-red-600 hover:text-red-800 text-sm"
-                                        >
-                                            Delete
-                                        </button>
+                                                    );
+                                                }}
+                                                className="text-orange-600 hover:text-orange-800 text-sm"
+                                            >
+                                                Archive
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    showConfirm(
+                                                        'Delete this log?\n\nThis action cannot be undone.',
+                                                        async () => {
+                                                            try {
+                                                                await axios.delete(`${API_URL}/api/admin/logs/${log._id}`, {
+                                                                    headers: { Authorization: `Bearer ${token}` }
+                                                                });
+                                                                showSuccess('Log deleted');
+                                                                fetchDashboardData();
+                                                            } catch (err) {
+                                                                showError('Failed to delete log');
+                                                            }
+                                                        }
+                                                    );
+                                                }}
+                                                className="text-red-600 hover:text-red-800 text-sm"
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>

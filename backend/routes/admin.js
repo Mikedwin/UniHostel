@@ -249,9 +249,74 @@ router.get('/insights/full-rooms', auth, checkAdmin, async (req, res) => {
 
 router.get('/logs', auth, checkAdmin, async (req, res) => {
   try {
-    const { limit = 50 } = req.query;
-    const logs = await AdminLog.find().populate('adminId', 'name email').sort({ timestamp: -1 }).limit(parseInt(limit)).lean();
+    const { limit = 50, includeArchived = false } = req.query;
+    const query = includeArchived === 'true' ? {} : { isArchived: { $ne: true } };
+    const logs = await AdminLog.find(query).populate('adminId', 'name email').sort({ timestamp: -1 }).limit(parseInt(limit)).lean();
     res.json(logs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Move logs to history (archive)
+router.patch('/logs/archive', auth, checkAdmin, async (req, res) => {
+  try {
+    const { logIds } = req.body;
+    if (!logIds || !Array.isArray(logIds) || logIds.length === 0) {
+      return res.status(400).json({ error: 'Log IDs required' });
+    }
+
+    const result = await AdminLog.updateMany(
+      { _id: { $in: logIds } },
+      { 
+        isArchived: true, 
+        archivedAt: new Date(), 
+        archivedBy: req.user.id 
+      }
+    );
+
+    await logAdminAction(req.user.id, 'ARCHIVE_LOGS', 'system', null, `Archived ${result.modifiedCount} log(s)`);
+    res.json({ message: `${result.modifiedCount} log(s) moved to history`, count: result.modifiedCount });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get archived logs
+router.get('/logs/history', auth, checkAdmin, async (req, res) => {
+  try {
+    const { limit = 50 } = req.query;
+    const logs = await AdminLog.find({ isArchived: true })
+      .populate('adminId', 'name email')
+      .populate('archivedBy', 'name email')
+      .sort({ archivedAt: -1 })
+      .limit(parseInt(limit))
+      .lean();
+    res.json(logs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Restore logs from history
+router.patch('/logs/restore', auth, checkAdmin, async (req, res) => {
+  try {
+    const { logIds } = req.body;
+    if (!logIds || !Array.isArray(logIds) || logIds.length === 0) {
+      return res.status(400).json({ error: 'Log IDs required' });
+    }
+
+    const result = await AdminLog.updateMany(
+      { _id: { $in: logIds } },
+      { 
+        isArchived: false, 
+        archivedAt: null, 
+        archivedBy: null 
+      }
+    );
+
+    await logAdminAction(req.user.id, 'RESTORE_LOGS', 'system', null, `Restored ${result.modifiedCount} log(s) from history`);
+    res.json({ message: `${result.modifiedCount} log(s) restored from history`, count: result.modifiedCount });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
