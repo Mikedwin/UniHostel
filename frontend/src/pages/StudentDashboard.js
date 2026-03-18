@@ -42,14 +42,14 @@ const StudentDashboard = () => {
     const handleProceedToPayment = async (app) => {
         try {
             const response = await axios.post(API_ENDPOINTS.PAYMENT_INITIALIZE, 
-                { application_id: app.id, email: user.email, amount: app.total_amount },
+                { application_id: app._id, email: user.email, amount: app.totalAmount },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             
             const handler = window.PaystackPop.setup({
                 key: PAYSTACK_PUBLIC_KEY,
                 email: user.email,
-                amount: app.total_amount * 100,
+                amount: app.totalAmount * 100,
                 currency: 'GHS',
                 ref: response.data.reference,
                 channels: ['card', 'mobile_money'],
@@ -71,7 +71,7 @@ const StudentDashboard = () => {
 
     const handleMoveToHistory = async (appId) => {
         try {
-            await axios.patch(`${API_ENDPOINTS.STUDENT_APPLICATIONS}/${appId}/archive`, 
+            await axios.patch(`${API_ENDPOINTS.APPLICATIONS}/${appId}/archive`, 
                 { archive: true },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
