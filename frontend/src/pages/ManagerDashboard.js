@@ -582,21 +582,103 @@ const ManagerDashboard = () => {
                         {selectedApps.length > 0 && (
                             <div className="mt-4 flex items-center gap-3">
                                 <span className="text-sm text-gray-600">{selectedApps.length} selected</span>
-                                <button
-                                    onClick={() => handleBulkAction('approve_for_payment')}
-                                    className="text-white px-3 py-1 rounded text-sm"
-                                    style={{ backgroundColor: '#23817A' }}
-                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1a6159'}
-                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#23817A'}
-                                >
-                                    Approve for Payment
-                                </button>
-                                <button
-                                    onClick={() => handleBulkAction('reject')}
-                                    className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
-                                >
-                                    Reject All
-                                </button>
+                                {viewMode === 'active' ? (
+                                    <>
+                                        <button
+                                            onClick={() => handleBulkAction('approve_for_payment')}
+                                            className="text-white px-3 py-1 rounded text-sm"
+                                            style={{ backgroundColor: '#23817A' }}
+                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1a6159'}
+                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#23817A'}
+                                        >
+                                            Approve for Payment
+                                        </button>
+                                        <button
+                                            onClick={() => handleBulkAction('reject')}
+                                            className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+                                        >
+                                            Reject All
+                                        </button>
+                                        <button
+                                            onClick={async () => {
+                                                const result = await Swal.fire({
+                                                    title: 'Move to History',
+                                                    text: `Move ${selectedApps.length} application(s) to history?`,
+                                                    icon: 'question',
+                                                    showCancelButton: true,
+                                                    confirmButtonColor: '#3b82f6',
+                                                    cancelButtonColor: '#6b7280',
+                                                    confirmButtonText: 'Yes, move them',
+                                                    cancelButtonText: 'Cancel'
+                                                });
+                                                if (result.isConfirmed) {
+                                                    try {
+                                                        await Promise.all(selectedApps.map(id => 
+                                                            axios.patch(API_ENDPOINTS.APPLICATIONS + `/${id}/archive`, 
+                                                                { archive: true }, 
+                                                                { headers: { Authorization: `Bearer ${token}` } }
+                                                            )
+                                                        ));
+                                                        showToast('Applications moved to history');
+                                                        setSelectedApps([]);
+                                                        fetchData();
+                                                    } catch (err) {
+                                                        showToast('Some operations failed', 'error');
+                                                    }
+                                                }
+                                            }}
+                                            className="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700"
+                                        >
+                                            Move to History
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <button
+                                            onClick={async () => {
+                                                const result = await Swal.fire({
+                                                    title: 'Delete Permanently?',
+                                                    html: `<p>Are you sure you want to <strong>permanently delete ${selectedApps.length} application(s)</strong>?</p>
+                                                           <p class="text-red-600 font-semibold mt-3">⚠️ This action cannot be undone!</p>`,
+                                                    icon: 'warning',
+                                                    showCancelButton: true,
+                                                    confirmButtonColor: '#ef4444',
+                                                    cancelButtonColor: '#6b7280',
+                                                    confirmButtonText: 'Yes, Delete Permanently',
+                                                    cancelButtonText: 'Cancel'
+                                                });
+                                                if (result.isConfirmed) {
+                                                    try {
+                                                        await Promise.all(selectedApps.map(id => 
+                                                            axios.delete(API_ENDPOINTS.APPLICATIONS + `/${id}/permanent`, 
+                                                                { headers: { Authorization: `Bearer ${token}` } }
+                                                            )
+                                                        ));
+                                                        Swal.fire({
+                                                            title: 'Deleted!',
+                                                            text: 'Applications permanently deleted.',
+                                                            icon: 'success',
+                                                            confirmButtonColor: '#23817A',
+                                                            timer: 2000
+                                                        });
+                                                        setSelectedApps([]);
+                                                        fetchData();
+                                                    } catch (err) {
+                                                        Swal.fire({
+                                                            title: 'Error',
+                                                            text: 'Some deletions failed',
+                                                            icon: 'error',
+                                                            confirmButtonColor: '#ef4444'
+                                                        });
+                                                    }
+                                                }
+                                            }}
+                                            className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+                                        >
+                                            Delete Selected Permanently
+                                        </button>
+                                    </>
+                                )}
                                 <button
                                     onClick={() => setSelectedApps([])}
                                     className="text-gray-600 text-sm hover:underline"
@@ -619,10 +701,10 @@ const ManagerDashboard = () => {
                                             <th className="px-4 py-3 text-left">
                                                 <input
                                                     type="checkbox"
-                                                    checked={selectedApps.length === filteredApplications.filter(a => a.status === 'pending').length && filteredApplications.filter(a => a.status === 'pending').length > 0}
+                                                    checked={selectedApps.length === filteredApplications.length && filteredApplications.length > 0}
                                                     onChange={(e) => {
                                                         if (e.target.checked) {
-                                                            setSelectedApps(filteredApplications.filter(a => a.status === 'pending').map(a => a._id));
+                                                            setSelectedApps(filteredApplications.map(a => a._id));
                                                         } else {
                                                             setSelectedApps([]);
                                                         }
@@ -648,20 +730,18 @@ const ManagerDashboard = () => {
                                                 onContextMenu={(e) => handleContextMenu(e, app)}
                                             >
                                                 <td className="px-4 py-3 whitespace-nowrap">
-                                                    {app.status === 'pending' && (
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selectedApps.includes(app._id)}
-                                                            onChange={(e) => {
-                                                                if (e.target.checked) {
-                                                                    setSelectedApps([...selectedApps, app._id]);
-                                                                } else {
-                                                                    setSelectedApps(selectedApps.filter(id => id !== app._id));
-                                                                }
-                                                            }}
-                                                            className="rounded"
-                                                        />
-                                                    )}
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedApps.includes(app._id)}
+                                                        onChange={(e) => {
+                                                            if (e.target.checked) {
+                                                                setSelectedApps([...selectedApps, app._id]);
+                                                            } else {
+                                                                setSelectedApps(selectedApps.filter(id => id !== app._id));
+                                                            }
+                                                        }}
+                                                        className="rounded"
+                                                    />
                                                 </td>
                                                 <td className="px-4 py-3 whitespace-nowrap">
                                                     <div className="text-sm font-medium text-gray-900">{app.studentName || app.studentId?.name}</div>
