@@ -13,8 +13,8 @@ export const API_ENDPOINTS = {
   
   // Applications
   APPLICATIONS: `${API_BASE_URL}/applications`,
-  STUDENT_APPLICATIONS: (studentId) => `${API_BASE_URL}/applications/student/${studentId}`,
-  MANAGER_APPLICATIONS: (managerId) => `${API_BASE_URL}/applications/manager/${managerId}`,
+  STUDENT_APPLICATIONS: `${API_BASE_URL}/applications/student`,
+  MANAGER_APPLICATIONS: `${API_BASE_URL}/applications/manager`,
   APPLICATION_STATUS: (id) => `${API_BASE_URL}/applications/${id}/status`,
   APPLICATION_DETAIL: (id) => `${API_BASE_URL}/applications/${id}`,
   

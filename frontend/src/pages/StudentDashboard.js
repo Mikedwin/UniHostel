@@ -123,10 +123,10 @@ const StudentDashboard = () => {
             ) : (
                 <div className="space-y-4">
                     {applications.map(app => (
-                        <div key={app.id} className="bg-white p-4 rounded-lg shadow-sm">
+                        <div key={app._id} className="bg-white p-4 rounded-lg shadow-sm">
                             <div className="flex justify-between">
                                 <div>
-                                    <h3 className="font-bold">{app.hostels?.name}</h3>
+                                    <h3 className="font-bold">{app.hostelId?.name}</h3>
                                     <p className="text-sm text-gray-500">{app.semester}</p>
                                 </div>
                                 <span className={`px-2 py-1 rounded text-xs ${getStatusStyle(app.status)}`}>
@@ -139,7 +139,7 @@ const StudentDashboard = () => {
                                         className="flex-1 bg-primary-600 text-white py-2 rounded flex items-center justify-center gap-2">
                                         <CreditCard size={16} /> Pay Now
                                     </button>
-                                    <button onClick={() => handleMoveToHistory(app.id)}
+                                    <button onClick={() => handleMoveToHistory(app._id)}
                                         className="px-4 bg-gray-200 text-gray-700 py-2 rounded flex items-center gap-2 hover:bg-gray-300">
                                         <Archive size={16} /> Move to History
                                     </button>
