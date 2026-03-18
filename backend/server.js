@@ -1423,7 +1423,7 @@ app.get('/api/applications/hostel/:hostelId/stats', checkDBConnection, async (re
   }
 });
 
-// Step 2 & 6: Manager approves for payment OR final approval
+// Step 2 & 6: Manager approves for payment OR final approval - OPTIMIZED
 app.patch('/api/applications/:id/status', checkDBConnection, auth, checkRole('manager'), async (req, res) => {
   try {
     if (!isValidObjectId(req.params.id)) {
@@ -1436,13 +1436,15 @@ app.patch('/api/applications/:id/status', checkDBConnection, auth, checkRole('ma
       return res.status(400).json({ error: 'Action is required' });
     }
     
-    const app = await Application.findById(req.params.id).populate('hostelId');
+    // Fetch application WITHOUT populate (faster)
+    const app = await Application.findById(req.params.id).lean();
     
     if (!app) {
       return res.status(404).json({ error: 'Application not found' });
     }
     
-    const hostel = await Hostel.findById(app.hostelId._id);
+    // Fetch hostel separately
+    const hostel = await Hostel.findById(app.hostelId).lean();
     
     if (!hostel) {
       return res.status(404).json({ error: 'Hostel not found' });
@@ -1462,21 +1464,23 @@ app.patch('/api/applications/:id/status', checkDBConnection, auth, checkRole('ma
     const room = hostel.roomTypes[roomIndex];
     
     if (action === 'approve_for_payment') {
-      // Step 2: Approve for payment (no room allocation yet)
       if (app.status !== 'pending') {
         return res.status(400).json({ error: `Can only approve pending applications. Current status: ${app.status}` });
       }
-      app.status = 'approved_for_payment';
-      await app.save();
       
-      // Send response immediately
-      res.json({ message: 'Application approved for payment', application: app });
+      // Update status directly
+      await Application.updateOne({ _id: req.params.id }, { $set: { status: 'approved_for_payment' } });
       
-      // Send approval email to student in background (non-blocking)
+      // Send response IMMEDIATELY
+      res.json({ message: 'Application approved for payment', application: { ...app, status: 'approved_for_payment' } });
+      
+      // Everything else in background
       setImmediate(async () => {
         try {
-          const student = await User.findById(app.studentId);
-          await sendApplicationApprovedForPaymentEmail(student.email, student.name, hostel.name, app.roomType, app.totalAmount);
+          const student = await User.findById(app.studentId).lean();
+          if (student) {
+            await sendApplicationApprovedForPaymentEmail(student.email, student.name, hostel.name, app.roomType, app.totalAmount);
+          }
         } catch (emailErr) {
           logger.error('Email notification error:', emailErr);
         }
@@ -1486,18 +1490,19 @@ app.patch('/api/applications/:id/status', checkDBConnection, auth, checkRole('ma
     }
     
     if (action === 'reject') {
-      // Reject application
-      app.status = 'rejected';
-      await app.save();
+      // Update status directly
+      await Application.updateOne({ _id: req.params.id }, { $set: { status: 'rejected' } });
       
-      // Send response immediately
-      res.json({ message: 'Application rejected', application: app });
+      // Send response IMMEDIATELY
+      res.json({ message: 'Application rejected', application: { ...app, status: 'rejected' } });
       
-      // Send rejection email to student in background (non-blocking)
+      // Everything else in background
       setImmediate(async () => {
         try {
-          const student = await User.findById(app.studentId);
-          await sendApplicationRejectedEmail(student.email, student.name, hostel.name, app.roomType);
+          const student = await User.findById(app.studentId).lean();
+          if (student) {
+            await sendApplicationRejectedEmail(student.email, student.name, hostel.name, app.roomType);
+          }
         } catch (emailErr) {
           logger.error('Email notification error:', emailErr);
         }
@@ -1507,7 +1512,6 @@ app.patch('/api/applications/:id/status', checkDBConnection, auth, checkRole('ma
     }
     
     if (action === 'final_approve') {
-      // Step 6: Final approval after payment - allocate room
       if (app.status !== 'paid_awaiting_final') {
         return res.status(400).json({ error: `Can only final approve paid applications. Current status: ${app.status}` });
       }
@@ -1521,39 +1525,53 @@ app.patch('/api/applications/:id/status', checkDBConnection, auth, checkRole('ma
         });
       }
       
-      // Increase occupancy
-      hostel.roomTypes[roomIndex].occupiedCapacity = Math.min(
-        (room.occupiedCapacity || 0) + 1,
-        room.totalCapacity
-      );
-      hostel.roomTypes[roomIndex].available = hostel.roomTypes[roomIndex].occupiedCapacity < room.totalCapacity;
-      await hostel.save();
-      
-      // Generate secure access code
+      // Generate access code
       const accessCode = generateAccessCode();
-      app.status = 'approved';
-      app.accessCode = accessCode;
-      app.accessCodeIssuedAt = new Date();
-      app.finalApprovedAt = new Date();
-      await app.save();
+      const now = new Date();
       
-      // Send response immediately
+      // Update both application and hostel in parallel
+      await Promise.all([
+        Application.updateOne(
+          { _id: req.params.id },
+          { 
+            $set: { 
+              status: 'approved',
+              accessCode,
+              accessCodeIssuedAt: now,
+              finalApprovedAt: now
+            }
+          }
+        ),
+        Hostel.updateOne(
+          { _id: app.hostelId, 'roomTypes.type': app.roomType },
+          { 
+            $inc: { 'roomTypes.$.occupiedCapacity': 1 },
+            $set: { 
+              'roomTypes.$.available': (room.occupiedCapacity + 1) < room.totalCapacity
+            }
+          }
+        )
+      ]);
+      
+      // Send response IMMEDIATELY
       res.json({ 
         message: 'Application finally approved', 
-        application: app,
+        application: { ...app, status: 'approved', accessCode },
         accessCode,
         roomStatus: {
-          occupiedCapacity: hostel.roomTypes[roomIndex].occupiedCapacity,
-          totalCapacity: hostel.roomTypes[roomIndex].totalCapacity,
-          available: hostel.roomTypes[roomIndex].available
+          occupiedCapacity: room.occupiedCapacity + 1,
+          totalCapacity: room.totalCapacity,
+          available: (room.occupiedCapacity + 1) < room.totalCapacity
         }
       });
       
-      // Send final approval email with access code in background (non-blocking)
+      // Email in background
       setImmediate(async () => {
         try {
-          const student = await User.findById(app.studentId);
-          await sendFinalApprovalEmail(student.email, student.name, hostel.name, app.roomType, accessCode);
+          const student = await User.findById(app.studentId).lean();
+          if (student) {
+            await sendFinalApprovalEmail(student.email, student.name, hostel.name, app.roomType, accessCode);
+          }
         } catch (emailErr) {
           logger.error('Email notification error:', emailErr);
         }
