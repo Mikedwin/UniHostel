@@ -1,13 +1,15 @@
-import React, { Suspense, lazy, useEffect, useState } from 'react';
+import React, { lazy, useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Users, Building2, FileText, Activity } from 'lucide-react';
 import API_URL from '../config';
 import UserActionModal from '../components/admin/UserActionModal';
 import UserDetailsModal from '../components/admin/UserDetailsModal';
 import ApplicationDetailsModal from '../components/admin/ApplicationDetailsModal';
 import ApplicationActionModal from '../components/admin/ApplicationActionModal';
 import LoadingSpinner from '../components/LoadingSpinner';
+import AdminStatsSection from '../components/admin/dashboard/AdminStatsSection';
+import AdminTabContent from '../components/admin/dashboard/AdminTabContent';
+import AdminTabNavigation from '../components/admin/dashboard/AdminTabNavigation';
 
 const UserManagementTable = lazy(() => import('../components/admin/UserManagementTable'));
 const ApplicationManagementTable = lazy(() => import('../components/admin/ApplicationManagementTable'));
@@ -17,1069 +19,489 @@ const ManagerRegistrationForm = lazy(() => import('../components/admin/ManagerRe
 const VisitorTracking = lazy(() => import('../components/admin/VisitorTracking'));
 
 const AdminDashboard = () => {
-    const [stats, setStats] = useState(null);
-    const [hostels, setHostels] = useState([]);
-    const [managers, setManagers] = useState([]);
-    const [logs, setLogs] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('overview');
-    const [modalOpen, setModalOpen] = useState(false);
-    const [modalAction, setModalAction] = useState('');
-    const [selectedUser, setSelectedUser] = useState(null);
-    const [actionLoading, setActionLoading] = useState(false);
-    const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-    const [successMessage, setSuccessMessage] = useState('');
-    const [errorMessage, setErrorMessage] = useState('');
-    const [confirmDialog, setConfirmDialog] = useState({ open: false, message: '', onConfirm: null });
-    const [appModalOpen, setAppModalOpen] = useState(false);
-    const [appModalAction, setAppModalAction] = useState('');
-    const [selectedApp, setSelectedApp] = useState(null);
-    const [appDetailsModalOpen, setAppDetailsModalOpen] = useState(false);
-    const [selectedLogs, setSelectedLogs] = useState([]);
-    const [selectedHistoryLogs, setSelectedHistoryLogs] = useState([]);
-    const [historyLogs, setHistoryLogs] = useState([]);
-    const { token } = useAuth();
+  const [stats, setStats] = useState(null);
+  const [hostels, setHostels] = useState([]);
+  const [managers, setManagers] = useState([]);
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalAction, setModalAction] = useState('');
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [confirmDialog, setConfirmDialog] = useState({ open: false, message: '', onConfirm: null });
+  const [appModalOpen, setAppModalOpen] = useState(false);
+  const [appModalAction, setAppModalAction] = useState('');
+  const [selectedApp, setSelectedApp] = useState(null);
+  const [appDetailsModalOpen, setAppDetailsModalOpen] = useState(false);
+  const [selectedLogs, setSelectedLogs] = useState([]);
+  const [selectedHistoryLogs, setSelectedHistoryLogs] = useState([]);
+  const [historyLogs, setHistoryLogs] = useState([]);
+  const { token } = useAuth();
 
-    useEffect(() => {
-        if (token) {
-            fetchDashboardData();
-        }
+  useEffect(() => {
+    if (token) {
+      fetchDashboardData();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [token]);
+  }, [token]);
 
-    const fetchDashboardData = async () => {
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const [statsRes, hostelsRes, managersRes, logsRes] = await Promise.all([
+        axios.get(`${API_URL}/api/admin/dashboard/stats`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_URL}/api/admin/hostels`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_URL}/api/admin/managers`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_URL}/api/admin/logs?limit=20`, { headers: { Authorization: `Bearer ${token}` } })
+      ]);
+      setStats(statsRes.data);
+      setHostels(hostelsRes.data);
+      setManagers(managersRes.data);
+      setLogs(logsRes.data);
+    } catch (err) {
+      console.error('Admin dashboard error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchHistoryLogs = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/admin/logs/history?limit=50`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setHistoryLogs(res.data);
+    } catch (err) {
+      console.error('Failed to fetch history logs:', err);
+      showError('Failed to fetch history logs');
+    }
+  };
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (tab === 'logs-history') {
+      fetchHistoryLogs();
+    }
+  };
+
+  const toggleHostelActive = async (hostelId) => {
+    if (!window.confirm('Are you sure you want to change this hostel status?')) return;
+    try {
+      await axios.patch(`${API_URL}/api/admin/hostels/${hostelId}/toggle-active`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      fetchDashboardData();
+    } catch (err) {
+      alert('Failed to update hostel status');
+    }
+  };
+
+  const flagHostel = async (hostelId) => {
+    const reason = prompt('Enter reason for flagging this hostel:');
+    if (!reason) return;
+    try {
+      await axios.patch(`${API_URL}/api/admin/hostels/${hostelId}/flag`, { reason }, { headers: { Authorization: `Bearer ${token}` } });
+      fetchDashboardData();
+    } catch (err) {
+      alert('Failed to flag hostel');
+    }
+  };
+
+  const deleteHostel = async (hostelId) => {
+    if (!window.confirm('Are you sure you want to DELETE this hostel? This action cannot be undone and will remove it from the browse section.')) return;
+    try {
+      await axios.delete(`${API_URL}/api/admin/hostels/${hostelId}`, { headers: { Authorization: `Bearer ${token}` } });
+      fetchDashboardData();
+    } catch (err) {
+      alert('Failed to delete hostel');
+    }
+  };
+
+  const handleUserAction = (action, user) => {
+    if (action === 'view') {
+      setSelectedUser(user);
+      setDetailsModalOpen(true);
+    } else if (action.startsWith('bulk-')) {
+      handleBulkAction(action.replace('bulk-', ''), user);
+    } else {
+      setModalAction(action);
+      setSelectedUser(user);
+      setModalOpen(true);
+    }
+  };
+
+  const handleActionConfirm = async (data) => {
+    setActionLoading(true);
+    try {
+      let endpoint = '';
+      let method = 'patch';
+      let payload = data;
+
+      switch (modalAction) {
+        case 'suspend':
+          endpoint = `/api/admin/users/${selectedUser._id}/suspend`;
+          break;
+        case 'ban':
+          endpoint = `/api/admin/users/${selectedUser._id}/ban`;
+          break;
+        case 'activate':
+          endpoint = `/api/admin/users/${selectedUser._id}/activate`;
+          break;
+        case 'verify':
+          endpoint = `/api/admin/users/${selectedUser._id}/verify`;
+          break;
+        case 'reject':
+          endpoint = `/api/admin/users/${selectedUser._id}/reject`;
+          break;
+        case 'reset-password':
+          endpoint = `/api/admin/users/${selectedUser._id}/reset-password`;
+          method = 'post';
+          break;
+        case 'delete':
+          endpoint = `/api/admin/users/${selectedUser._id}`;
+          method = 'delete';
+          break;
+        default:
+          throw new Error('Unknown action');
+      }
+
+      const res = await axios[method](`${API_URL}${endpoint}`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (modalAction === 'reset-password' && res.data.temporaryPassword) {
+        alert(`Password reset successful!\n\nTemporary Password: ${res.data.temporaryPassword}\n\nPlease save this password and share it with the user securely.`);
+      }
+
+      showSuccess(res.data.message || 'Action completed successfully');
+      setModalOpen(false);
+      setSelectedUser(null);
+      setModalAction('');
+    } catch (err) {
+      alert(err.response?.data?.error || 'Action failed');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleBulkAction = async (action, userIds) => {
+    const reason = action === 'suspend' || action === 'ban' ? prompt(`Enter reason for bulk ${action}:`) : null;
+    if ((action === 'suspend' || action === 'ban') && !reason) return;
+
+    if (!window.confirm(`Are you sure you want to ${action} ${userIds.length} user(s)?`)) return;
+
+    try {
+      const res = await axios.post(`${API_URL}/api/admin/users/bulk-action`, {
+        userIds,
+        action,
+        reason
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const { success, failed } = res.data.results;
+      let message = `Bulk action completed: ${success.length} succeeded`;
+      if (failed.length > 0) message += `, ${failed.length} failed`;
+      showSuccess(message);
+    } catch (err) {
+      alert(err.response?.data?.error || 'Bulk action failed');
+    }
+  };
+
+  const showSuccess = (message) => {
+    setSuccessMessage(message);
+    setTimeout(() => setSuccessMessage(''), 3000);
+  };
+
+  const showError = (message) => {
+    setErrorMessage(message);
+    setTimeout(() => setErrorMessage(''), 5000);
+  };
+
+  const showConfirm = (message, onConfirm) => {
+    setConfirmDialog({ open: true, message, onConfirm });
+  };
+
+  const handleConfirmClose = (confirmed) => {
+    if (confirmed && confirmDialog.onConfirm) {
+      confirmDialog.onConfirm();
+    }
+    setConfirmDialog({ open: false, message: '', onConfirm: null });
+  };
+
+  const tabFallback = (message) => (
+    <div className="py-10">
+      <LoadingSpinner message={message} />
+    </div>
+  );
+
+  const handleApplicationAction = (action, app, refreshCallback) => {
+    if (action === 'view') {
+      setSelectedApp(app);
+      setAppDetailsModalOpen(true);
+    } else if (action === 'delete') {
+      handleDeleteApplication(app, refreshCallback);
+    } else if (action.startsWith('bulk-')) {
+      handleBulkApplicationAction(action.replace('bulk-', ''), app, refreshCallback);
+    } else {
+      setAppModalAction(action);
+      setSelectedApp(app);
+      setAppModalOpen(true);
+    }
+  };
+
+  const handleDeleteApplication = async (app, refreshCallback) => {
+    showConfirm(
+      `Are you sure you want to delete this application from ${app.studentName}?\n\nThis action cannot be undone.`,
+      async () => {
         try {
-            setLoading(true);
-            const [statsRes, hostelsRes, managersRes, logsRes] = await Promise.all([
-                axios.get(`${API_URL}/api/admin/dashboard/stats`, { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get(`${API_URL}/api/admin/hostels`, { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get(`${API_URL}/api/admin/managers`, { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get(`${API_URL}/api/admin/logs?limit=20`, { headers: { Authorization: `Bearer ${token}` } })
-            ]);
-            setStats(statsRes.data);
-            setHostels(hostelsRes.data);
-            setManagers(managersRes.data);
-            setLogs(logsRes.data);
+          await axios.delete(`${API_URL}/api/admin/applications/${app._id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          showSuccess('Application deleted successfully');
+          if (refreshCallback) refreshCallback();
+          fetchDashboardData();
         } catch (err) {
-            console.error('Admin dashboard error:', err);
-        } finally {
-            setLoading(false);
+          showError(err.response?.data?.error || 'Failed to delete application');
         }
-    };
-
-    const fetchHistoryLogs = async () => {
-        try {
-            const res = await axios.get(`${API_URL}/api/admin/logs/history?limit=50`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setHistoryLogs(res.data);
-        } catch (err) {
-            console.error('Failed to fetch history logs:', err);
-            showError('Failed to fetch history logs');
-        }
-    };
-
-    const toggleHostelActive = async (hostelId) => {
-        if (!window.confirm('Are you sure you want to change this hostel status?')) return;
-        try {
-            await axios.patch(`${API_URL}/api/admin/hostels/${hostelId}/toggle-active`, {}, { headers: { Authorization: `Bearer ${token}` } });
-            fetchDashboardData();
-        } catch (err) {
-            alert('Failed to update hostel status');
-        }
-    };
-
-    const flagHostel = async (hostelId) => {
-        const reason = prompt('Enter reason for flagging this hostel:');
-        if (!reason) return;
-        try {
-            await axios.patch(`${API_URL}/api/admin/hostels/${hostelId}/flag`, { reason }, { headers: { Authorization: `Bearer ${token}` } });
-            fetchDashboardData();
-        } catch (err) {
-            alert('Failed to flag hostel');
-        }
-    };
-
-    const deleteHostel = async (hostelId) => {
-        if (!window.confirm('Are you sure you want to DELETE this hostel? This action cannot be undone and will remove it from the browse section.')) return;
-        try {
-            await axios.delete(`${API_URL}/api/admin/hostels/${hostelId}`, { headers: { Authorization: `Bearer ${token}` } });
-            fetchDashboardData();
-        } catch (err) {
-            alert('Failed to delete hostel');
-        }
-    };
-
-    // Reserved for future room management features
-    // eslint-disable-next-line no-unused-vars
-    const resetRoomCapacity = async (hostelId, roomType) => {
-        const newCapacity = prompt(`Enter new occupied capacity for ${roomType}:`);
-        if (newCapacity === null) return;
-        if (!window.confirm(`Reset ${roomType} capacity to ${newCapacity}? This action is logged.`)) return;
-        try {
-            await axios.patch(`${API_URL}/api/admin/hostels/${hostelId}/rooms/${encodeURIComponent(roomType)}/reset-capacity`, 
-                { newOccupiedCapacity: parseInt(newCapacity) }, 
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            fetchDashboardData();
-        } catch (err) {
-            alert('Failed to reset capacity');
-        }
-    };
-
-    const handleUserAction = (action, user) => {
-        if (action === 'view') {
-            setSelectedUser(user);
-            setDetailsModalOpen(true);
-        } else if (action.startsWith('bulk-')) {
-            handleBulkAction(action.replace('bulk-', ''), user);
-        } else {
-            setModalAction(action);
-            setSelectedUser(user);
-            setModalOpen(true);
-        }
-    };
-
-    const handleActionConfirm = async (data) => {
-        setActionLoading(true);
-        try {
-            let endpoint = '';
-            let method = 'patch';
-            let payload = data;
-
-            switch (modalAction) {
-                case 'suspend':
-                    endpoint = `/api/admin/users/${selectedUser._id}/suspend`;
-                    break;
-                case 'ban':
-                    endpoint = `/api/admin/users/${selectedUser._id}/ban`;
-                    break;
-                case 'activate':
-                    endpoint = `/api/admin/users/${selectedUser._id}/activate`;
-                    break;
-                case 'verify':
-                    endpoint = `/api/admin/users/${selectedUser._id}/verify`;
-                    break;
-                case 'reject':
-                    endpoint = `/api/admin/users/${selectedUser._id}/reject`;
-                    break;
-                case 'reset-password':
-                    endpoint = `/api/admin/users/${selectedUser._id}/reset-password`;
-                    method = 'post';
-                    break;
-                case 'delete':
-                    endpoint = `/api/admin/users/${selectedUser._id}`;
-                    method = 'delete';
-                    break;
-                default:
-                    throw new Error('Unknown action');
-            }
-
-            const res = await axios[method](`${API_URL}${endpoint}`, payload, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            if (modalAction === 'reset-password' && res.data.temporaryPassword) {
-                alert(`Password reset successful!\n\nTemporary Password: ${res.data.temporaryPassword}\n\nPlease save this password and share it with the user securely.`);
-            }
-
-            showSuccess(res.data.message || 'Action completed successfully');
-            setModalOpen(false);
-            setSelectedUser(null);
-            setModalAction('');
-        } catch (err) {
-            alert(err.response?.data?.error || 'Action failed');
-        } finally {
-            setActionLoading(false);
-        }
-    };
-
-    const handleBulkAction = async (action, userIds) => {
-        const reason = action === 'suspend' || action === 'ban' ? prompt(`Enter reason for bulk ${action}:`) : null;
-        if ((action === 'suspend' || action === 'ban') && !reason) return;
-
-        if (!window.confirm(`Are you sure you want to ${action} ${userIds.length} user(s)?`)) return;
-
-        try {
-            const res = await axios.post(`${API_URL}/api/admin/users/bulk-action`, {
-                userIds,
-                action,
-                reason
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            const { success, failed } = res.data.results;
-            let message = `Bulk action completed: ${success.length} succeeded`;
-            if (failed.length > 0) message += `, ${failed.length} failed`;
-            showSuccess(message);
-        } catch (err) {
-            alert(err.response?.data?.error || 'Bulk action failed');
-        }
-    };
-
-    const showSuccess = (message) => {
-        setSuccessMessage(message);
-        setTimeout(() => setSuccessMessage(''), 3000);
-    };
-
-    const showError = (message) => {
-        setErrorMessage(message);
-        setTimeout(() => setErrorMessage(''), 5000);
-    };
-
-    const showConfirm = (message, onConfirm) => {
-        setConfirmDialog({ open: true, message, onConfirm });
-    };
-
-    const handleConfirmClose = (confirmed) => {
-        if (confirmed && confirmDialog.onConfirm) {
-            confirmDialog.onConfirm();
-        }
-        setConfirmDialog({ open: false, message: '', onConfirm: null });
-    };
-
-    const tabFallback = (message) => (
-        <div className="py-10">
-            <LoadingSpinner message={message} />
-        </div>
+      }
     );
+  };
 
-    const handleApplicationAction = (action, app, refreshCallback) => {
-        if (action === 'view') {
-            setSelectedApp(app);
-            setAppDetailsModalOpen(true);
-        } else if (action === 'delete') {
-            handleDeleteApplication(app, refreshCallback);
-        } else if (action.startsWith('bulk-')) {
-            handleBulkApplicationAction(action.replace('bulk-', ''), app, refreshCallback);
-        } else {
-            setAppModalAction(action);
-            setSelectedApp(app);
-            setAppModalOpen(true);
-        }
-    };
+  const handleAppActionConfirm = async (data) => {
+    setActionLoading(true);
+    try {
+      let endpoint = '';
+      let method = 'post';
+      let payload = data;
 
-    const handleDeleteApplication = async (app, refreshCallback) => {
-        showConfirm(
-            `Are you sure you want to delete this application from ${app.studentName}?\n\nThis action cannot be undone.`,
-            async () => {
-                try {
-                    await axios.delete(`${API_URL}/api/admin/applications/${app._id}`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    showSuccess('Application deleted successfully');
-                    if (refreshCallback) refreshCallback();
-                    fetchDashboardData();
-                } catch (err) {
-                    showError(err.response?.data?.error || 'Failed to delete application');
-                }
-            }
-        );
-    };
+      switch (appModalAction) {
+        case 'approve':
+          endpoint = `/api/admin/applications/${selectedApp._id}/override`;
+          method = 'patch';
+          payload = { status: 'approved', reason: data.reason };
+          break;
+        case 'reject':
+          endpoint = `/api/admin/applications/${selectedApp._id}/override`;
+          method = 'patch';
+          payload = { status: 'rejected', reason: data.reason };
+          break;
+        case 'note':
+          endpoint = `/api/admin/applications/${selectedApp._id}/note`;
+          payload = { note: data.note, visibleToManager: data.visibleToManager };
+          break;
+        case 'dispute':
+          endpoint = `/api/admin/applications/${selectedApp._id}/dispute`;
+          payload = { disputeReason: data.disputeReason, disputeDetails: data.disputeDetails };
+          break;
+        case 'resolve-dispute':
+          endpoint = `/api/admin/applications/${selectedApp._id}/dispute/resolve`;
+          method = 'patch';
+          payload = { resolution: data.resolution, newStatus: data.newStatus };
+          break;
+        case 'refund':
+          endpoint = `/api/admin/applications/${selectedApp._id}/refund`;
+          payload = { refundAmount: parseFloat(data.refundAmount), reason: data.reason };
+          break;
+        default:
+          throw new Error('Unknown action');
+      }
 
-    const handleAppActionConfirm = async (data) => {
-        setActionLoading(true);
-        try {
-            let endpoint = '';
-            let method = 'post';
-            let payload = data;
+      const res = await axios[method](`${API_URL}${endpoint}`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-            switch (appModalAction) {
-                case 'approve':
-                    endpoint = `/api/admin/applications/${selectedApp._id}/override`;
-                    method = 'patch';
-                    payload = { status: 'approved', reason: data.reason };
-                    break;
-                case 'reject':
-                    endpoint = `/api/admin/applications/${selectedApp._id}/override`;
-                    method = 'patch';
-                    payload = { status: 'rejected', reason: data.reason };
-                    break;
-                case 'note':
-                    endpoint = `/api/admin/applications/${selectedApp._id}/note`;
-                    payload = { note: data.note, visibleToManager: data.visibleToManager };
-                    break;
-                case 'dispute':
-                    endpoint = `/api/admin/applications/${selectedApp._id}/dispute`;
-                    payload = { disputeReason: data.disputeReason, disputeDetails: data.disputeDetails };
-                    break;
-                case 'resolve-dispute':
-                    endpoint = `/api/admin/applications/${selectedApp._id}/dispute/resolve`;
-                    method = 'patch';
-                    payload = { resolution: data.resolution, newStatus: data.newStatus };
-                    break;
-                case 'refund':
-                    endpoint = `/api/admin/applications/${selectedApp._id}/refund`;
-                    payload = { refundAmount: parseFloat(data.refundAmount), reason: data.reason };
-                    break;
-                default:
-                    throw new Error('Unknown action');
-            }
+      showSuccess(res.data.message || 'Action completed successfully');
+      setAppModalOpen(false);
+      setSelectedApp(null);
+      setAppModalAction('');
+      fetchDashboardData();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Action failed');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
-            const res = await axios[method](`${API_URL}${endpoint}`, payload, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            showSuccess(res.data.message || 'Action completed successfully');
-            setAppModalOpen(false);
-            setSelectedApp(null);
-            setAppModalAction('');
-            fetchDashboardData();
-        } catch (err) {
-            alert(err.response?.data?.error || 'Action failed');
-        } finally {
-            setActionLoading(false);
-        }
-    };
-
-    const handleBulkApplicationAction = async (action, appIds, refreshCallback) => {
-        if (action === 'delete') {
-            showConfirm(
-                `Are you sure you want to delete ${appIds.length} application(s)?\n\nThis action cannot be undone.`,
-                async () => {
-                    try {
-                        const deletePromises = appIds.map(id => 
-                            axios.delete(`${API_URL}/api/admin/applications/${id}`, {
-                                headers: { Authorization: `Bearer ${token}` }
-                            })
-                        );
-                        await Promise.all(deletePromises);
-                        showSuccess(`Successfully deleted ${appIds.length} application(s)`);
-                        if (refreshCallback) refreshCallback();
-                        fetchDashboardData();
-                    } catch (err) {
-                        showError(err.response?.data?.error || 'Bulk delete failed');
-                    }
-                }
-            );
-            return;
-        }
-
-        const reason = prompt(`Enter reason for bulk ${action}:`);
-        if (!reason) return;
-
-        if (!window.confirm(`Are you sure you want to ${action} ${appIds.length} application(s)?`)) return;
-
-        try {
-            const res = await axios.post(`${API_URL}/api/admin/applications/bulk-action`, {
-                applicationIds: appIds,
-                action,
-                reason
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            const { success, failed } = res.data.results;
-            let message = `Bulk action completed: ${success.length} succeeded`;
-            if (failed.length > 0) message += `, ${failed.length} failed`;
-            showSuccess(message);
+  const handleBulkApplicationAction = async (action, appIds, refreshCallback) => {
+    if (action === 'delete') {
+      showConfirm(
+        `Are you sure you want to delete ${appIds.length} application(s)?\n\nThis action cannot be undone.`,
+        async () => {
+          try {
+            const deletePromises = appIds.map((id) => axios.delete(`${API_URL}/api/admin/applications/${id}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            }));
+            await Promise.all(deletePromises);
+            showSuccess(`Successfully deleted ${appIds.length} application(s)`);
             if (refreshCallback) refreshCallback();
             fetchDashboardData();
-        } catch (err) {
-            showError(err.response?.data?.error || 'Bulk action failed');
+          } catch (err) {
+            showError(err.response?.data?.error || 'Bulk delete failed');
+          }
         }
-    };
-
-    if (loading) {
-        return <LoadingSpinner message="Loading admin dashboard..." fullScreen />;
+      );
+      return;
     }
 
-    return (
-        <div className="min-h-screen bg-gray-100">
-            <div className="bg-white shadow">
-                <div className="max-w-7xl mx-auto px-4 py-4">
-                    <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-                    <p className="text-sm text-gray-600">System Overseer & Control Center - Analytics Enabled</p>
-                </div>
-            </div>
+    const reason = prompt(`Enter reason for bulk ${action}:`);
+    if (!reason) return;
 
-            <div className="max-w-7xl mx-auto px-4 py-6">
-                {/* Stats Overview */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-                    <div className="bg-white p-3 sm:p-4 rounded-lg shadow">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs sm:text-sm text-gray-600">Total Hostels</p>
-                                <p className="text-xl sm:text-2xl font-bold">{stats?.overview.totalHostels}</p>
-                                <p className="text-xs text-green-600">{stats?.overview.activeHostels} active</p>
-                            </div>
-                            <Building2 className="w-8 h-8 sm:w-10 sm:h-10 text-blue-500" />
-                        </div>
-                    </div>
-                    <div className="bg-white p-3 sm:p-4 rounded-lg shadow">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs sm:text-sm text-gray-600">Managers</p>
-                                <p className="text-xl sm:text-2xl font-bold">{stats?.overview.totalManagers}</p>
-                            </div>
-                            <Users className="w-8 h-8 sm:w-10 sm:h-10 text-purple-500" />
-                        </div>
-                    </div>
-                    <div className="bg-white p-3 sm:p-4 rounded-lg shadow">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs sm:text-sm text-gray-600">Applications</p>
-                                <p className="text-xl sm:text-2xl font-bold">{stats?.overview.totalApplications}</p>
-                                <p className="text-xs text-yellow-600">{stats?.overview.pendingApplications} pending</p>
-                            </div>
-                            <FileText className="w-8 h-8 sm:w-10 sm:h-10 text-orange-500" />
-                        </div>
-                    </div>
-                    <div className="bg-white p-3 sm:p-4 rounded-lg shadow">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs sm:text-sm text-gray-600">Students</p>
-                                <p className="text-xl sm:text-2xl font-bold">{stats?.overview.totalStudents}</p>
-                            </div>
-                            <Activity className="w-8 h-8 sm:w-10 sm:h-10 text-green-500" />
-                        </div>
-                    </div>
-                </div>
+    if (!window.confirm(`Are you sure you want to ${action} ${appIds.length} application(s)?`)) return;
 
-                {/* Room Stats */}
-                <div className="bg-white p-3 sm:p-4 rounded-lg shadow mb-6">
-                    <h2 className="text-base sm:text-lg font-bold mb-3 sm:mb-4">Room Statistics</h2>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                        {stats?.roomStats && Object.entries(stats.roomStats).map(([type, data]) => (
-                            <div key={type} className="border rounded p-2 sm:p-3">
-                                <p className="font-semibold text-xs sm:text-sm">{type}</p>
-                                <p className="text-xs text-gray-600">Total: {data.total}</p>
-                                <p className="text-xs text-gray-600">Occupied: {data.occupied}</p>
-                                <p className="text-xs text-green-600">Available: {data.available}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+    try {
+      const res = await axios.post(`${API_URL}/api/admin/applications/bulk-action`, {
+        applicationIds: appIds,
+        action,
+        reason
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-                {/* Tabs */}
-                <div className="bg-white rounded-lg shadow mb-6">
-                    <div className="border-b overflow-x-auto">
-                        <div className="flex space-x-2 sm:space-x-4 px-2 sm:px-4 min-w-max">
-                            {['overview', 'analytics', 'transactions', 'visitors', 'users', 'hostels', 'managers', 'register-manager', 'applications', 'logs', 'logs-history', 'trash'].map(tab => (
-                                <button
-                                    key={tab}
-                                    onClick={() => {
-                                        setActiveTab(tab);
-                                        if (tab === 'logs-history') {
-                                            fetchHistoryLogs();
-                                        }
-                                    }}
-                                    className={`py-2 sm:py-3 px-2 sm:px-4 font-medium capitalize text-xs sm:text-base whitespace-nowrap ${activeTab === tab ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'}`}
-                                >
-                                    {tab === 'register-manager' ? 'Register Manager' : 
-                                     tab === 'logs-history' ? 'Logs History' : tab}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+      const { success, failed } = res.data.results;
+      let message = `Bulk action completed: ${success.length} succeeded`;
+      if (failed.length > 0) message += `, ${failed.length} failed`;
+      showSuccess(message);
+      if (refreshCallback) refreshCallback();
+      fetchDashboardData();
+    } catch (err) {
+      showError(err.response?.data?.error || 'Bulk action failed');
+    }
+  };
 
-                    <div className="p-3 sm:p-4">
-                        {activeTab === 'overview' && (
-                            <div className="space-y-4">
-                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                    <h3 className="font-semibold text-blue-900 mb-2">Welcome to Admin Dashboard</h3>
-                                    <p className="text-sm text-blue-800">Manage users, hostels, applications, and monitor system activity from this central control hub.</p>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="bg-white border rounded-lg p-4">
-                                        <h4 className="font-semibold mb-2">Quick Stats</h4>
-                                        <ul className="text-sm space-y-1">
-                                            <li>• {stats?.overview.totalHostels} total hostels ({stats?.overview.activeHostels} active)</li>
-                                            <li>• {stats?.overview.totalManagers} managers registered</li>
-                                            <li>• {stats?.overview.totalStudents} students registered</li>
-                                            <li>• {stats?.overview.totalApplications} applications ({stats?.overview.pendingApplications} pending)</li>
-                                        </ul>
-                                    </div>
-                                    <div className="bg-white border rounded-lg p-4">
-                                        <h4 className="font-semibold mb-2">Quick Actions</h4>
-                                        <div className="space-y-2">
-                                            <button onClick={() => setActiveTab('users')} className="w-full text-left px-3 py-2 bg-blue-50 hover:bg-blue-100 rounded text-sm">Manage Users</button>
-                                            <button onClick={() => setActiveTab('applications')} className="w-full text-left px-3 py-2 bg-green-50 hover:bg-green-100 rounded text-sm">Review Applications</button>
-                                            <button onClick={() => setActiveTab('hostels')} className="w-full text-left px-3 py-2 bg-purple-50 hover:bg-purple-100 rounded text-sm">Manage Hostels</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+  if (loading) {
+    return <LoadingSpinner message="Loading admin dashboard..." fullScreen />;
+  }
 
-                        {activeTab === 'users' && (
-                            <div>
-                                <Suspense fallback={tabFallback('Loading users...')}>
-                                    {token ? (
-                                        <UserManagementTable token={token} onAction={handleUserAction} />
-                                    ) : (
-                                        <div className="text-center py-8 text-red-600">No authentication token found</div>
-                                    )}
-                                </Suspense>
-                            </div>
-                        )}
-
-                        {activeTab === 'analytics' && (
-                            <Suspense fallback={tabFallback('Loading analytics...')}>
-                                <AnalyticsDashboard token={token} />
-                            </Suspense>
-                        )}
-
-                        {activeTab === 'transactions' && (
-                            <Suspense fallback={tabFallback('Loading transactions...')}>
-                                <AdminTransactions token={token} />
-                            </Suspense>
-                        )}
-
-                        {activeTab === 'visitors' && (
-                            <Suspense fallback={tabFallback('Loading visitor insights...')}>
-                                <VisitorTracking />
-                            </Suspense>
-                        )}
-
-                        {activeTab === 'applications' && (
-                            <div>
-                                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                                    <h4 className="font-semibold text-blue-900 mb-2">Payment Verification Tool</h4>
-                                    <p className="text-sm text-blue-800 mb-3">Use this tool to manually verify payments that may have been processed but not updated in the system.</p>
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            placeholder="Application ID"
-                                            className="flex-1 px-3 py-2 border rounded-md text-sm"
-                                            id="verifyAppId"
-                                        />
-                                        <input
-                                            type="text"
-                                            placeholder="Payment Reference (optional)"
-                                            className="flex-1 px-3 py-2 border rounded-md text-sm"
-                                            id="verifyPayRef"
-                                        />
-                                        <button
-                                            onClick={async () => {
-                                                const appId = document.getElementById('verifyAppId').value;
-                                                const payRef = document.getElementById('verifyPayRef').value;
-                                                
-                                                if (!appId) {
-                                                    showError('Application ID is required');
-                                                    return;
-                                                }
-                                                
-                                                try {
-                                                    const res = await axios.post(`${API_URL}/api/payment/admin/verify-payment`, {
-                                                        applicationId: appId,
-                                                        paymentReference: payRef || undefined
-                                                    }, {
-                                                        headers: { Authorization: `Bearer ${token}` }
-                                                    });
-                                                    
-                                                    if (res.data.success) {
-                                                        showSuccess(`Payment verified! Paystack: ${res.data.paystackAmount} GHS, App: ${res.data.applicationAmount} GHS`);
-                                                        document.getElementById('verifyAppId').value = '';
-                                                        document.getElementById('verifyPayRef').value = '';
-                                                    } else {
-                                                        showError(res.data.message);
-                                                    }
-                                                } catch (err) {
-                                                    showError(err.response?.data?.message || 'Verification failed');
-                                                }
-                                            }}
-                                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
-                                        >
-                                            Verify Payment
-                                        </button>
-                                    </div>
-                                </div>
-                                <Suspense fallback={tabFallback('Loading applications...')}>
-                                    <ApplicationManagementTable token={token} onAction={handleApplicationAction} />
-                                </Suspense>
-                            </div>
-                        )}
-
-                        {activeTab === 'hostels' && (
-                            <div className="overflow-x-auto -mx-3 sm:mx-0">
-                                <div className="inline-block min-w-full align-middle">
-                                    <table className="min-w-full divide-y divide-gray-200">
-                                        <thead className="bg-gray-50">
-                                            <tr>
-                                                <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Hostel</th>
-                                                <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Manager</th>
-                                                <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Rooms</th>
-                                                <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                                <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="bg-white divide-y divide-gray-200">
-                                            {hostels.map(hostel => (
-                                                <tr key={hostel._id}>
-                                                    <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">{hostel.name}</td>
-                                                    <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">{hostel.managerId?.name}</td>
-                                                    <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">{hostel.roomTypes?.length} types</td>
-                                                    <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">
-                                                        <span className={`px-2 py-1 text-xs rounded ${hostel.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                            {hostel.isActive ? 'Active' : 'Inactive'}
-                                                        </span>
-                                                        {hostel.isFlagged && <span className="ml-2 px-2 py-1 text-xs rounded bg-yellow-100 text-yellow-700">Flagged</span>}
-                                                    </td>
-                                                    <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">
-                                                        <button onClick={() => toggleHostelActive(hostel._id)} className="text-blue-600 hover:underline mr-2">Toggle</button>
-                                                        <button onClick={() => flagHostel(hostel._id)} className="text-orange-600 hover:underline mr-2">Flag</button>
-                                                        <button onClick={() => deleteHostel(hostel._id)} className="text-red-600 hover:underline">Delete</button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        )}
-
-                        {activeTab === 'managers' && (
-                            <div className="overflow-x-auto -mx-3 sm:mx-0">
-                                <div className="inline-block min-w-full align-middle">
-                                    <table className="min-w-full divide-y divide-gray-200">
-                                        <thead className="bg-gray-50">
-                                            <tr>
-                                                <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                                                <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                                                <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Hostels</th>
-                                                <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Applications</th>
-                                                <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
-                                                <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="bg-white divide-y divide-gray-200">
-                                            {managers.map(manager => (
-                                                <tr key={manager._id}>
-                                                    <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">{manager.name}</td>
-                                                    <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">{manager.email}</td>
-                                                    <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">{manager.hostelCount}</td>
-                                                    <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">{manager.applicationCount}</td>
-                                                    <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">{new Date(manager.createdAt).toLocaleDateString()}</td>
-                                                    <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">
-                                                        <button 
-                                                            onClick={() => handleUserAction('delete', manager)}
-                                                            className="text-red-600 hover:text-red-800 hover:underline"
-                                                        >
-                                                            Delete
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        )}
-
-                        {activeTab === 'register-manager' && (
-                            <Suspense fallback={tabFallback('Loading manager registration...')}>
-                                <ManagerRegistrationForm token={token} onSuccess={() => { showSuccess('Manager registered successfully'); fetchDashboardData(); }} />
-                            </Suspense>
-                        )}
-
-                        {activeTab === 'logs-history' && (
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h3 className="text-lg font-bold">Archived Logs</h3>
-                                    <button
-                                        onClick={() => setActiveTab('logs')}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                                    >
-                                        Back to Active Logs
-                                    </button>
-                                </div>
-
-                                {/* Bulk Actions for History */}
-                                {selectedHistoryLogs.length > 0 && (
-                                    <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
-                                        <span className="text-sm font-medium">{selectedHistoryLogs.length} archived log(s) selected</span>
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={() => {
-                                                    showConfirm(
-                                                        `Restore ${selectedHistoryLogs.length} selected log(s) from history?\n\nThey will be moved back to active logs.`,
-                                                        async () => {
-                                                            try {
-                                                                const res = await axios.patch(`${API_URL}/api/admin/logs/restore`, {
-                                                                    logIds: selectedHistoryLogs
-                                                                }, {
-                                                                    headers: { Authorization: `Bearer ${token}` }
-                                                                });
-                                                                showSuccess(`Restored ${res.data.count} log(s) from history`);
-                                                                setSelectedHistoryLogs([]);
-                                                                fetchHistoryLogs();
-                                                            } catch (err) {
-                                                                showError('Failed to restore logs from history');
-                                                            }
-                                                        }
-                                                    );
-                                                }}
-                                                className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
-                                            >
-                                                Restore Selected
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    showConfirm(
-                                                        `Permanently delete ${selectedHistoryLogs.length} selected log(s)?\n\nThis action cannot be undone.`,
-                                                        async () => {
-                                                            try {
-                                                                await Promise.all(selectedHistoryLogs.map(id => 
-                                                                    axios.delete(`${API_URL}/api/admin/logs/${id}`, {
-                                                                        headers: { Authorization: `Bearer ${token}` }
-                                                                    })
-                                                                ));
-                                                                showSuccess(`Permanently deleted ${selectedHistoryLogs.length} log(s)`);
-                                                                setSelectedHistoryLogs([]);
-                                                                fetchHistoryLogs();
-                                                            } catch (err) {
-                                                                showError('Failed to delete logs');
-                                                            }
-                                                        }
-                                                    );
-                                                }}
-                                                className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
-                                            >
-                                                Delete Permanently
-                                            </button>
-                                            <button
-                                                onClick={() => setSelectedHistoryLogs([])}
-                                                className="px-3 py-1 bg-gray-600 text-white text-sm rounded hover:bg-gray-700"
-                                            >
-                                                Clear
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-                                
-                                {historyLogs.length === 0 ? (
-                                    <div className="text-center py-8 text-gray-500">
-                                        No archived logs found
-                                    </div>
-                                ) : (
-                                    historyLogs.map(log => (
-                                        <div key={log._id} className="border-l-4 border-gray-400 bg-gray-50 p-3 flex items-start gap-3">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedHistoryLogs.includes(log._id)}
-                                                onChange={(e) => {
-                                                    if (e.target.checked) {
-                                                        setSelectedHistoryLogs([...selectedHistoryLogs, log._id]);
-                                                    } else {
-                                                        setSelectedHistoryLogs(selectedHistoryLogs.filter(id => id !== log._id));
-                                                    }
-                                                }}
-                                                className="mt-1"
-                                            />
-                                            <div className="flex-1">
-                                                <p className="text-sm font-medium text-gray-700">{log.action}</p>
-                                                <p className="text-xs text-gray-600">{log.details}</p>
-                                                <p className="text-xs text-gray-500 mt-1">
-                                                    By {log.adminId?.name} • {new Date(log.timestamp).toLocaleString()}
-                                                </p>
-                                                <p className="text-xs text-orange-600 mt-1">
-                                                    Archived: {new Date(log.archivedAt).toLocaleString()} by {log.archivedBy?.name}
-                                                </p>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => {
-                                                        showConfirm(
-                                                            'Restore this log from history?\n\nIt will be moved back to active logs.',
-                                                            async () => {
-                                                                try {
-                                                                    await axios.patch(`${API_URL}/api/admin/logs/restore`, {
-                                                                        logIds: [log._id]
-                                                                    }, {
-                                                                        headers: { Authorization: `Bearer ${token}` }
-                                                                    });
-                                                                    showSuccess('Log restored from history');
-                                                                    fetchHistoryLogs();
-                                                                } catch (err) {
-                                                                    showError('Failed to restore log from history');
-                                                                }
-                                                            }
-                                                        );
-                                                    }}
-                                                    className="text-green-600 hover:text-green-800 text-sm"
-                                                >
-                                                    Restore
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        showConfirm(
-                                                            'Permanently delete this log?\n\nThis action cannot be undone.',
-                                                            async () => {
-                                                                try {
-                                                                    await axios.delete(`${API_URL}/api/admin/logs/${log._id}`, {
-                                                                        headers: { Authorization: `Bearer ${token}` }
-                                                                    });
-                                                                    showSuccess('Log permanently deleted');
-                                                                    fetchHistoryLogs();
-                                                                } catch (err) {
-                                                                    showError('Failed to delete log');
-                                                                }
-                                                            }
-                                                        );
-                                                    }}
-                                                    className="text-red-600 hover:text-red-800 text-sm"
-                                                >
-                                                    Delete
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        )}
-
-                        {activeTab === 'trash' && (
-                            <div className="space-y-6">
-                                <div>
-                                    <h3 className="text-lg font-bold mb-4">Deleted Hostels</h3>
-                                    {/* <TrashHostels token={token} onRestore={fetchDashboardData} /> */}
-                                    <p className="text-gray-500">Trash feature coming soon</p>
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-bold mb-4">Deleted Users</h3>
-                                    {/* <TrashUsers token={token} onRestore={fetchDashboardData} /> */}
-                                    <p className="text-gray-500">Trash feature coming soon</p>
-                                </div>
-                            </div>
-                        )}
-
-                        {activeTab === 'logs' && (
-                            <div className="space-y-4">
-                                {/* View Toggle */}
-                                <div className="flex gap-2 mb-4">
-                                    <button
-                                        onClick={() => {
-                                            setActiveTab('logs');
-                                            fetchDashboardData();
-                                        }}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                                    >
-                                        Active Logs
-                                    </button>
-                                    <button
-                                        onClick={() => setActiveTab('logs-history')}
-                                        className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-                                    >
-                                        View History
-                                    </button>
-                                </div>
-
-                                {/* Bulk Actions */}
-                                {selectedLogs.length > 0 && (
-                                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
-                                        <span className="text-sm font-medium">{selectedLogs.length} log(s) selected</span>
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={() => {
-                                                    showConfirm(
-                                                        `Move ${selectedLogs.length} selected log(s) to history?\n\nThey can be restored later if needed.`,
-                                                        async () => {
-                                                            try {
-                                                                const res = await axios.patch(`${API_URL}/api/admin/logs/archive`, {
-                                                                    logIds: selectedLogs
-                                                                }, {
-                                                                    headers: { Authorization: `Bearer ${token}` }
-                                                                });
-                                                                showSuccess(`Moved ${res.data.count} log(s) to history`);
-                                                                setSelectedLogs([]);
-                                                                fetchDashboardData();
-                                                            } catch (err) {
-                                                                showError('Failed to move logs to history');
-                                                            }
-                                                        }
-                                                    );
-                                                }}
-                                                className="px-3 py-1 bg-orange-600 text-white text-sm rounded hover:bg-orange-700"
-                                            >
-                                                Move Selected to History
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    showConfirm(
-                                                        `Delete ${selectedLogs.length} selected log(s)?\n\nThis action cannot be undone.`,
-                                                        async () => {
-                                                            try {
-                                                                await Promise.all(selectedLogs.map(id => 
-                                                                    axios.delete(`${API_URL}/api/admin/logs/${id}`, {
-                                                                        headers: { Authorization: `Bearer ${token}` }
-                                                                    })
-                                                                ));
-                                                                showSuccess(`Deleted ${selectedLogs.length} log(s)`);
-                                                                setSelectedLogs([]);
-                                                                fetchDashboardData();
-                                                            } catch (err) {
-                                                                showError('Failed to delete logs');
-                                                            }
-                                                        }
-                                                    );
-                                                }}
-                                                className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
-                                            >
-                                                Delete Selected
-                                            </button>
-                                            <button
-                                                onClick={() => setSelectedLogs([])}
-                                                className="px-3 py-1 bg-gray-600 text-white text-sm rounded hover:bg-gray-700"
-                                            >
-                                                Clear
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-                                
-                                {logs.map(log => (
-                                    <div key={log._id} className="border-l-4 border-blue-500 bg-gray-50 p-3 flex items-start gap-3">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedLogs.includes(log._id)}
-                                            onChange={(e) => {
-                                                if (e.target.checked) {
-                                                    setSelectedLogs([...selectedLogs, log._id]);
-                                                } else {
-                                                    setSelectedLogs(selectedLogs.filter(id => id !== log._id));
-                                                }
-                                            }}
-                                            className="mt-1"
-                                        />
-                                        <div className="flex-1">
-                                            <p className="text-sm font-medium">{log.action}</p>
-                                            <p className="text-xs text-gray-600">{log.details}</p>
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                By {log.adminId?.name} • {new Date(log.timestamp).toLocaleString()}
-                                            </p>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={() => {
-                                                    showConfirm(
-                                                        'Move this log to history?\n\nIt can be restored later if needed.',
-                                                        async () => {
-                                                            try {
-                                                                await axios.patch(`${API_URL}/api/admin/logs/archive`, {
-                                                                    logIds: [log._id]
-                                                                }, {
-                                                                    headers: { Authorization: `Bearer ${token}` }
-                                                                });
-                                                                showSuccess('Log moved to history');
-                                                                fetchDashboardData();
-                                                            } catch (err) {
-                                                                showError('Failed to move log to history');
-                                                            }
-                                                        }
-                                                    );
-                                                }}
-                                                className="text-orange-600 hover:text-orange-800 text-sm"
-                                            >
-                                                Archive
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    showConfirm(
-                                                        'Delete this log?\n\nThis action cannot be undone.',
-                                                        async () => {
-                                                            try {
-                                                                await axios.delete(`${API_URL}/api/admin/logs/${log._id}`, {
-                                                                    headers: { Authorization: `Bearer ${token}` }
-                                                                });
-                                                                showSuccess('Log deleted');
-                                                                fetchDashboardData();
-                                                            } catch (err) {
-                                                                showError('Failed to delete log');
-                                                            }
-                                                        }
-                                                    );
-                                                }}
-                                                className="text-red-600 hover:text-red-800 text-sm"
-                                            >
-                                                Delete
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* User Action Modal */}
-            <UserActionModal
-                isOpen={modalOpen}
-                onClose={() => { setModalOpen(false); setSelectedUser(null); setModalAction(''); }}
-                action={modalAction}
-                user={selectedUser}
-                onConfirm={handleActionConfirm}
-                loading={actionLoading}
-            />
-
-            {/* User Details Modal */}
-            <UserDetailsModal
-                isOpen={detailsModalOpen}
-                onClose={() => { setDetailsModalOpen(false); setSelectedUser(null); }}
-                user={selectedUser}
-                token={token}
-            />
-
-            {/* Application Action Modal */}
-            <ApplicationActionModal
-                isOpen={appModalOpen}
-                onClose={() => { setAppModalOpen(false); setSelectedApp(null); setAppModalAction(''); }}
-                action={appModalAction}
-                application={selectedApp}
-                onConfirm={handleAppActionConfirm}
-                loading={actionLoading}
-            />
-
-            {/* Application Details Modal */}
-            <ApplicationDetailsModal
-                isOpen={appDetailsModalOpen}
-                onClose={() => { setAppDetailsModalOpen(false); setSelectedApp(null); }}
-                application={selectedApp}
-                token={token}
-                onRefresh={fetchDashboardData}
-            />
-
-            {/* Success Message */}
-            {successMessage && (
-                <div className="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50">
-                    {successMessage}
-                </div>
-            )}
-
-            {/* Error Message */}
-            {errorMessage && (
-                <div className="fixed bottom-4 right-4 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg z-50">
-                    {errorMessage}
-                </div>
-            )}
-
-            {/* Confirm Dialog */}
-            {confirmDialog.open && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-                        <h3 className="text-lg font-bold mb-4">Confirm Action</h3>
-                        <p className="text-gray-700 mb-6 whitespace-pre-line">{confirmDialog.message}</p>
-                        <div className="flex justify-end gap-3">
-                            <button
-                                onClick={() => handleConfirmClose(false)}
-                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={() => handleConfirmClose(true)}
-                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                            >
-                                Confirm
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <div className="bg-white shadow">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-sm text-gray-600">System Overseer & Control Center - Analytics Enabled</p>
         </div>
-    );
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <AdminStatsSection stats={stats} />
+
+        <div className="bg-white rounded-lg shadow mb-6">
+          <AdminTabNavigation activeTab={activeTab} onTabChange={handleTabChange} />
+
+          <div className="p-3 sm:p-4">
+            <AdminTabContent
+              activeTab={activeTab}
+              token={token}
+              stats={stats}
+              hostels={hostels}
+              managers={managers}
+              logs={logs}
+              historyLogs={historyLogs}
+              selectedLogs={selectedLogs}
+              selectedHistoryLogs={selectedHistoryLogs}
+              setSelectedLogs={setSelectedLogs}
+              setSelectedHistoryLogs={setSelectedHistoryLogs}
+              onApplicationAction={handleApplicationAction}
+              onUserAction={handleUserAction}
+              onDeleteHostel={deleteHostel}
+              onFlagHostel={flagHostel}
+              onShowConfirm={showConfirm}
+              onShowError={showError}
+              onShowSuccess={showSuccess}
+              onToggleHostelActive={toggleHostelActive}
+              onTabChange={handleTabChange}
+              tabFallback={tabFallback}
+              UserManagementTable={UserManagementTable}
+              AnalyticsDashboard={AnalyticsDashboard}
+              AdminTransactions={AdminTransactions}
+              VisitorTracking={VisitorTracking}
+              ApplicationManagementTable={ApplicationManagementTable}
+              ManagerRegistrationForm={ManagerRegistrationForm}
+              refreshDashboard={fetchDashboardData}
+            />
+          </div>
+        </div>
+      </div>
+
+      <UserActionModal
+        isOpen={modalOpen}
+        onClose={() => {
+          setModalOpen(false);
+          setSelectedUser(null);
+          setModalAction('');
+        }}
+        action={modalAction}
+        user={selectedUser}
+        onConfirm={handleActionConfirm}
+        loading={actionLoading}
+      />
+
+      <UserDetailsModal
+        isOpen={detailsModalOpen}
+        onClose={() => {
+          setDetailsModalOpen(false);
+          setSelectedUser(null);
+        }}
+        user={selectedUser}
+        token={token}
+      />
+
+      <ApplicationActionModal
+        isOpen={appModalOpen}
+        onClose={() => {
+          setAppModalOpen(false);
+          setSelectedApp(null);
+          setAppModalAction('');
+        }}
+        action={appModalAction}
+        application={selectedApp}
+        onConfirm={handleAppActionConfirm}
+        loading={actionLoading}
+      />
+
+      <ApplicationDetailsModal
+        isOpen={appDetailsModalOpen}
+        onClose={() => {
+          setAppDetailsModalOpen(false);
+          setSelectedApp(null);
+        }}
+        application={selectedApp}
+        token={token}
+        onRefresh={fetchDashboardData}
+      />
+
+      {successMessage && (
+        <div className="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50">
+          {successMessage}
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="fixed bottom-4 right-4 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg z-50">
+          {errorMessage}
+        </div>
+      )}
+
+      {confirmDialog.open && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-bold mb-4">Confirm Action</h3>
+            <p className="text-gray-700 mb-6 whitespace-pre-line">{confirmDialog.message}</p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => handleConfirmClose(false)} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                Cancel
+              </button>
+              <button onClick={() => handleConfirmClose(true)} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default AdminDashboard;
