@@ -27,6 +27,9 @@ export const API_ENDPOINTS = {
   PAYMENT_VERIFY: (reference) => `${API_BASE_URL}/payment/verify/${reference}`,
   PAYMENT_STATUS: (applicationId) => `${API_BASE_URL}/payment/status/${applicationId}`,
   PAYMENT_STATUS_BATCH: `${API_BASE_URL}/payment/status/batch`,
+
+  // Visitor tracking
+  VISITOR_TRACK: `${API_BASE_URL}/visitors/track`,
   
   // Upload
   UPLOAD_IMAGE: `${API_BASE_URL}/upload`,

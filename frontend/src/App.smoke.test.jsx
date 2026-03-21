@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 import axios from 'axios';
 
@@ -13,6 +13,16 @@ vi.mock('axios', () => ({
     }
   }
 }));
+
+beforeEach(() => {
+  vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: true })));
+  window.sessionStorage.clear();
+  localStorage.clear();
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe('App smoke tests', () => {
   it('redirects /manager-register to the contact page', async () => {

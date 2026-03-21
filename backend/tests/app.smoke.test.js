@@ -51,6 +51,16 @@ test('POST /api/payment/status/batch requires authentication', async () => {
   assert.match(response.body.message, /authentication token|access denied/i);
 });
 
+test('POST /api/visitors/track accepts pageview payloads without authentication', async () => {
+  const response = await request(app)
+    .post('/api/visitors/track')
+    .set('User-Agent', 'Node Test Browser')
+    .send({ path: '/support' })
+    .expect(202);
+
+  assert.equal(typeof response.body.tracked, 'boolean');
+});
+
 test('GET /api/admin/analytics/locations requires authentication', async () => {
   const response = await request(app)
     .get('/api/admin/analytics/locations')

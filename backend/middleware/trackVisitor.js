@@ -1,5 +1,6 @@
 const Visitor = require('../models/Visitor');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 
 const parseUserAgent = (userAgent) => {
   if (!userAgent) return { device: 'Unknown', browser: 'Unknown', os: 'Unknown' };
@@ -28,6 +29,69 @@ const parseUserAgent = (userAgent) => {
   return { device, browser, os };
 };
 
+const getClientIp = (req) => {
+  const forwardedFor = req.headers['x-forwarded-for'];
+
+  if (typeof forwardedFor === 'string' && forwardedFor.trim()) {
+    return forwardedFor.split(',')[0].trim();
+  }
+
+  return req.ip || req.connection?.remoteAddress || 'Unknown';
+};
+
+const getUserFromAuthHeader = (authHeader) => {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return {};
+  }
+
+  try {
+    const token = authHeader.substring(7);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, {
+      algorithms: ['HS256'],
+      maxAge: '30d'
+    });
+
+    if (decoded && decoded.id) {
+      return {
+        userId: decoded.id,
+        userRole: decoded.role
+      };
+    }
+  } catch (err) {
+    // Invalid or expired token - keep visitor as guest
+  }
+
+  return {};
+};
+
+const recordVisitorEvent = async (req, overrides = {}) => {
+  if (mongoose.connection.readyState !== 1) {
+    throw new Error('Visitor tracking unavailable: database is not connected');
+  }
+
+  const userAgent = req.get('user-agent');
+  const { device, browser, os } = parseUserAgent(userAgent);
+  const authData = getUserFromAuthHeader(req.headers.authorization);
+
+  const visitorData = {
+    ip: getClientIp(req),
+    userAgent,
+    device,
+    browser,
+    os,
+    url: overrides.url || req.originalUrl || req.url,
+    method: overrides.method || req.method,
+    eventType: overrides.eventType || 'request',
+    source: overrides.source || 'server',
+    sessionId: overrides.sessionId,
+    pageTitle: overrides.pageTitle,
+    referrer: overrides.referrer || req.get('referer'),
+    ...authData
+  };
+
+  return Visitor.create(visitorData);
+};
+
 const trackVisitor = async (req, res, next) => {
   // Skip tracking entirely - run in background without blocking
   next();
@@ -38,37 +102,8 @@ const trackVisitor = async (req, res, next) => {
       return;
     }
     
-    const ip = req.ip || req.connection.remoteAddress;
-    const userAgent = req.get('user-agent');
-    const { device, browser, os } = parseUserAgent(userAgent);
-    
-    const visitorData = {
-      ip,
-      userAgent,
-      device,
-      browser,
-      os,
-      url: req.url,
-      method: req.method
-    };
-    
-    // Try to extract user info from JWT token
-    const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      try {
-        const token = authHeader.substring(7);
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        if (decoded && decoded.id) {
-          visitorData.userId = decoded.id;
-          visitorData.userRole = decoded.role;
-        }
-      } catch (err) {
-        // Token invalid or expired - continue as guest
-      }
-    }
-    
     // Log visitor asynchronously (don't block request)
-    Visitor.create(visitorData).catch(err => console.error('Visitor tracking error:', err));
+    recordVisitorEvent(req).catch(err => console.error('Visitor tracking error:', err));
   } catch (error) {
     // Don't break the app if tracking fails
     console.error('Visitor tracking middleware error:', error);
@@ -76,3 +111,5 @@ const trackVisitor = async (req, res, next) => {
 };
 
 module.exports = trackVisitor;
+module.exports.parseUserAgent = parseUserAgent;
+module.exports.recordVisitorEvent = recordVisitorEvent;

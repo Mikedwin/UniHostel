@@ -8,6 +8,11 @@ const visitorSchema = new mongoose.Schema({
   os: String,
   url: String,
   method: String,
+  eventType: { type: String, default: 'request' },
+  source: { type: String, default: 'server' },
+  sessionId: { type: String, index: true },
+  pageTitle: String,
+  referrer: String,
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   userRole: String,
   timestamp: { type: Date, default: Date.now, index: true }

@@ -1171,15 +1171,22 @@ router.get('/visitors/stats', auth, checkAdmin, async (req, res) => {
       dateQuery = { timestamp: { $gte: new Date(startDate), $lte: new Date(endDate) } };
     }
     
-    const [totalVisits, uniqueIPs, deviceStats, browserStats, osStats] = await Promise.all([
+    const [totalVisits, uniqueIPs, uniqueSessions, deviceStats, browserStats, osStats, topPages] = await Promise.all([
       Visitor.countDocuments(dateQuery),
       Visitor.distinct('ip', dateQuery).then(ips => ips.length),
+      Visitor.distinct('sessionId', { ...dateQuery, sessionId: { $exists: true, $nin: [null, ''] } }).then((sessions) => sessions.length),
       Visitor.aggregate([{ $match: dateQuery }, { $group: { _id: '$device', count: { $sum: 1 } } }]),
       Visitor.aggregate([{ $match: dateQuery }, { $group: { _id: '$browser', count: { $sum: 1 } } }]),
-      Visitor.aggregate([{ $match: dateQuery }, { $group: { _id: '$os', count: { $sum: 1 } } }])
+      Visitor.aggregate([{ $match: dateQuery }, { $group: { _id: '$os', count: { $sum: 1 } } }]),
+      Visitor.aggregate([
+        { $match: { ...dateQuery, url: { $exists: true, $nin: [null, ''] } } },
+        { $group: { _id: '$url', count: { $sum: 1 } } },
+        { $sort: { count: -1, _id: 1 } },
+        { $limit: 5 }
+      ])
     ]);
     
-    res.json({ totalVisits, uniqueIPs, deviceStats, browserStats, osStats });
+    res.json({ totalVisits, uniqueIPs, uniqueSessions, deviceStats, browserStats, osStats, topPages });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

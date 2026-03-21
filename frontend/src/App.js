@@ -1,7 +1,8 @@
-import React, { Suspense, lazy, useEffect } from 'react';
+import React, { Suspense, lazy, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { setupAxiosInterceptors } from './utils/axiosInterceptor';
+import { trackPageView } from './utils/visitorTracking';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -34,9 +35,10 @@ const GDPRSettings = lazy(() => import('./pages/GDPRSettings'));
 const MoMoSettings = lazy(() => import('./pages/MoMoSettings'));
 
 function AppContent() {
-  const { logout } = useAuth();
+  const { logout, token } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const lastTrackedRouteRef = useRef('');
 
   useEffect(() => {
     setupAxiosInterceptors(logout, navigate);
@@ -46,6 +48,23 @@ function AppContent() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const routeKey = `${location.pathname}${location.search}${location.hash}`;
+
+    if (lastTrackedRouteRef.current === routeKey) {
+      return;
+    }
+
+    lastTrackedRouteRef.current = routeKey;
+
+    trackPageView({
+      pathname: location.pathname,
+      search: location.search,
+      hash: location.hash,
+      token
+    });
+  }, [location.pathname, location.search, location.hash, token]);
 
   return (
     <div className="min-h-screen bg-gray-50">

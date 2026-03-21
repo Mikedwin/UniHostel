@@ -46,6 +46,7 @@ const gdprRoutes = require('./routes/gdpr');
 const dataRetentionRoutes = require('./routes/dataRetention');
 const cacheRoutes = require('./routes/cache');
 const payoutRoutes = require('./routes/payout');
+const visitorRoutes = require('./routes/visitors');
 
 const app = express();
 const VERIFICATION_TOKEN_EXPIRY_HOURS = parseInt(process.env.VERIFICATION_TOKEN_EXPIRY_HOURS, 10) || 24;
@@ -448,6 +449,9 @@ const checkDBConnection = (req, res, next) => {
 
 // Admin routes
 app.use('/api/admin', adminRoutes);
+
+// Public visitor tracking route for SPA page views
+app.use('/api/visitors', visitorRoutes);
 
 // Auth routes
 app.use('/api/auth', authRoutes);

@@ -84,7 +84,7 @@ const VisitorTracking = () => {
 
       {/* Stats Cards */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="flex items-center justify-between">
               <div>
@@ -102,6 +102,16 @@ const VisitorTracking = () => {
                 <p className="text-2xl font-bold text-gray-900">{stats.uniqueIPs}</p>
               </div>
               <Monitor className="w-8 h-8 text-green-500" />
+            </div>
+          </div>
+
+          <div className="bg-white p-4 rounded-lg shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Sessions</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.uniqueSessions ?? 0}</p>
+              </div>
+              <Eye className="w-8 h-8 text-indigo-500" />
             </div>
           </div>
 
@@ -131,6 +141,20 @@ const VisitorTracking = () => {
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {stats && Array.isArray(stats.topPages) && stats.topPages.length > 0 && (
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h3 className="text-lg font-semibold text-gray-900 mb-3">Top Pages</h3>
+          <div className="space-y-2">
+            {stats.topPages.map((page) => (
+              <div key={page._id} className="flex items-center justify-between text-sm">
+                <span className="text-gray-700 truncate mr-4">{page._id}</span>
+                <span className="font-semibold text-gray-900">{page.count}</span>
+              </div>
+            ))}
           </div>
         </div>
       )}
