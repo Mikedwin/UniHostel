@@ -6,55 +6,50 @@ const User = require('./models/User');
 
 const checkAdmin = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log('✅ Connected to MongoDB\n');
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
 
-    const admin = await User.findOne({ email: process.env.ADMIN_EMAIL || '1mikedwin@gmail.com' });
-    
+    if (!adminEmail) {
+      throw new Error('ADMIN_EMAIL must be set in the environment');
+    }
+
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log('Connected to MongoDB');
+
+    const admin = await User.findOne({ email: adminEmail });
+
     if (!admin) {
-      console.log('❌ No admin found');
-      mongoose.connection.close();
+      console.log('No admin found');
+      await mongoose.connection.close();
       return;
     }
 
-    console.log('📋 ADMIN ACCOUNT DETAILS:');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('Admin account details');
     console.log('Email:', admin.email);
     console.log('Role:', admin.role);
     console.log('Verified:', admin.isVerified);
     console.log('Status:', admin.accountStatus);
     console.log('Created:', admin.createdAt);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
-    // Try passwords from environment
-    const passwordsToTry = [
-      process.env.ADMIN_PASSWORD,
-      'Admin@123456'
-    ].filter(Boolean);
-
-    console.log('🔍 Testing common passwords...\n');
-    
-    for (const pwd of passwordsToTry) {
-      const isMatch = await bcrypt.compare(pwd, admin.password);
-      if (isMatch) {
-        console.log('✅ PASSWORD FOUND!');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('Email:   ', admin.email);
-        console.log('Password:', pwd);
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-        mongoose.connection.close();
-        return;
-      }
+    if (!adminPassword) {
+      console.log('ADMIN_PASSWORD is not set, so password verification was skipped.');
+      await mongoose.connection.close();
+      return;
     }
 
-    console.log('❌ None of the common passwords matched.\n');
-    console.log('💡 SOLUTION: Run this command to reset password:');
-    console.log('   node reset-admin-password.js\n');
+    const isMatch = await bcrypt.compare(adminPassword, admin.password);
 
-    mongoose.connection.close();
+    if (isMatch) {
+      console.log('Configured ADMIN_PASSWORD matches the stored admin password.');
+    } else {
+      console.log('Configured ADMIN_PASSWORD does not match the stored admin password.');
+      console.log('Run node reset-admin-password.js to rotate the admin password.');
+    }
+
+    await mongoose.connection.close();
   } catch (error) {
-    console.error('❌ Error:', error.message);
-    mongoose.connection.close();
+    console.error('Error:', error.message);
+    await mongoose.connection.close().catch(() => {});
     process.exit(1);
   }
 };

@@ -26,13 +26,13 @@ const hashedPassword = await bcrypt.hash(password, 12);
 ### 2. Hardcoded Credentials (reset-admin-password.js)
 **Issue:** Hardcoded admin email and password
 ```javascript
-const adminEmail = '1mikedwin@gmail.com';
+const adminEmail = 'admin@example.com';
 const newPassword = 'Admin@123456';
 ```
 
 **Fix:** Use environment variables with fallback
 ```javascript
-const adminEmail = process.env.ADMIN_EMAIL || '1mikedwin@gmail.com';
+const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
 const newPassword = process.env.ADMIN_PASSWORD || 'Admin@123456';
 ```
 

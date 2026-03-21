@@ -386,8 +386,8 @@ node migrateApplications.js
 
 **Admin Dashboard**: https://uni-hostel-two.vercel.app/admin-dashboard
 **Admin Credentials**: 
-- Email: 1mikedwin@gmail.com
-- Password: GguzgpD0t5XXe0ms
+- Email: admin@example.com
+- Password: <secure_password_here>
 
 **Applications Tab**: 6th tab in admin dashboard
 

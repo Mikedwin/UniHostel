@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { X, User, Mail, Calendar, Clock, Activity } from 'lucide-react';
+import { X, User, Mail, Calendar, Clock, Activity, Phone, Home } from 'lucide-react';
 import API_URL from '../../config';
 
 const UserDetailsModal = ({ isOpen, onClose, user, token }) => {
@@ -71,6 +71,26 @@ const UserDetailsModal = ({ isOpen, onClose, user, token }) => {
                                 </div>
                             </div>
 
+                            {user.phone && (
+                                <div className="flex items-start gap-3">
+                                    <Phone className="w-5 h-5 text-gray-400 mt-1" />
+                                    <div>
+                                        <p className="text-sm text-gray-500">Phone</p>
+                                        <p className="font-medium text-gray-900">{user.phone}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {user.hostelName && (
+                                <div className="flex items-start gap-3">
+                                    <Home className="w-5 h-5 text-gray-400 mt-1" />
+                                    <div>
+                                        <p className="text-sm text-gray-500">Hostel Name</p>
+                                        <p className="font-medium text-gray-900">{user.hostelName}</p>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="flex items-start gap-3">
                                 <Activity className="w-5 h-5 text-gray-400 mt-1" />
                                 <div>
@@ -135,23 +155,6 @@ const UserDetailsModal = ({ isOpen, onClose, user, token }) => {
                                         <span className="font-medium">Date:</span> {formatDate(user.suspendedAt)}
                                     </p>
                                 )}
-                            </div>
-                        )}
-
-                        {/* Login History */}
-                        {user.loginHistory && user.loginHistory.length > 0 && (
-                            <div>
-                                <h4 className="text-sm font-medium text-gray-700 mb-3">Recent Login History</h4>
-                                <div className="space-y-2">
-                                    {user.loginHistory.slice(-5).reverse().map((login, idx) => (
-                                        <div key={idx} className="bg-gray-50 p-3 rounded text-sm">
-                                            <p className="text-gray-900">{formatDate(login.timestamp)}</p>
-                                            {login.ipAddress && (
-                                                <p className="text-gray-600 text-xs">IP: {login.ipAddress}</p>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
                             </div>
                         )}
 

@@ -4,6 +4,8 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
+  phone: { type: String, trim: true, maxlength: 20 },
+  hostelName: { type: String, trim: true, maxlength: 200 },
   role: { type: String, enum: ['student', 'manager', 'admin'], default: 'student' },
   isActive: { type: Boolean, default: true },
   accountStatus: { type: String, enum: ['active', 'suspended', 'banned', 'pending_verification'], default: 'active' },

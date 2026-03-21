@@ -24,7 +24,7 @@ Comprehensive security audit identified and fixed **12 critical vulnerabilities*
 **Severity:** CRITICAL  
 **Issue:** JWT secret was `your_super_secret_jwt_key_12345` (easily guessable)  
 **Fix Applied:**
-- ✅ Generated strong random secret: `uH8$mK9#pL2@nQ5*vR7&wT3!xY6^zA1%bC4+dE0-fG8~hJ2`
+- ✅ Generated strong random secret: `<generate_a_strong_jwt_secret>`
 - ✅ Added algorithm specification (HS256) to prevent algorithm confusion attacks
 - ✅ Added issued-at-time (iat) claim for better token tracking
 
@@ -298,7 +298,7 @@ Comprehensive security audit identified and fixed **12 critical vulnerabilities*
 ## Security Contact
 
 For security issues, contact:
-- **Email:** 1mikedwin@gmail.com
+- **Email:** admin@example.com
 - **Response Time:** Within 24 hours
 - **Severity Levels:** Critical (4h), High (24h), Medium (7d), Low (30d)
 

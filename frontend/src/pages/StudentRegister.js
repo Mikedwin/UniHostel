@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { GraduationCap, Eye, EyeOff, User, Mail, Lock } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { GraduationCap, Eye, EyeOff, User, Mail, Lock, CheckCircle } from 'lucide-react';
 import { API_ENDPOINTS } from '../config/api';
 
 const StudentRegister = () => {
@@ -16,16 +15,51 @@ const StudentRegister = () => {
     const [tosAccepted, setTosAccepted] = useState(false);
     const [privacyAccepted, setPrivacyAccepted] = useState(false);
     const [error, setError] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
+    const [registeredEmail, setRegisteredEmail] = useState('');
+    const [resendMessage, setResendMessage] = useState('');
+    const [resending, setResending] = useState(false);
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const { login } = useAuth();
-    const navigate = useNavigate();
+
+    const resetForm = () => {
+        setFormData({
+            name: '',
+            email: '',
+            password: '',
+            confirmPassword: '',
+            role: 'student'
+        });
+        setTosAccepted(false);
+        setPrivacyAccepted(false);
+    };
+
+    const handleResendVerification = async () => {
+        if (!registeredEmail) {
+            return;
+        }
+
+        setResending(true);
+        setError('');
+        setResendMessage('');
+
+        try {
+            const res = await axios.post(API_ENDPOINTS.RESEND_VERIFICATION, { email: registeredEmail });
+            setResendMessage(res.data?.message || 'A new verification email has been sent.');
+        } catch (err) {
+            setError(err.response?.data?.message || 'Unable to resend verification email right now.');
+        } finally {
+            setResending(false);
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
+        setSuccessMessage('');
+        setResendMessage('');
         
         try {
             if (!tosAccepted || !privacyAccepted) {
@@ -38,22 +72,23 @@ const StudentRegister = () => {
                 return;
             }
             
-            if (formData.password.length < 6) {
-                setError('Password must be at least 6 characters long');
+            if (formData.password.length < 8) {
+                setError('Password must be at least 8 characters long');
                 return;
             }
             
             const { confirmPassword, ...submitData } = formData;
-            console.log('Submitting registration data:', submitData);
-            
             const res = await axios.post(API_ENDPOINTS.REGISTER, { ...submitData, tosAccepted, privacyPolicyAccepted: privacyAccepted });
-            console.log('Registration response:', res.data);
-            
-            login(res.data.user, res.data.token);
-            navigate('/hostels');
+            setRegisteredEmail(res.data?.email || submitData.email.trim().toLowerCase());
+            setSuccessMessage(res.data?.message || 'Registration successful. Please check your email to verify your account.');
+            resetForm();
         } catch (err) {
-            console.error('Registration error:', err);
-            console.error('Error response:', err.response?.data);
+            if (err.response?.data?.verificationRequired) {
+                setRegisteredEmail(err.response?.data?.email || formData.email.trim().toLowerCase());
+                setSuccessMessage(err.response?.data?.message || 'Your account is waiting for email verification.');
+                return;
+            }
+
             setError(err.response?.data?.message || err.message || 'Registration failed');
         } finally {
             setLoading(false);
@@ -79,7 +114,43 @@ const StudentRegister = () => {
                             {error}
                         </div>
                     )}
+
+                    {successMessage && (
+                        <div className="border border-green-200 bg-green-50 rounded-lg p-5 mb-6">
+                            <div className="flex items-start gap-3">
+                                <CheckCircle className="h-6 w-6 text-green-600 mt-0.5" />
+                                <div className="flex-1">
+                                    <h3 className="text-base font-semibold text-green-800">Check your email</h3>
+                                    <p className="mt-1 text-sm text-green-700">{successMessage}</p>
+                                    {registeredEmail && (
+                                        <p className="mt-2 text-sm text-green-800 font-medium">{registeredEmail}</p>
+                                    )}
+                                    {resendMessage && (
+                                        <p className="mt-3 text-sm text-green-700">{resendMessage}</p>
+                                    )}
+                                    <div className="mt-4 flex flex-col sm:flex-row gap-3">
+                                        <Link
+                                            to="/student-login"
+                                            className="inline-flex items-center justify-center px-4 py-2 rounded-md text-white font-medium"
+                                            style={{ backgroundColor: '#23817A' }}
+                                        >
+                                            Go to Student Login
+                                        </Link>
+                                        <button
+                                            type="button"
+                                            onClick={handleResendVerification}
+                                            disabled={resending}
+                                            className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-green-300 text-green-800 font-medium disabled:opacity-50"
+                                        >
+                                            {resending ? 'Sending...' : 'Resend Verification Email'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     
+                    {!successMessage && (
                     <form className="space-y-6" onSubmit={handleSubmit}>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -208,6 +279,7 @@ const StudentRegister = () => {
                             )}
                         </button>
                     </form>
+                    )}
                     
                     <div className="mt-6 text-center">
                         <p className="text-sm text-gray-600">
@@ -217,9 +289,9 @@ const StudentRegister = () => {
                             </Link>
                         </p>
                         <p className="mt-2 text-xs text-gray-500">
-                            Are you a hostel manager?{' '}
-                            <Link to="/manager-register" style={{ color: '#23817A' }}>
-                                Manager Registration
+                            Need a manager account?{' '}
+                            <Link to="/contact" style={{ color: '#23817A' }}>
+                                Contact support
                             </Link>
                         </p>
                     </div>

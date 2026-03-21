@@ -47,7 +47,7 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/manager-register" className="text-xs sm:text-sm text-white/90 hover:text-white transition-colors">
+                <Link to="/contact" className="text-xs sm:text-sm text-white/90 hover:text-white transition-colors">
                   List Your Hostel
                 </Link>
               </li>
@@ -97,8 +97,8 @@ const Footer = () => {
             <ul className="space-y-2 sm:space-y-3">
               <li className="flex items-start">
                 <Mail className="w-4 h-4 sm:w-5 sm:h-5 mr-2 mt-0.5 flex-shrink-0 text-white" />
-                <a href="mailto:3mikedwin@gmail.com" className="text-xs sm:text-sm text-white/90 hover:text-white transition-colors break-all">
-                  3mikedwin@gmail.com
+                <a href="mailto:support@example.com" className="text-xs sm:text-sm text-white/90 hover:text-white transition-colors break-all">
+                  support@example.com
                 </a>
               </li>
               <li className="flex items-start">

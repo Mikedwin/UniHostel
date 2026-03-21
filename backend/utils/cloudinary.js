@@ -1,4 +1,5 @@
 const cloudinary = require('cloudinary').v2;
+const { Readable } = require('stream');
 
 // Configure Cloudinary
 cloudinary.config({
@@ -32,6 +33,47 @@ const uploadImage = async (base64Image, folder = 'unihostel') => {
 };
 
 /**
+ * Upload file buffer to Cloudinary
+ * @param {Buffer} buffer - File buffer
+ * @param {string} folder - Cloudinary folder name
+ * @param {string} mimetype - File mime type
+ * @returns {Promise<string>} - Cloudinary URL
+ */
+const uploadBuffer = async (buffer, folder = 'unihostel', mimetype = 'image/jpeg') => {
+  try {
+    const result = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder,
+          resource_type: 'image',
+          format: mimetype === 'image/png' ? 'png' : undefined,
+          transformation: [
+            { width: 1200, height: 800, crop: 'limit' },
+            { quality: 'auto:good' },
+            { fetch_format: 'auto' }
+          ]
+        },
+        (error, uploadResult) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+
+          resolve(uploadResult);
+        }
+      );
+
+      Readable.from(buffer).pipe(uploadStream);
+    });
+
+    return result.secure_url;
+  } catch (error) {
+    console.error('Cloudinary buffer upload error:', error);
+    throw new Error('Failed to upload image');
+  }
+};
+
+/**
  * Delete image from Cloudinary
  * @param {string} imageUrl - Cloudinary image URL
  * @returns {Promise<void>}
@@ -51,4 +93,4 @@ const deleteImage = async (imageUrl) => {
   }
 };
 
-module.exports = { uploadImage, deleteImage };
+module.exports = { uploadImage, uploadBuffer, deleteImage };

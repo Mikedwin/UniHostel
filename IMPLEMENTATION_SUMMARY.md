@@ -209,8 +209,8 @@
 **Applications Tab**: 6th tab in admin dashboard
 
 **Admin Login**:
-- Email: 1mikedwin@gmail.com
-- Password: GguzgpD0t5XXe0ms
+- Email: admin@example.com
+- Password: <secure_password_here>
 
 ## 🎯 Success Criteria - ALL MET ✓
 

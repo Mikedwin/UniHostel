@@ -6,7 +6,7 @@ const Hostel = require('./models/Hostel');
 
 const forceUpdateAll = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/unihostel');
+    await mongoose.connect(process.env.MONGO_URI);
     console.log('Connected to MongoDB');
 
     const applications = await Application.find({}).populate('hostelId');
@@ -50,3 +50,4 @@ const forceUpdateAll = async () => {
 };
 
 forceUpdateAll();
+

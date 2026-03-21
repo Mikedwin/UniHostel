@@ -17,6 +17,7 @@ const EditHostelSimple = () => {
     const [location, setLocation] = useState('');
     const [description, setDescription] = useState('');
     const [hostelViewImage, setHostelViewImage] = useState('');
+    const [hostelViewImageFile, setHostelViewImageFile] = useState(null);
     const [roomTypes, setRoomTypes] = useState([]);
 
     const commonFacilities = {
@@ -54,11 +55,14 @@ const EditHostelSimple = () => {
                 const roomsWithoutImages = (hostel.roomTypes || []).map(room => ({
                     type: room.type,
                     price: room.price,
+                    gender: room.gender || 'Not Specified',
                     totalCapacity: room.totalCapacity || 1,
                     occupiedCapacity: room.occupiedCapacity || 0,
                     available: room.available,
                     facilities: room.facilities || [],
-                    roomImage: room.roomImage || '' // Keep existing image reference
+                    virtualTourUrl: room.virtualTourUrl || '',
+                    roomImage: room.roomImage || '',
+                    roomImages: room.roomImages || []
                 }));
                 setRoomTypes(roomsWithoutImages);
                 console.log('State updated successfully');
@@ -85,20 +89,21 @@ const EditHostelSimple = () => {
         setError('');
         
         try {
-            // Only include fields that should be updated
             const updateData = {
                 name: name.trim(),
                 location: location.trim(),
                 description: description.trim(),
                 roomTypes
             };
-            
-            // Only update hostelViewImage if a new one was uploaded (starts with 'data:image')
-            if (hostelViewImage && hostelViewImage.startsWith('data:image')) {
-                updateData.hostelViewImage = hostelViewImage;
+
+            const formData = new FormData();
+            formData.append('payload', JSON.stringify(updateData));
+
+            if (hostelViewImageFile) {
+                formData.append('hostelViewImage', hostelViewImageFile);
             }
             
-            await axios.put(`${API_URL}/api/hostels/${id}`, updateData, {
+            await axios.put(`${API_URL}/api/hostels/${id}`, formData, {
                 headers: { 
                     Authorization: `Bearer ${token}`
                 }
@@ -203,7 +208,10 @@ const EditHostelSimple = () => {
                                                     return;
                                                 }
                                                 const reader = new FileReader();
-                                                reader.onload = (event) => setHostelViewImage(event.target.result);
+                                                reader.onload = (event) => {
+                                                    setHostelViewImage(event.target.result);
+                                                    setHostelViewImageFile(file);
+                                                };
                                                 reader.readAsDataURL(file);
                                             }
                                         }}
@@ -212,7 +220,10 @@ const EditHostelSimple = () => {
                                 {hostelViewImage && hostelViewImage.startsWith('data:image') && (
                                     <button
                                         type="button"
-                                        onClick={() => setHostelViewImage('')}
+                                        onClick={() => {
+                                            setHostelViewImage('');
+                                            setHostelViewImageFile(null);
+                                        }}
                                         className="text-red-600 hover:text-red-700 text-sm flex items-center gap-1"
                                     >
                                         <X className="w-4 h-4" />

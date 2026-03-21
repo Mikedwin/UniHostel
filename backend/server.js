@@ -19,20 +19,6 @@ const swaggerSpec = require('./swagger');
 // For production (Railway): uses environment variables from dashboard
 require('dotenv').config();
 
-// Validate critical environment variables
-const requiredEnvVars = ['JWT_SECRET', 'MONGO_URI'];
-const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
-if (missingEnvVars.length > 0) {
-  console.error(`CRITICAL: Missing required environment variables: ${missingEnvVars.join(', ')}`);
-  process.exit(1);
-}
-
-// Validate JWT_SECRET strength
-if (process.env.JWT_SECRET.length < 32) {
-  console.error('CRITICAL: JWT_SECRET must be at least 32 characters long');
-  process.exit(1);
-}
-
 // Import IDS middleware (optional - controlled by env variable)
 const intrusionDetection = require('./middleware/intrusionDetection');
 
@@ -45,11 +31,12 @@ const Hostel = require('./models/Hostel');
 const Application = require('./models/Application');
 const { auth, checkRole } = require('./middleware/auth');
 
-const { validateImageUpload } = require('./middleware/imageValidation');
+const { validateImageUpload, hostelUpload } = require('./middleware/imageValidation');
 const { cacheMiddleware } = require('./middleware/cache');
 const { scheduleDataRetentionCleanup } = require('./services/dataRetention');
 const cache = require('./services/cache');
-const { uploadImage } = require('./utils/cloudinary');
+const { uploadBuffer } = require('./utils/cloudinary');
+const { sendVerificationEmail } = require('./utils/emailService');
 const adminRoutes = require('./routes/admin');
 const authRoutes = require('./routes/auth');
 const paymentRoutes = require('./routes/payment');
@@ -61,6 +48,140 @@ const cacheRoutes = require('./routes/cache');
 const payoutRoutes = require('./routes/payout');
 
 const app = express();
+const VERIFICATION_TOKEN_EXPIRY_HOURS = parseInt(process.env.VERIFICATION_TOKEN_EXPIRY_HOURS, 10) || 24;
+const parseEnvInt = (value, fallback) => {
+  const parsed = parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+const RATE_LIMIT_WINDOW_MS = parseEnvInt(process.env.RATE_LIMIT_WINDOW_MS, 15 * 60 * 1000);
+const RATE_LIMIT_MAX_REQUESTS = parseEnvInt(process.env.RATE_LIMIT_MAX_REQUESTS, 60);
+const AUTH_RATE_LIMIT_WINDOW_MS = parseEnvInt(process.env.AUTH_RATE_LIMIT_WINDOW_MS, RATE_LIMIT_WINDOW_MS);
+const AUTH_RATE_LIMIT_MAX = parseEnvInt(process.env.AUTH_RATE_LIMIT_MAX, 3);
+const FORGOT_PASSWORD_RATE_LIMIT_WINDOW_MS = parseEnvInt(process.env.FORGOT_PASSWORD_RATE_LIMIT_WINDOW_MS, 60 * 60 * 1000);
+const FORGOT_PASSWORD_RATE_LIMIT_MAX = parseEnvInt(process.env.FORGOT_PASSWORD_RATE_LIMIT_MAX, 3);
+const VERIFICATION_EMAIL_RATE_LIMIT_WINDOW_MS = parseEnvInt(process.env.VERIFICATION_EMAIL_RATE_LIMIT_WINDOW_MS, 60 * 60 * 1000);
+const VERIFICATION_EMAIL_RATE_LIMIT_MAX = parseEnvInt(process.env.VERIFICATION_EMAIL_RATE_LIMIT_MAX, 3);
+const VISITOR_TRACKING_ENABLED = process.env.VISITOR_TRACKING_ENABLED === 'true';
+
+const validateRuntimeEnv = ({ requireDatabase = true } = {}) => {
+  const requiredEnvVars = ['JWT_SECRET'];
+
+  if (requireDatabase) {
+    requiredEnvVars.push('MONGO_URI');
+  }
+
+  const missingEnvVars = requiredEnvVars.filter((varName) => !process.env[varName]);
+  if (missingEnvVars.length > 0) {
+    throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
+  }
+
+  if (process.env.JWT_SECRET.length < 32) {
+    throw new Error('JWT_SECRET must be at least 32 characters long');
+  }
+};
+
+const applyVerificationToken = (user) => {
+  user.verificationToken = crypto.randomBytes(32).toString('hex');
+  user.verificationTokenExpires = new Date(Date.now() + VERIFICATION_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000);
+  user.isVerified = false;
+
+  if (user.role === 'student') {
+    user.accountStatus = 'pending_verification';
+  }
+};
+
+const normalizeImageArray = (images) => (
+  Array.isArray(images)
+    ? images.filter((image) => typeof image === 'string' && image.trim())
+    : []
+);
+
+const parseHostelPayload = (req, res, next) => {
+  try {
+    if (req.body?.payload) {
+      req.hostelPayload = JSON.parse(req.body.payload);
+    } else {
+      req.hostelPayload = req.body;
+    }
+
+    next();
+  } catch (error) {
+    logger.warn('Invalid hostel payload received', { error: error.message });
+    res.status(400).json({ message: 'Invalid hostel payload format' });
+  }
+};
+
+const groupFilesByField = (files = []) => files.reduce((accumulator, file) => {
+  if (!accumulator[file.fieldname]) {
+    accumulator[file.fieldname] = [];
+  }
+
+  accumulator[file.fieldname].push(file);
+  return accumulator;
+}, {});
+
+const uploadFiles = async (files, folder) => Promise.all(
+  (files || []).map((file) => uploadBuffer(file.buffer, folder, file.mimetype))
+);
+
+const normalizeRoomType = (room = {}) => {
+  const normalizedRoom = { ...room };
+  const numericPrice = Number(room.price);
+  const numericCapacity = Number(room.totalCapacity);
+  const numericOccupied = Number(room.occupiedCapacity);
+
+  if (Number.isFinite(numericPrice)) {
+    normalizedRoom.price = numericPrice;
+  }
+
+  if (Number.isFinite(numericCapacity)) {
+    normalizedRoom.totalCapacity = numericCapacity;
+  }
+
+  if (Number.isFinite(numericOccupied)) {
+    normalizedRoom.occupiedCapacity = numericOccupied;
+  }
+
+  normalizedRoom.roomImages = normalizeImageArray(room.roomImages);
+
+  return normalizedRoom;
+};
+
+const processHostelMediaPayload = async (payload = {}, filesByField = {}) => {
+  const roomTypes = Array.isArray(payload.roomTypes) ? payload.roomTypes : [];
+  const processedRoomTypes = await Promise.all(roomTypes.map(async (room, index) => {
+    const normalizedRoom = normalizeRoomType(room);
+    const mainRoomFile = filesByField[`roomImage_${index}`]?.[0];
+    const roomGalleryFiles = filesByField[`roomImages_${index}`] || [];
+
+    if (mainRoomFile) {
+      normalizedRoom.roomImage = await uploadBuffer(mainRoomFile.buffer, 'unihostel/rooms', mainRoomFile.mimetype);
+    }
+
+    if (roomGalleryFiles.length > 0) {
+      const uploadedRoomImages = await uploadFiles(roomGalleryFiles, 'unihostel/rooms');
+      normalizedRoom.roomImages = [...normalizeImageArray(normalizedRoom.roomImages), ...uploadedRoomImages];
+    }
+
+    return normalizedRoom;
+  }));
+
+  let hostelViewImage = typeof payload.hostelViewImage === 'string' ? payload.hostelViewImage.trim() : '';
+  const hostelViewImageFile = filesByField.hostelViewImage?.[0];
+  if (hostelViewImageFile) {
+    hostelViewImage = await uploadBuffer(hostelViewImageFile.buffer, 'unihostel/hostels', hostelViewImageFile.mimetype);
+  }
+
+  const uploadedHostelImages = await uploadFiles(filesByField.hostelImages || [], 'unihostel/hostels');
+  const hostelImages = [...normalizeImageArray(payload.hostelImages), ...uploadedHostelImages];
+
+  return {
+    ...payload,
+    hostelViewImage,
+    hostelImages,
+    roomTypes: processedRoomTypes
+  };
+};
 
 // Trust proxy - required for Railway/Heroku/production
 app.set('trust proxy', 1);
@@ -129,17 +250,17 @@ app.use(helmet({
 
 // 2. Rate Limiting - TIGHTENED: More aggressive limits
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 60, // REDUCED: limit each IP to 60 requests per windowMs
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  max: RATE_LIMIT_MAX_REQUESTS,
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
 });
 
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 3, // REDUCED: limit each IP to 3 login attempts per windowMs
-  message: 'Too many login attempts, please try again after 15 minutes.',
+  windowMs: AUTH_RATE_LIMIT_WINDOW_MS,
+  max: AUTH_RATE_LIMIT_MAX,
+  message: `Too many login attempts, please try again after ${Math.ceil(AUTH_RATE_LIMIT_WINDOW_MS / 60000)} minutes.`,
   skipSuccessfulRequests: true,
 });
 
@@ -164,22 +285,30 @@ if (process.env.SECURITY_ENABLED === 'true') {
   logger.info('🔓 Intrusion Detection System DISABLED (set SECURITY_ENABLED=true to enable)');
 }
 
-// 6. Visitor Tracking - Logs all platform access
-app.use(trackVisitor);
-logger.info('👁️ Visitor tracking enabled');
-console.log('👁️ Tracking all platform access');
+// 6. Visitor Tracking - opt-in for deployments that actually serve trackable pages
+if (VISITOR_TRACKING_ENABLED) {
+  app.use(trackVisitor);
+  logger.info('Visitor tracking enabled');
+  console.log('Visitor tracking enabled');
+} else {
+  logger.info('Visitor tracking disabled');
+}
 
 // Database Connection with Retry Logic
 let dbConnected = false;
 let dbConnectionAttempts = 0;
 const MAX_DB_RETRIES = 5;
+let runtimeInitialized = false;
+let shutdownHandlersRegistered = false;
+let server = null;
 
 const connectDB = async () => {
   try {
+    validateRuntimeEnv();
     dbConnectionAttempts++;
     logger.info(`MongoDB connection attempt ${dbConnectionAttempts}/${MAX_DB_RETRIES}`);
     
-    await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/unihostel', {
+    await mongoose.connect(process.env.MONGO_URI, {
       maxPoolSize: 50,
       minPoolSize: 5,
       serverSelectionTimeoutMS: 30000,
@@ -238,10 +367,15 @@ mongoose.connection.on('reconnected', () => {
   console.log('MongoDB reconnected');
 });
 
-connectDB();
+const initializeRuntime = () => {
+  if (runtimeInitialized) {
+    return;
+  }
 
-// Schedule data retention cleanup
-scheduleDataRetentionCleanup();
+  connectDB();
+  scheduleDataRetentionCleanup();
+  runtimeInitialized = true;
+};
 
 // Utility: Validate MongoDB ObjectId
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
@@ -318,8 +452,8 @@ app.use('/api/admin', adminRoutes);
 // Auth routes
 app.use('/api/auth', authRoutes);
 
-// Payment routes - NO CSRF (already has JWT auth)
-app.use('/api/payment', auth, paymentRoutes);
+// Payment routes - webhook stays public and signature-verified; private routes use per-route auth
+app.use('/api/payment', paymentRoutes);
 
 // Transaction routes
 app.use('/api/transactions', auth, transactionRoutes);
@@ -413,44 +547,77 @@ app.post('/api/auth/register', validateInput, async (req, res) => {
       return res.status(403).json({ message: 'Only student registration is allowed. Managers must be registered by administrators.' });
     }
     
-    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
-    if (existingUser) return res.status(400).json({ message: 'User already exists' });
+    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedName = name.trim();
+    const existingUser = await User.findOne({ email: normalizedEmail });
+
+    if (existingUser) {
+      if (existingUser.role === 'student' && !existingUser.isVerified) {
+        applyVerificationToken(existingUser);
+        await existingUser.save();
+        try {
+          const verificationSent = await sendVerificationEmail(existingUser.email, existingUser.name, existingUser.verificationToken);
+
+          if (!verificationSent) {
+            return res.status(503).json({
+              message: 'Email verification is temporarily unavailable. Please try again later.'
+            });
+          }
+        } catch (emailError) {
+          logger.error('Verification email resend failed during registration:', emailError);
+          return res.status(503).json({
+            message: 'Email verification is temporarily unavailable. Please try again later.'
+          });
+        }
+
+        return res.status(409).json({
+          message: 'An account with this email already exists and is awaiting verification. We sent a new verification email.',
+          verificationRequired: true,
+          email: existingUser.email
+        });
+      }
+
+      return res.status(400).json({ message: 'User already exists' });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 12);
-    
-    // Generate verification token
-    const verificationToken = crypto.randomBytes(32).toString('hex');
-    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-    
+
     const newUser = new User({ 
-      name: name.trim(), 
-      email: email.toLowerCase().trim(), 
+      name: normalizedName, 
+      email: normalizedEmail, 
       password: hashedPassword, 
       role: 'student',
-      isVerified: false,
-      verificationToken,
-      verificationTokenExpires,
-      accountStatus: 'active',
       tosAccepted: true,
       tosAcceptedAt: new Date(),
       privacyPolicyAccepted: true,
       privacyPolicyAcceptedAt: new Date()
     });
-    await newUser.save();
-    logger.info(`New student registered: ${newUser._id}`);
-    
-    // For now, auto-verify (until email service is set up)
-    // TODO: Send verification email
-    logger.info(`Verification link: ${process.env.FRONTEND_URL}/verify-email/${verificationToken}`);
 
-    const token = jwt.sign(
-      { id: newUser._id, role: newUser.role, iat: Math.floor(Date.now() / 1000) }, 
-      process.env.JWT_SECRET, 
-      { expiresIn: '30d', algorithm: 'HS256' }
-    );
-    res.json({ 
-      token, 
-      user: { id: newUser._id, name, email, role: newUser.role, isVerified: false },
+    applyVerificationToken(newUser);
+    await newUser.save();
+
+    try {
+      const verificationSent = await sendVerificationEmail(newUser.email, newUser.name, newUser.verificationToken);
+
+      if (!verificationSent) {
+        await User.deleteOne({ _id: newUser._id });
+        return res.status(503).json({
+          message: 'Registration is temporarily unavailable because email verification is not configured. Please try again later.'
+        });
+      }
+    } catch (emailError) {
+      await User.deleteOne({ _id: newUser._id });
+      logger.error('Verification email send failed during registration:', emailError);
+      return res.status(503).json({
+        message: 'Registration is temporarily unavailable because we could not send the verification email. Please try again later.'
+      });
+    }
+
+    logger.info(`New student registered: ${newUser._id}`);
+
+    res.status(201).json({
+      verificationRequired: true,
+      email: newUser.email,
       message: 'Registration successful. Please check your email to verify your account.'
     });
   } catch (err) {
@@ -476,6 +643,7 @@ app.get('/api/auth/verify-email/:token', async (req, res) => {
     user.isVerified = true;
     user.verificationToken = undefined;
     user.verificationTokenExpires = undefined;
+    user.accountStatus = 'active';
     await user.save();
     
     logger.info(`User verified: ${user.email}`);
@@ -483,6 +651,60 @@ app.get('/api/auth/verify-email/:token', async (req, res) => {
   } catch (err) {
     logger.error('Email verification error:', err);
     res.status(500).json({ message: 'Verification failed' });
+  }
+});
+
+const verificationEmailLimiter = rateLimit({
+  windowMs: VERIFICATION_EMAIL_RATE_LIMIT_WINDOW_MS,
+  max: VERIFICATION_EMAIL_RATE_LIMIT_MAX,
+  message: 'Too many verification email requests. Please try again later.',
+});
+
+app.post('/api/auth/resend-verification', verificationEmailLimiter, async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: normalizedEmail, role: 'student' });
+
+    if (!user) {
+      return res.json({ message: 'If an unverified student account exists, a new verification email has been sent.' });
+    }
+
+    if (user.isVerified) {
+      return res.json({ message: 'This email has already been verified. Please sign in.' });
+    }
+
+    applyVerificationToken(user);
+    await user.save();
+    let verificationSent = false;
+    try {
+      verificationSent = await sendVerificationEmail(user.email, user.name, user.verificationToken);
+    } catch (emailError) {
+      logger.error('Verification email resend failed:', emailError);
+      return res.status(503).json({
+        message: 'Email verification is temporarily unavailable. Please try again later.'
+      });
+    }
+
+    if (!verificationSent) {
+      return res.status(503).json({
+        message: 'Email verification is temporarily unavailable. Please try again later.'
+      });
+    }
+
+    res.json({
+      message: 'A new verification email has been sent.',
+      verificationRequired: true,
+      email: user.email
+    });
+  } catch (err) {
+    logger.error('Resend verification error:', err);
+    res.status(500).json({ message: 'Unable to resend verification email right now.' });
   }
 });
 
@@ -526,7 +748,7 @@ app.post('/api/auth/login', validateInput, async (req, res) => {
       return res.status(400).json({ message: 'Email and password are required' });
     }
     
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
     if (!user) return res.status(400).json({ message: 'User does not exist' });
 
     // Check if account is locked
@@ -585,6 +807,14 @@ app.post('/api/auth/login', validateInput, async (req, res) => {
       });
     }
 
+    if (user.role === 'student' && !user.isVerified) {
+      return res.status(403).json({
+        message: 'Please verify your email address before signing in.',
+        verificationRequired: true,
+        email: user.email
+      });
+    }
+
     // Successful login - reset failed attempts
     user.failedLoginAttempts = 0;
     user.accountLockedUntil = null;
@@ -613,7 +843,14 @@ app.post('/api/auth/login', validateInput, async (req, res) => {
     
     res.json({ 
       token,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isVerified: user.isVerified,
+        accountStatus: user.accountStatus
+      },
       passwordResetRequired: user.passwordResetRequired
     });
   } catch (err) {
@@ -634,8 +871,8 @@ const {
 } = require('./utils/emailService');
 
 const forgotPasswordLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  max: 3,
+  windowMs: FORGOT_PASSWORD_RATE_LIMIT_WINDOW_MS,
+  max: FORGOT_PASSWORD_RATE_LIMIT_MAX,
   message: 'Too many password reset requests. Please try again later.',
 });
 
@@ -936,7 +1173,7 @@ app.get('/api/hostels', checkDBConnection, cacheMiddleware(300), async (req, res
  *       403:
  *         description: Not authorized or unverified
  */
-app.post('/api/hostels', checkDBConnection, auth, checkRole('manager'), validateImageUpload, async (req, res) => {
+app.post('/api/hostels', checkDBConnection, auth, checkRole('manager'), hostelUpload, parseHostelPayload, validateImageUpload, async (req, res) => {
   try {
     logger.info('Hostel creation request from manager:', req.user.id);
     
@@ -949,7 +1186,9 @@ app.post('/api/hostels', checkDBConnection, auth, checkRole('manager'), validate
     logger.info('Processing hostel creation with image upload');
     
     // Validate required fields
-    const { name, location, description, roomTypes, hostelViewImage } = req.body;
+    const payload = req.hostelPayload || {};
+    const filesByField = groupFilesByField(req.files);
+    const { name, location, description, roomTypes } = payload;
     if (!name || !location || !description || !roomTypes || roomTypes.length === 0) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
@@ -958,28 +1197,10 @@ app.post('/api/hostels', checkDBConnection, auth, checkRole('manager'), validate
       return res.status(400).json({ message: 'Input exceeds maximum length' });
     }
     
-    // Upload hostelViewImage to Cloudinary if provided
-    let hostelViewImageUrl = '';
-    if (hostelViewImage && hostelViewImage.startsWith('data:image')) {
-      logger.info('Uploading hostel view image to Cloudinary');
-      hostelViewImageUrl = await uploadImage(hostelViewImage, 'unihostel/hostels');
-      logger.info('Hostel view image uploaded successfully');
-    }
-    
-    // Upload room images to Cloudinary
-    const processedRoomTypes = await Promise.all(roomTypes.map(async (room) => {
-      if (room.roomImage && room.roomImage.startsWith('data:image')) {
-        logger.info(`Uploading room image for ${room.type}`);
-        const roomImageUrl = await uploadImage(room.roomImage, 'unihostel/rooms');
-        return { ...room, roomImage: roomImageUrl };
-      }
-      return room;
-    }));
-    
+    const processedPayload = await processHostelMediaPayload(payload, filesByField);
+
     const hostelData = {
-      ...req.body,
-      hostelViewImage: hostelViewImageUrl,
-      roomTypes: processedRoomTypes,
+      ...processedPayload,
       managerId: req.user.id
     };
     
@@ -1084,7 +1305,7 @@ app.get('/api/hostels/:id', checkDBConnection, async (req, res) => {
   }
 });
 
-app.put('/api/hostels/:id', checkDBConnection, auth, checkRole('manager'), validateImageUpload, async (req, res) => {
+app.put('/api/hostels/:id', checkDBConnection, auth, checkRole('manager'), hostelUpload, parseHostelPayload, validateImageUpload, async (req, res) => {
   try {
     
     if (!isValidObjectId(req.params.id)) {
@@ -1100,43 +1321,38 @@ app.put('/api/hostels/:id', checkDBConnection, auth, checkRole('manager'), valid
       return res.status(403).json({ message: 'Not authorized to edit this hostel' });
     }
     
+    const payload = req.hostelPayload || {};
+    const filesByField = groupFilesByField(req.files);
+
     // Build update object
     const updateData = {};
     
-    if (req.body.name) updateData.name = req.body.name;
-    if (req.body.location) updateData.location = req.body.location;
-    if (req.body.description) updateData.description = req.body.description;
-    if (req.body.facilities) updateData.facilities = req.body.facilities;
-    if (req.body.isAvailable !== undefined) updateData.isAvailable = req.body.isAvailable;
+    if (payload.name) updateData.name = payload.name;
+    if (payload.location) updateData.location = payload.location;
+    if (payload.description) updateData.description = payload.description;
+    if (payload.facilities) updateData.facilities = payload.facilities;
+    if (payload.isAvailable !== undefined) updateData.isAvailable = payload.isAvailable;
+    if (payload.virtualTourUrl !== undefined) updateData.virtualTourUrl = payload.virtualTourUrl;
     
-    // Upload new hostelViewImage to Cloudinary if provided
-    if (req.body.hostelViewImage && req.body.hostelViewImage.startsWith('data:image')) {
-      logger.info('Uploading new hostel view image');
-      updateData.hostelViewImage = await uploadImage(req.body.hostelViewImage, 'unihostel/hostels');
-    } else if (req.body.hostelViewImage) {
-      // Keep existing Cloudinary URL
-      updateData.hostelViewImage = req.body.hostelViewImage;
+    const processedPayload = await processHostelMediaPayload(payload, filesByField);
+
+    if (processedPayload.hostelViewImage) {
+      updateData.hostelViewImage = processedPayload.hostelViewImage;
+    }
+
+    if (payload.hostelImages || filesByField.hostelImages?.length) {
+      updateData.hostelImages = processedPayload.hostelImages;
     }
     
     // Process room types - upload new images to Cloudinary and recalculate availability
-    if (req.body.roomTypes) {
-      updateData.roomTypes = await Promise.all(req.body.roomTypes.map(async (room) => {
-        let processedRoom = { ...room };
-        
-        // Upload new image if provided
-        if (room.roomImage && room.roomImage.startsWith('data:image')) {
-          logger.info(`Uploading new room image for ${room.type}`);
-          const roomImageUrl = await uploadImage(room.roomImage, 'unihostel/rooms');
-          processedRoom.roomImage = roomImageUrl;
-        }
-        
-        // Recalculate availability based on capacity
+    if (payload.roomTypes) {
+      updateData.roomTypes = processedPayload.roomTypes.map((room) => {
+        const processedRoom = { ...room };
         const occupiedCapacity = processedRoom.occupiedCapacity || 0;
         const totalCapacity = processedRoom.totalCapacity || 0;
         processedRoom.available = occupiedCapacity < totalCapacity;
-        
         return processedRoom;
-      }));
+      });
     }
     
     const updatedHostel = await Hostel.findByIdAndUpdate(
@@ -1347,12 +1563,29 @@ app.get('/api/applications/student', checkDBConnection, auth, checkRole('student
       .sort({ createdAt: -1 })
       .lean();
     
-    // Populate manager contact for approved applications only
-    for (let app of apps) {
-      if (app.status === 'approved' && app.hostelId?.managerId) {
-        const manager = await User.findById(app.hostelId.managerId).select('name email phone').lean();
-        app.managerContact = manager;
-      }
+    // Populate manager contact for approved applications in one query.
+    const managerIds = [
+      ...new Set(
+        apps
+          .filter((app) => app.status === 'approved' && app.hostelId?.managerId)
+          .map((app) => app.hostelId.managerId.toString())
+      )
+    ];
+
+    if (managerIds.length > 0) {
+      const managers = await User.find({ _id: { $in: managerIds } })
+        .select('name email phone')
+        .lean();
+
+      const managerMap = new Map(
+        managers.map((manager) => [manager._id.toString(), manager])
+      );
+
+      apps.forEach((app) => {
+        if (app.status === 'approved' && app.hostelId?.managerId) {
+          app.managerContact = managerMap.get(app.hostelId.managerId.toString()) || null;
+        }
+      });
     }
     
     res.json(apps);
@@ -1401,7 +1634,9 @@ app.get('/api/applications/hostel/:hostelId/stats', checkDBConnection, async (re
     
     const applications = await Application.find({ hostelId, status: { $in: ['pending', 'approved'] } }).lean();
     
-    const stats = {};
+    const stats = {
+      commissionPercent: parseFloat(process.env.ADMIN_COMMISSION_PERCENT) || 3
+    };
     applications.forEach(app => {
       // Count applications per room type
       if (!stats[app.roomType]) {
@@ -1746,26 +1981,6 @@ app.delete('/api/applications/:id/permanent', checkDBConnection, auth, async (re
   }
 });
 
-const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, '0.0.0.0', () => {
-  logger.info(`Server started on port ${PORT} - v2`);
-  logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`Server running on port ${PORT}`);
-  console.log(`API available at http://localhost:${PORT}`);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM received, shutting down gracefully');
-  server.close(() => {
-    logger.info('Server closed');
-    mongoose.connection.close(false, () => {
-      logger.info('MongoDB connection closed');
-      process.exit(0);
-    });
-  });
-});
-
 // Global error handler
 app.use((err, req, res, next) => {
   logger.error('Unhandled error:', {
@@ -1778,15 +1993,94 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// Handle uncaught exceptions
-process.on('uncaughtException', (err) => {
-  logger.error('Uncaught Exception:', err);
-  process.exit(1);
-});
+const closeServer = async () => {
+  if (!server) {
+    return;
+  }
 
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err) => {
-  logger.error('Unhandled Rejection:', err);
-  process.exit(1);
-});
+  await new Promise((resolve, reject) => {
+    server.close((err) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      resolve();
+    });
+  });
+
+  server = null;
+};
+
+const registerProcessHandlers = () => {
+  if (shutdownHandlersRegistered) {
+    return;
+  }
+
+  process.on('SIGTERM', () => {
+    logger.info('SIGTERM received, shutting down gracefully');
+    closeServer()
+      .then(() => new Promise((resolve) => {
+        mongoose.connection.close(false, () => {
+          logger.info('MongoDB connection closed');
+          resolve();
+        });
+      }))
+      .then(() => process.exit(0))
+      .catch((error) => {
+        logger.error('Graceful shutdown failed:', error);
+        process.exit(1);
+      });
+  });
+
+  process.on('uncaughtException', (err) => {
+    logger.error('Uncaught Exception:', err);
+    process.exit(1);
+  });
+
+  process.on('unhandledRejection', (err) => {
+    logger.error('Unhandled Rejection:', err);
+    process.exit(1);
+  });
+
+  shutdownHandlersRegistered = true;
+};
+
+const startServer = () => {
+  validateRuntimeEnv();
+  initializeRuntime();
+
+  if (server) {
+    return server;
+  }
+
+  const PORT = process.env.PORT || 5000;
+  server = app.listen(PORT, '0.0.0.0', () => {
+    logger.info(`Server started on port ${PORT} - v2`);
+    logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`Server running on port ${PORT}`);
+    console.log(`API available at http://localhost:${PORT}`);
+  });
+
+  registerProcessHandlers();
+  return server;
+};
+
+if (require.main === module) {
+  try {
+    startServer();
+  } catch (error) {
+    console.error(`CRITICAL: ${error.message}`);
+    process.exit(1);
+  }
+}
+
+module.exports = {
+  app,
+  startServer,
+  closeServer,
+  connectDB
+};
+
+
 

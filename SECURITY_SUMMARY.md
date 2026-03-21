@@ -60,7 +60,7 @@ All critical vulnerabilities have been identified and fixed. Your platform now i
 
 1. **Rotate MongoDB Credentials**
    - Go to MongoDB Atlas → Database Access
-   - Change password for user: `1mikedwin_db_user`
+   - Change password for user: `admin_user`
    - Update `MONGO_URI` in `.env` file
 
 2. **Rotate Paystack API Keys**
@@ -159,7 +159,7 @@ All critical vulnerabilities have been identified and fixed. Your platform now i
 
 ## 📞 Support
 
-**Security Issues:** 1mikedwin@gmail.com  
+**Security Issues:** admin@example.com  
 **Response Time:** Within 24 hours  
 **Documentation:** See SECURITY_AUDIT.md for full details
 

@@ -32,21 +32,21 @@ Cannot access the manager dashboard with your email and password because:
 3. You should see:
    ```
    ✅ Admin manager account created successfully!
-   Email: 1mikedwin@gmail.com
+   Email: admin@example.com
    Role: manager
    ```
 
 4. Now you can login with:
-   - Email: `1mikedwin@gmail.com`
-   - Password: `GguzgpD0t5XXe0ms`
+   - Email: `admin@example.com`
+   - Password: `<secure_password_here>`
 
 ### Option 2: Register Manually via Frontend
 
 1. Go to your webapp registration page
 2. Fill in the form:
    - Name: Your name
-   - Email: `1mikedwin@gmail.com`
-   - Password: `GguzgpD0t5XXe0ms`
+   - Email: `admin@example.com`
+   - Password: `<secure_password_here>`
    - Role: Select "Hostel Manager / Landlord"
 3. Click Register
 4. You'll be automatically logged in and redirected to the manager dashboard
@@ -81,8 +81,8 @@ After deploying backend to Railway:
 
 2. **Test login:**
    - Go to login page
-   - Enter email: `1mikedwin@gmail.com`
-   - Enter password: `GguzgpD0t5XXe0ms`
+   - Enter email: `admin@example.com`
+   - Enter password: `<secure_password_here>`
    - Should redirect to Manager Dashboard
 
 3. **Verify manager features:**

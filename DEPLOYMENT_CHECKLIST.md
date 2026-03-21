@@ -64,9 +64,9 @@ git push
 PORT=5000
 MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/unihostel
 JWT_SECRET=your_super_secret_jwt_key_12345
-ADMIN_USERNAME=1mikedwin_db_user
-ADMIN_PASSWORD=GguzgpD0t5XXe0ms
-ADMIN_EMAIL=1mikedwin@gmail.com
+ADMIN_USERNAME=admin_user
+ADMIN_PASSWORD=<secure_password_here>
+ADMIN_EMAIL=admin@example.com
 NODE_ENV=production
 FRONTEND_URL=https://your-app.vercel.app
 ```

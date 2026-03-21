@@ -27,20 +27,20 @@ const Contact = () => {
             <div className="space-y-3 text-gray-700">
               <div>
                 <p className="font-semibold">For general inquiries, support requests, or feedback:</p>
-                <a href="mailto:3mikedwin@gmail.com" className="text-primary-600 hover:underline">
-                  3mikedwin@gmail.com
+                <a href="mailto:support@example.com" className="text-primary-600 hover:underline">
+                  support@example.com
                 </a>
               </div>
               <div>
                 <p className="font-semibold">For privacy-related concerns:</p>
-                <a href="mailto:3mikedwin@gmail.com" className="text-primary-600 hover:underline">
-                  3mikedwin@gmail.com
+                <a href="mailto:support@example.com" className="text-primary-600 hover:underline">
+                  support@example.com
                 </a>
               </div>
               <div>
                 <p className="font-semibold">For business or partnership inquiries:</p>
-                <a href="mailto:3mikedwin@gmail.com" className="text-primary-600 hover:underline">
-                  3mikedwin@gmail.com
+                <a href="mailto:support@example.com" className="text-primary-600 hover:underline">
+                  support@example.com
                 </a>
               </div>
             </div>
@@ -121,8 +121,8 @@ const Contact = () => {
             </ul>
             <p className="text-gray-900">
               Reach out to us via{' '}
-              <a href="mailto:3mikedwin@gmail.com" className="text-primary-600 hover:underline">
-                3mikedwin@gmail.com
+              <a href="mailto:support@example.com" className="text-primary-600 hover:underline">
+                support@example.com
               </a>{' '}
               for collaboration opportunities.
             </p>
@@ -157,8 +157,8 @@ const Contact = () => {
             </ul>
             <p className="text-gray-900">
               Please email{' '}
-              <a href="mailto:3mikedwin@gmail.com" className="text-primary-600 hover:underline">
-                3mikedwin@gmail.com
+              <a href="mailto:support@example.com" className="text-primary-600 hover:underline">
+                support@example.com
               </a>{' '}
               or use the WhatsApp platform:{' '}
               <a href="https://wa.me/233503847786" className="text-primary-600 hover:underline" target="_blank" rel="noopener noreferrer">
@@ -176,8 +176,8 @@ const Contact = () => {
                 <Mail className="w-8 h-8 text-primary-600" />
               </div>
               <h3 className="font-bold text-gray-900 mb-2 text-lg">Email Us</h3>
-              <a href="mailto:3mikedwin@gmail.com" className="text-primary-600 hover:underline text-lg">
-                3mikedwin@gmail.com
+              <a href="mailto:support@example.com" className="text-primary-600 hover:underline text-lg">
+                support@example.com
               </a>
             </div>
 

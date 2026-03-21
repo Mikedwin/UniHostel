@@ -71,7 +71,7 @@
 
 ## 📞 Emergency Contacts
 
-- **Security Lead:** 1mikedwin@gmail.com
+- **Security Lead:** admin@example.com
 - **MongoDB Support:** support.mongodb.com
 - **Paystack Support:** support@paystack.com
 - **Vercel Support:** vercel.com/support

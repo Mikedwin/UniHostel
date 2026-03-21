@@ -27,23 +27,35 @@ const StudentDashboard = () => {
             });
             // Ensure data is always an array
             const apps = Array.isArray(res.data) ? res.data : [];
-            
-            // Check payment status for approved_for_payment applications
-            const updatedApps = await Promise.all(apps.map(async (app) => {
-                if (app.status === 'approved_for_payment' && app.paymentStatus !== 'paid') {
-                    try {
-                        const statusRes = await axios.get(`${API_ENDPOINTS.PAYMENT_VERIFY.replace('/verify', '')}/status/${app._id}`, {
-                            headers: { Authorization: `Bearer ${token}` }
-                        });
-                        return { ...app, ...statusRes.data };
-                    } catch (err) {
-                        console.log('Payment status check failed for app:', app._id);
-                        return app;
-                    }
+
+            const relevantApplicationIds = apps
+                .filter((app) => app.status === 'approved_for_payment' && app.paymentStatus !== 'paid')
+                .map((app) => app._id);
+
+            let paymentStatuses = [];
+            if (relevantApplicationIds.length > 0) {
+                try {
+                    const statusRes = await axios.post(
+                        API_ENDPOINTS.PAYMENT_STATUS_BATCH,
+                        { applicationIds: relevantApplicationIds },
+                        { headers: { Authorization: `Bearer ${token}` } }
+                    );
+                    paymentStatuses = Array.isArray(statusRes.data?.statuses) ? statusRes.data.statuses : [];
+                } catch (err) {
+                    console.log('Batch payment status check failed');
                 }
-                return app;
-            }));
-            
+            }
+
+            const paymentStatusMap = new Map(
+                paymentStatuses.map((status) => [status.applicationId, status])
+            );
+
+            const updatedApps = apps.map((app) => (
+                paymentStatusMap.has(app._id)
+                    ? { ...app, ...paymentStatusMap.get(app._id) }
+                    : app
+            ));
+
             setApplications(updatedApps);
         } catch (err) {
             console.error(err);
@@ -61,7 +73,7 @@ const StudentDashboard = () => {
     const handleProceedToPayment = async (app) => {
         try {
             // First check if payment status has changed
-            const statusCheck = await axios.get(`${API_ENDPOINTS.PAYMENT_VERIFY.replace('/verify', '')}/status/${app._id}`, {
+            const statusCheck = await axios.get(API_ENDPOINTS.PAYMENT_STATUS(app._id), {
                 headers: { Authorization: `Bearer ${token}` }
             });
             
@@ -85,7 +97,7 @@ const StudentDashboard = () => {
                 channels: ['card', 'mobile_money'],
                 onClose: () => Swal.fire('Payment Cancelled', 'You closed the payment window', 'info'),
                 callback: (res) => {
-                    axios.post(API_ENDPOINTS.PAYMENT_VERIFY, { reference: res.reference }, 
+                    axios.get(API_ENDPOINTS.PAYMENT_VERIFY(res.reference), 
                         { headers: { Authorization: `Bearer ${token}` } }
                     ).then(() => {
                         Swal.fire('Payment Successful!', 'Awaiting final manager approval.', 'success');
@@ -114,6 +126,19 @@ const StudentDashboard = () => {
             fetchApps();
         } catch (err) {
             showToast(err.response?.data?.message || 'Failed to archive', 'error');
+        }
+    };
+
+    const handleRestoreFromHistory = async (appId) => {
+        try {
+            await axios.patch(`${API_ENDPOINTS.APPLICATIONS}/${appId}/archive`,
+                { archive: false },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            showToast('Application restored successfully', 'success');
+            fetchApps();
+        } catch (err) {
+            showToast(err.response?.data?.message || 'Failed to restore application', 'error');
         }
     };
 
@@ -343,7 +368,7 @@ const StudentDashboard = () => {
                                     )}
                                     {viewMode === 'history' && (
                                         <div className="mt-3 flex gap-2">
-                                            <button onClick={() => handleMoveToHistory(app._id)}
+                                            <button onClick={() => handleRestoreFromHistory(app._id)}
                                                 className="flex-1 py-2 rounded flex items-center justify-center gap-2"
                                                 style={{ color: '#23817A', backgroundColor: 'rgba(35, 129, 122, 0.1)' }}
                                                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(35, 129, 122, 0.2)'}

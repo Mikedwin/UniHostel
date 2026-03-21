@@ -8,14 +8,40 @@ import { API_ENDPOINTS } from '../config/api';
 const Login = () => {
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [error, setError] = useState('');
+    const [infoMessage, setInfoMessage] = useState('');
+    const [verificationEmail, setVerificationEmail] = useState('');
+    const [resending, setResending] = useState(false);
     const [loading, setLoading] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
+
+    const handleResendVerification = async () => {
+        const email = verificationEmail || formData.email.trim().toLowerCase();
+        if (!email) {
+            setError('Enter your email address first.');
+            return;
+        }
+
+        setResending(true);
+        setError('');
+        setInfoMessage('');
+
+        try {
+            const res = await axios.post(API_ENDPOINTS.RESEND_VERIFICATION, { email });
+            setInfoMessage(res.data?.message || 'A new verification email has been sent.');
+        } catch (err) {
+            setError(err.response?.data?.message || 'Unable to resend verification email right now.');
+        } finally {
+            setResending(false);
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
+        setInfoMessage('');
+        setVerificationEmail('');
         try {
             const res = await axios.post(API_ENDPOINTS.LOGIN, formData);
             login(res.data.user, res.data.token);
@@ -24,6 +50,9 @@ const Login = () => {
             else if (role === 'manager') navigate('/manager-dashboard');
             else navigate('/hostels');
         } catch (err) {
+            if (err.response?.data?.verificationRequired) {
+                setVerificationEmail(err.response?.data?.email || formData.email.trim().toLowerCase());
+            }
             setError(err.response?.data?.message || 'Invalid credentials');
         } finally {
             setLoading(false);
@@ -62,6 +91,12 @@ const Login = () => {
                     {error && (
                         <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                             {error}
+                        </div>
+                    )}
+
+                    {infoMessage && (
+                        <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+                            {infoMessage}
                         </div>
                     )}
 
@@ -127,6 +162,19 @@ const Login = () => {
                     </form>
 
                     <div className="mt-6">
+                        {verificationEmail && (
+                            <div className="mb-4 text-center">
+                                <button
+                                    type="button"
+                                    onClick={handleResendVerification}
+                                    disabled={resending}
+                                    className="text-sm font-medium disabled:opacity-50"
+                                    style={{ color: '#23817A' }}
+                                >
+                                    {resending ? 'Sending verification email...' : 'Resend verification email'}
+                                </button>
+                            </div>
+                        )}
                         <div className="relative">
                             <div className="absolute inset-0 flex items-center">
                                 <div className="w-full border-t border-gray-300"></div>

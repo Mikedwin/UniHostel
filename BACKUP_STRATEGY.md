@@ -128,7 +128,7 @@ mongorestore --uri="NEW_MONGO_URI" --archive="backups/backup-file.gz" --gzip
 
 **Database Issues:**
 - MongoDB Atlas Support: https://support.mongodb.com
-- Admin Email: 1mikedwin@gmail.com
+- Admin Email: admin@example.com
 
 ## Backup Monitoring
 

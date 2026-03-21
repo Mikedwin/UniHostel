@@ -94,7 +94,7 @@ npm start
 
 **Problem:** Emails go to spam
 **Solution:** 
-- Ask users to whitelist 1mikedwin@gmail.com
+- Ask users to whitelist admin@example.com
 - For production, use AWS SES or SendGrid
 
 ---

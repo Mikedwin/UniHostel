@@ -93,17 +93,17 @@ PORT=5000
 NODE_ENV=production
 
 # Database
-MONGO_URI=mongodb+srv://1mikedwin_db_user:iY9i8ms8Wf0SeuEV@cluster0.paznchc.mongodb.net/unihostel?appName=Cluster0
+MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/unihostel?appName=Cluster0
 
 # Security
-JWT_SECRET=22a2e63fb2d1e1cfc2584498a2c98e23c1e878011d4bdeda2965b17533970d494ff42b60cab4710130ef0004537f2e53c8e153ccf1f7c41ba899a39641f36cbd
+JWT_SECRET=<generate_a_64_plus_character_jwt_secret>
 MAX_LOGIN_ATTEMPTS=5
 LOCKOUT_DURATION_MINUTES=30
 
 # Admin
-ADMIN_USERNAME=1mikedwin_db_user
-ADMIN_PASSWORD=iY9i8ms8Wf0SeuEV
-ADMIN_EMAIL=1mikedwin@gmail.com
+ADMIN_USERNAME=admin_user
+ADMIN_PASSWORD=<secure_password_here>
+ADMIN_EMAIL=admin@example.com
 
 # Frontend URL (update after Vercel deployment)
 FRONTEND_URL=https://uni-hostel-two.vercel.app
@@ -114,9 +114,9 @@ PAYSTACK_PUBLIC_KEY=pk_live_YOUR_PUBLIC_KEY_HERE
 ADMIN_COMMISSION_PERCENT=5
 
 # Cloudinary
-CLOUDINARY_CLOUD_NAME=dcpqsgmso
-CLOUDINARY_API_KEY=342562251768364
-CLOUDINARY_API_SECRET=8joCwAp1MpyUGZwar9WaJzIeNhE
+CLOUDINARY_CLOUD_NAME=<your_cloudinary_cloud_name>
+CLOUDINARY_API_KEY=<your_cloudinary_api_key>
+CLOUDINARY_API_SECRET=<your_cloudinary_api_secret>
 
 # Email (choose one option)
 EMAIL_USER=your-email@gmail.com
@@ -172,7 +172,7 @@ AUTH_RATE_LIMIT_MAX=3
 **Environment Variables:**
 ```env
 REACT_APP_API_URL=https://your-railway-url.up.railway.app
-REACT_APP_PAYSTACK_PUBLIC_KEY=pk_live_eb0f80d31cbab0aea6cbf905036e6b3a096d888c
+REACT_APP_PAYSTACK_PUBLIC_KEY=pk_test_your_public_key_here
 ```
 
 #### 3.3 Deploy
@@ -232,8 +232,8 @@ npm run init-admin
 1. Go to your Vercel URL
 2. Navigate to `/manager-login`
 3. Login with:
-   - Email: 1mikedwin@gmail.com
-   - Password: iY9i8ms8Wf0SeuEV
+   - Email: admin@example.com
+   - Password: <secure_password_here>
 
 ---
 
@@ -409,7 +409,7 @@ Expected response:
 - Paystack: https://dashboard.paystack.com
 
 ### Emergency Contacts
-- Admin Email: 1mikedwin@gmail.com
+- Admin Email: admin@example.com
 - GitHub Repo: https://github.com/Mikedwin/UniHostel
 
 ---

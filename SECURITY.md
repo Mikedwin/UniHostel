@@ -143,4 +143,4 @@ In case of security breach:
 
 ## Contact
 
-For security concerns, contact: 1mikedwin@gmail.com
+For security concerns, contact: admin@example.com

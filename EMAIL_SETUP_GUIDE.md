@@ -22,7 +22,7 @@ To send password reset emails, you need a Gmail App Password:
 
 4. **Update .env File**
    ```
-   EMAIL_USER=1mikedwin@gmail.com
+   EMAIL_USER=admin@example.com
    EMAIL_PASSWORD=xxxx xxxx xxxx xxxx  (paste the app password here)
    ```
 

@@ -6,18 +6,21 @@ const User = require('./models/User');
 
 const setupAdmin = async () => {
   try {
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const newPassword = process.env.ADMIN_PASSWORD;
+
+    if (!adminEmail || !newPassword) {
+      throw new Error('ADMIN_EMAIL and ADMIN_PASSWORD must be set in the environment');
+    }
+
     await mongoose.connect(process.env.MONGO_URI);
-    console.log('✅ Connected to MongoDB\n');
+    console.log('Connected to MongoDB');
 
-    const adminEmail = process.env.ADMIN_EMAIL || '1mikedwin@gmail.com';
-    const newPassword = process.env.ADMIN_PASSWORD || 'Admin@123456';
-
-    // Find admin
     let admin = await User.findOne({ email: adminEmail });
-    
+
     if (!admin) {
-      console.log('❌ No admin found. Creating new admin...\n');
-      
+      console.log('No admin found. Creating new admin.');
+
       const hashedPassword = await bcrypt.hash(newPassword, 12);
       admin = new User({
         name: 'Admin',
@@ -32,10 +35,10 @@ const setupAdmin = async () => {
         privacyPolicyAcceptedAt: new Date()
       });
       await admin.save();
-      console.log('✅ Admin created!\n');
+      console.log('Admin created');
     } else {
-      console.log('✅ Admin found. Resetting password...\n');
-      
+      console.log('Admin found. Resetting password.');
+
       const hashedPassword = await bcrypt.hash(newPassword, 12);
       admin.password = hashedPassword;
       admin.role = 'admin';
@@ -44,28 +47,17 @@ const setupAdmin = async () => {
       admin.failedLoginAttempts = 0;
       admin.accountLockedUntil = null;
       await admin.save();
-      
-      console.log('✅ Password reset complete!\n');
+
+      console.log('Password reset complete');
     }
 
-    console.log('═══════════════════════════════════════');
-    console.log('🔐 ADMIN LOGIN CREDENTIALS');
-    console.log('═══════════════════════════════════════');
-    console.log('');
-    console.log('  Email:    ' + adminEmail);
-    console.log('  Password: (check your .env file)');
-    console.log('');
-    console.log('═══════════════════════════════════════');
-    console.log('');
-    console.log('✅ You can now log in as admin!');
-    console.log('');
-    console.log('⚠️  IMPORTANT: Change this password after first login');
-    console.log('');
+    console.log('Admin email:', adminEmail);
+    console.log('Password: stored securely in the configured environment');
 
-    mongoose.connection.close();
+    await mongoose.connection.close();
   } catch (error) {
-    console.error('❌ Error:', error.message);
-    mongoose.connection.close();
+    console.error('Error:', error.message);
+    await mongoose.connection.close().catch(() => {});
     process.exit(1);
   }
 };

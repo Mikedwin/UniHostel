@@ -6,7 +6,7 @@ app.get('/update-subaccount-now', async (req, res) => {
     const User = require('./models/User');
     
     const manager = await User.findOne({ 
-      email: '3mikedwin@gmail.com', 
+      email: 'support@example.com', 
       role: 'manager' 
     });
 

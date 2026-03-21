@@ -237,7 +237,7 @@ REACT_APP_API_URL=https://your-railway-url.up.railway.app
 - Health Check: https://your-railway-url.up.railway.app/api/health
 
 ### Admin Credentials
-- Email: 1mikedwin@gmail.com
+- Email: admin@example.com
 - Password: (set during init-admin)
 - Login: /manager-login
 

@@ -142,9 +142,9 @@ const ManagerLogin = () => {
                     
                     <div className="mt-6 text-center">
                         <p className="text-sm text-gray-600">
-                            Don't have an account?{' '}
-                            <Link to="/manager-register" className="font-medium" style={{ color: '#23817A' }}>
-                                Register as Manager
+                            Need a manager account?{' '}
+                            <Link to="/contact" className="font-medium" style={{ color: '#23817A' }}>
+                                Contact support
                             </Link>
                         </p>
                         <p className="mt-2 text-xs text-gray-500">

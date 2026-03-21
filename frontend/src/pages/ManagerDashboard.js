@@ -1,13 +1,14 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { Check, X, Plus, Edit, Trash2, Search, Eye, TrendingUp, Users, Home, Clock, BarChart3, CheckCircle, XCircle, DollarSign } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
-import ManagerAnalytics from '../components/manager/ManagerAnalytics';
-import ManagerTransactions from '../components/manager/ManagerTransactions';
 import Swal from 'sweetalert2';
 import LoadingSpinner from '../components/LoadingSpinner';
+
+const ManagerAnalytics = lazy(() => import('../components/manager/ManagerAnalytics'));
+const ManagerTransactions = lazy(() => import('../components/manager/ManagerTransactions'));
 
 const ManagerDashboard = () => {
     const [applications, setApplications] = useState([]);
@@ -338,6 +339,12 @@ const ManagerDashboard = () => {
         return { totalApps, pending, approved, rejected, totalHostels: hostels.length, activeHostels, inactiveHostels, occupancyRate, totalCapacity, totalOccupied };
     }, [applications, hostels]);
 
+    const tabFallback = (message) => (
+        <div className="rounded-lg bg-white shadow-sm">
+            <LoadingSpinner message={message} />
+        </div>
+    );
+
     return (
         <div className="max-w-7xl mx-auto px-4 py-8">
             {/* Toast Notification */}
@@ -435,9 +442,13 @@ const ManagerDashboard = () => {
             {!loading && !error && (
                 <>
                 {activeTab === 'analytics' ? (
-                    <ManagerAnalytics applications={applications} hostels={hostels} />
+                    <Suspense fallback={tabFallback('Loading analytics...')}>
+                        <ManagerAnalytics applications={applications} hostels={hostels} />
+                    </Suspense>
                 ) : activeTab === 'transactions' ? (
-                    <ManagerTransactions token={token} hostels={hostels} />
+                    <Suspense fallback={tabFallback('Loading transactions...')}>
+                        <ManagerTransactions token={token} hostels={hostels} />
+                    </Suspense>
                 ) : (
                 <>
                 {/* KPI Stats */}

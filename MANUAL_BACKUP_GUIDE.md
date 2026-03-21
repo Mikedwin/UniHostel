@@ -19,7 +19,7 @@ https://www.mongodb.com/try/download/database-tools
 **After installation, run this command weekly:**
 ```bash
 cd "C:\Users\user\Desktop\Hostel Hub\backend"
-mongodump --uri="mongodb+srv://1mikedwin_db_user:GguzgpD0t5XXe0ms@cluster0.paznchc.mongodb.net/unihostel" --out="backups\manual\backup-%date%"
+mongodump --uri="mongodb+srv://username:password@cluster.mongodb.net/unihostel" --out="backups\manual\backup-%date%"
 ```
 
 **Backup Location:**

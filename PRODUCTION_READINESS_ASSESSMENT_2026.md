@@ -333,7 +333,7 @@ The code is actually correct! The previous report mentioned a wrong path, but th
 **Estimated Fix Time:** 30 minutes
 
 **Issue:** Live production credentials are visible in the .env file:
-- MongoDB password: iY9i8ms8Wf0SeuEV
+- MongoDB password: <secure_password_here>
 - Paystack live keys
 - Supabase keys
 - Cloudinary API secret
@@ -530,8 +530,8 @@ const API_URL = process.env.REACT_APP_API_URL || 'https://fvkucgyqvuroxbrjdpkx.s
    PAYSTACK_SECRET_KEY=<live_key>
    PAYSTACK_PUBLIC_KEY=<live_key>
    ADMIN_COMMISSION_PERCENT=5
-   CLOUDINARY_CLOUD_NAME=dcpqsgmso
-   CLOUDINARY_API_KEY=342562251768364
+   CLOUDINARY_CLOUD_NAME=<your_cloudinary_cloud_name>
+   CLOUDINARY_API_KEY=<your_cloudinary_api_key>
    CLOUDINARY_API_SECRET=<your_secret>
    MAX_LOGIN_ATTEMPTS=5
    LOCKOUT_DURATION_MINUTES=30
@@ -681,7 +681,7 @@ Hostel Hub is a **mature, well-architected application** with:
 - GitHub: https://github.com/Mikedwin/UniHostel
 
 **Admin Credentials:**
-- Email: 1mikedwin@gmail.com
+- Email: admin@example.com
 - Password: (set during init-admin)
 
 **Documentation:**

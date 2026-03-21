@@ -157,7 +157,7 @@ await sendPasswordResetEmail(email, resetToken);
 ## ⚙️ Configuration Status
 
 ### Current Configuration:
-- **EMAIL_USER**: 1mikedwin@gmail.com ✅
+- **EMAIL_USER**: admin@example.com ✅
 - **EMAIL_PASSWORD**: Not configured ⚠️
 - **FRONTEND_URL**: https://uni-hostel-two.vercel.app ✅
 

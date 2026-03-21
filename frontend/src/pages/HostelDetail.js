@@ -24,7 +24,7 @@ const HostelDetail = () => {
       try {
         const [hostelRes, statsRes] = await Promise.all([
           axios.get(API_ENDPOINTS.HOSTEL_DETAIL(id)),
-          axios.get(`${API_ENDPOINTS.HOSTELS}/${id}/stats`).catch(() => ({ data: {} }))
+          axios.get(API_ENDPOINTS.APPLICATION_STATS_BY_HOSTEL(id)).catch(() => ({ data: {} }))
         ]);
         setHostel(hostelRes.data);
         setApplicationStats(statsRes.data || {});
@@ -103,6 +103,8 @@ const HostelDetail = () => {
   const getApplicationCount = (roomType) => {
     return applicationStats[roomType] || 0;
   };
+
+  const commissionPercent = Number(applicationStats.commissionPercent) || 3;
 
   // Get last booking time
   const getLastBookingTime = (roomType) => {
@@ -283,7 +285,7 @@ const HostelDetail = () => {
                           GH₵{room.price} <span className="text-sm text-gray-500 font-normal">/ semester</span>
                         </div>
                         <div className="text-xs text-gray-600 mb-2">
-                          + Platform fee (5%): ~GH₵{Math.round(room.price * 0.05)}
+                          + Platform fee ({commissionPercent}%): ~GH₵{Math.round(room.price * (commissionPercent / 100))}
                         </div>
                         <div className="mb-2">
                           <span className="inline-block px-3 py-1 text-sm font-semibold rounded-full bg-blue-100 text-blue-700">
@@ -415,7 +417,7 @@ const HostelDetail = () => {
                             GH₵{room.price} <span className="text-sm text-gray-500 font-normal">/ semester</span>
                           </div>
                           <div className="text-xs text-gray-600 mb-3">
-                            + Platform fee (5%): ~GH₵{Math.round(room.price * 0.05)}
+                            + Platform fee ({commissionPercent}%): ~GH₵{Math.round(room.price * (commissionPercent / 100))}
                           </div>
                           <div className="mb-3">
                             <span className="inline-block px-3 py-1 text-sm font-semibold rounded-full bg-blue-100 text-blue-700">

@@ -114,7 +114,7 @@
 ┌──────────────────────────────────────────────────────────────┐
 │ Setting                          Value                Status │
 ├──────────────────────────────────────────────────────────────┤
-│ EMAIL_USER                       1mikedwin@gmail.com  ✅     │
+│ EMAIL_USER                       admin@example.com  ✅     │
 │ EMAIL_PASSWORD                   Not Set              ⚠️     │
 │ FRONTEND_URL                     vercel.app           ✅     │
 │ Nodemailer                       Installed            ✅     │

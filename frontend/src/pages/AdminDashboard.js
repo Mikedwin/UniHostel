@@ -1,19 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { Users, Building2, FileText, Activity } from 'lucide-react';
 import API_URL from '../config';
-import UserManagementTable from '../components/admin/UserManagementTable';
 import UserActionModal from '../components/admin/UserActionModal';
 import UserDetailsModal from '../components/admin/UserDetailsModal';
-import ApplicationManagementTable from '../components/admin/ApplicationManagementTable';
 import ApplicationDetailsModal from '../components/admin/ApplicationDetailsModal';
 import ApplicationActionModal from '../components/admin/ApplicationActionModal';
-import AnalyticsDashboard from '../components/admin/AnalyticsDashboard';
-import AdminTransactions from '../components/admin/AdminTransactions';
-import ManagerRegistrationForm from '../components/admin/ManagerRegistrationForm';
-import VisitorTracking from '../components/admin/VisitorTracking';
 import LoadingSpinner from '../components/LoadingSpinner';
+
+const UserManagementTable = lazy(() => import('../components/admin/UserManagementTable'));
+const ApplicationManagementTable = lazy(() => import('../components/admin/ApplicationManagementTable'));
+const AnalyticsDashboard = lazy(() => import('../components/admin/AnalyticsDashboard'));
+const AdminTransactions = lazy(() => import('../components/admin/AdminTransactions'));
+const ManagerRegistrationForm = lazy(() => import('../components/admin/ManagerRegistrationForm'));
+const VisitorTracking = lazy(() => import('../components/admin/VisitorTracking'));
 
 const AdminDashboard = () => {
     const [stats, setStats] = useState(null);
@@ -237,6 +238,12 @@ const AdminDashboard = () => {
         }
         setConfirmDialog({ open: false, message: '', onConfirm: null });
     };
+
+    const tabFallback = (message) => (
+        <div className="py-10">
+            <LoadingSpinner message={message} />
+        </div>
+    );
 
     const handleApplicationAction = (action, app, refreshCallback) => {
         if (action === 'view') {
@@ -498,24 +505,32 @@ const AdminDashboard = () => {
 
                         {activeTab === 'users' && (
                             <div>
-                                {token ? (
-                                    <UserManagementTable token={token} onAction={handleUserAction} />
-                                ) : (
-                                    <div className="text-center py-8 text-red-600">No authentication token found</div>
-                                )}
+                                <Suspense fallback={tabFallback('Loading users...')}>
+                                    {token ? (
+                                        <UserManagementTable token={token} onAction={handleUserAction} />
+                                    ) : (
+                                        <div className="text-center py-8 text-red-600">No authentication token found</div>
+                                    )}
+                                </Suspense>
                             </div>
                         )}
 
                         {activeTab === 'analytics' && (
-                            <AnalyticsDashboard token={token} />
+                            <Suspense fallback={tabFallback('Loading analytics...')}>
+                                <AnalyticsDashboard token={token} />
+                            </Suspense>
                         )}
 
                         {activeTab === 'transactions' && (
-                            <AdminTransactions token={token} />
+                            <Suspense fallback={tabFallback('Loading transactions...')}>
+                                <AdminTransactions token={token} />
+                            </Suspense>
                         )}
 
                         {activeTab === 'visitors' && (
-                            <VisitorTracking />
+                            <Suspense fallback={tabFallback('Loading visitor insights...')}>
+                                <VisitorTracking />
+                            </Suspense>
                         )}
 
                         {activeTab === 'applications' && (
@@ -571,7 +586,9 @@ const AdminDashboard = () => {
                                         </button>
                                     </div>
                                 </div>
-                                <ApplicationManagementTable token={token} onAction={handleApplicationAction} />
+                                <Suspense fallback={tabFallback('Loading applications...')}>
+                                    <ApplicationManagementTable token={token} onAction={handleApplicationAction} />
+                                </Suspense>
                             </div>
                         )}
 
@@ -652,7 +669,9 @@ const AdminDashboard = () => {
                         )}
 
                         {activeTab === 'register-manager' && (
-                            <ManagerRegistrationForm token={token} onSuccess={() => { showSuccess('Manager registered successfully'); fetchDashboardData(); }} />
+                            <Suspense fallback={tabFallback('Loading manager registration...')}>
+                                <ManagerRegistrationForm token={token} onSuccess={() => { showSuccess('Manager registered successfully'); fetchDashboardData(); }} />
+                            </Suspense>
                         )}
 
                         {activeTab === 'logs-history' && (

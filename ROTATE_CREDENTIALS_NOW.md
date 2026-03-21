@@ -4,7 +4,7 @@
 
 ### ✅ Step 1: MongoDB Password (5 min)
 - [ ] Go to https://cloud.mongodb.com/
-- [ ] Database Access → Edit user `1mikedwin_db_user`
+- [ ] Database Access → Edit user `admin_user`
 - [ ] Autogenerate new password
 - [ ] Copy password
 - [ ] Update `MONGO_URI` in `.env`

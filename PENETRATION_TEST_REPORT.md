@@ -355,7 +355,7 @@ The UniHostel platform demonstrates **strong security practices** with comprehen
 
 **Report Generated:** December 2024  
 **Next Security Audit:** March 2025 (Quarterly)  
-**Contact:** 1mikedwin@gmail.com
+**Contact:** admin@example.com
 
 ---
 

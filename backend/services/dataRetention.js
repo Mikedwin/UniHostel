@@ -9,6 +9,7 @@ const INACTIVE_USER_DAYS = parseInt(process.env.INACTIVE_USER_DAYS) || 365;
 const ARCHIVED_APPLICATION_DAYS = parseInt(process.env.ARCHIVED_APPLICATION_DAYS) || 180;
 const LOGIN_HISTORY_DAYS = parseInt(process.env.LOGIN_HISTORY_DAYS) || 90;
 const CLEANUP_SCHEDULE_HOUR = parseInt(process.env.CLEANUP_SCHEDULE_HOUR) || 2;
+const UNVERIFIED_USER_RETENTION_DAYS = parseInt(process.env.UNVERIFIED_USER_RETENTION_DAYS) || 30;
 
 const cleanupOldLoginHistory = async () => {
   try {
@@ -42,11 +43,16 @@ const cleanupArchivedApplications = async () => {
 
 const cleanupInactiveUnverifiedUsers = async () => {
   try {
-    const cutoffDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const cutoffDate = new Date(Date.now() - UNVERIFIED_USER_RETENTION_DAYS * 24 * 60 * 60 * 1000);
     const result = await User.deleteMany({
       isVerified: false,
       createdAt: { $lt: cutoffDate },
-      role: 'student'
+      role: 'student',
+      accountStatus: 'pending_verification',
+      $or: [
+        { lastLogin: { $exists: false } },
+        { lastLogin: null }
+      ]
     });
     logger.info(`Deleted unverified inactive users: ${result.deletedCount} users`);
     return result.deletedCount;

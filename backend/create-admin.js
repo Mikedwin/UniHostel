@@ -6,40 +6,39 @@ const User = require('./models/User');
 
 const createAdmin = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log('✅ Connected to MongoDB');
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
 
-    // Check if admin already exists
-    const existingAdmin = await User.findOne({ 
-      email: process.env.ADMIN_EMAIL || '1mikedwin@gmail.com' 
-    });
+    if (!adminEmail || !adminPassword) {
+      throw new Error('ADMIN_EMAIL and ADMIN_PASSWORD must be set in the environment');
+    }
+
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log('Connected to MongoDB');
+
+    const existingAdmin = await User.findOne({ email: adminEmail });
 
     if (existingAdmin) {
-      console.log('⚠️  Admin already exists:', existingAdmin.email);
+      console.log('Admin already exists:', existingAdmin.email);
       console.log('Role:', existingAdmin.role);
-      
-      // Update to admin if not already
+
       if (existingAdmin.role !== 'admin') {
         existingAdmin.role = 'admin';
         existingAdmin.isVerified = true;
         existingAdmin.accountStatus = 'active';
         await existingAdmin.save();
-        console.log('✅ Updated user to admin role');
+        console.log('Updated user to admin role');
       }
-      
-      mongoose.connection.close();
+
+      await mongoose.connection.close();
       return;
     }
 
-    // Create new admin
-    const hashedPassword = await bcrypt.hash(
-      process.env.ADMIN_PASSWORD || 'Admin@123456', 
-      12
-    );
+    const hashedPassword = await bcrypt.hash(adminPassword, 12);
 
     const admin = new User({
       name: 'Admin',
-      email: process.env.ADMIN_EMAIL || '1mikedwin@gmail.com',
+      email: adminEmail,
       password: hashedPassword,
       role: 'admin',
       isVerified: true,
@@ -51,15 +50,14 @@ const createAdmin = async () => {
     });
 
     await admin.save();
-    console.log('✅ Admin account created successfully!');
+    console.log('Admin account created successfully');
     console.log('Email:', admin.email);
-    console.log('Password: (check your .env file)');
-    console.log('\n🔐 Use these credentials to login as admin');
+    console.log('Password: stored securely in the configured environment');
 
-    mongoose.connection.close();
+    await mongoose.connection.close();
   } catch (error) {
-    console.error('❌ Error:', error.message);
-    mongoose.connection.close();
+    console.error('Error:', error.message);
+    await mongoose.connection.close().catch(() => {});
     process.exit(1);
   }
 };

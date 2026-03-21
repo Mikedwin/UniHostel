@@ -56,11 +56,11 @@ Click "Advanced" → "Add Environment Variable" and add ALL these:
 
 ```
 PORT=5000
-MONGO_URI=mongodb+srv://1mikedwin_db_user:iY9i8ms8Wf0SeuEV@cluster0.paznchc.mongodb.net/unihostel?appName=Cluster0
-JWT_SECRET=22a2e63fb2d1e1cfc2584498a2c98e23c1e878011d4bdeda2965b17533970d494ff42b60cab4710130ef0004537f2e53c8e153ccf1f7c41ba899a39641f36cbd
-ADMIN_USERNAME=1mikedwin_db_user
-ADMIN_PASSWORD=iY9i8ms8Wf0SeuEV
-ADMIN_EMAIL=1mikedwin@gmail.com
+MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/unihostel?appName=Cluster0
+JWT_SECRET=<generate_a_64_plus_character_jwt_secret>
+ADMIN_USERNAME=admin_user
+ADMIN_PASSWORD=<secure_password_here>
+ADMIN_EMAIL=admin@example.com
 NODE_ENV=production
 FRONTEND_URL=https://uni-hostel-two.vercel.app
 PAYSTACK_SECRET_KEY=sk_live_YOUR_SECRET_KEY_HERE
@@ -71,7 +71,7 @@ RATE_LIMIT_MAX_REQUESTS=60
 AUTH_RATE_LIMIT_MAX=3
 MAX_LOGIN_ATTEMPTS=5
 LOCKOUT_DURATION_MINUTES=30
-EMAIL_USER=3mikedwin@gmail.com
+EMAIL_USER=support@example.com
 EMAIL_PASSWORD=your_email_password_here
 DATA_RETENTION_DAYS=730
 INACTIVE_USER_DAYS=365
@@ -83,9 +83,9 @@ MAX_IMAGES_PER_HOSTEL=20
 ALLOWED_IMAGE_TYPES=image/jpeg,image/jpg,image/png,image/webp
 CACHE_TTL_SECONDS=300
 CACHE_CHECK_PERIOD=60
-CLOUDINARY_CLOUD_NAME=dcpqsgmso
-CLOUDINARY_API_KEY=342562251768364
-CLOUDINARY_API_SECRET=8joCwAp1MpyUGZwar9WaJzIeNhE
+CLOUDINARY_CLOUD_NAME=<your_cloudinary_cloud_name>
+CLOUDINARY_API_KEY=<your_cloudinary_api_key>
+CLOUDINARY_API_SECRET=<your_cloudinary_api_secret>
 ```
 
 ### Step 6: Deploy

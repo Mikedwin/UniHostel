@@ -169,7 +169,7 @@ dir backend\backups\manual
 ## Emergency Contacts
 
 **Your Info:**
-- Email: 1mikedwin@gmail.com
+- Email: admin@example.com
 - GitHub: https://github.com/Mikedwin/UniHostel
 
 **MongoDB Atlas:**

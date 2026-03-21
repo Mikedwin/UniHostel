@@ -4,7 +4,7 @@ const Hostel = require('./models/Hostel');
 
 async function checkRoomAvailability() {
   try {
-    await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/unihostel');
+    await mongoose.connect(process.env.MONGO_URI);
     console.log('Connected to MongoDB\n');
     
     const hostels = await Hostel.find({ isDeleted: { $ne: true } })
@@ -38,3 +38,4 @@ async function checkRoomAvailability() {
 }
 
 checkRoomAvailability();
+

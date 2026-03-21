@@ -131,13 +131,13 @@ You have **TWO OPTIONS**:
 cd backend
 node create-admin.js
 ```
-**Result**: Admin account with email `1mikedwin@gmail.com`
+**Result**: Admin account with email `admin@example.com`
 
 ### Step 2: Create Manager Account (5 minutes)
 ```bash
 node create-manager.js
 ```
-**Result**: Manager account with email `3mikedwin@gmail.com`
+**Result**: Manager account with email `support@example.com`
 
 ### Step 3: Test Manager Login (2 minutes)
 - Login with manager credentials

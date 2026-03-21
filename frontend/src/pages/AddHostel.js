@@ -18,6 +18,7 @@ const AddHostel = () => {
     const [location, setLocation] = useState('');
     const [description, setDescription] = useState('');
     const [hostelViewImage, setHostelViewImage] = useState('');
+    const [hostelViewImageFile, setHostelViewImageFile] = useState(null);
     const [hostelImages, setHostelImages] = useState([]);
     const [virtualTourUrl, setVirtualTourUrl] = useState('');
     
@@ -28,7 +29,9 @@ const AddHostel = () => {
         price: '',
         gender: 'Not Specified',
         roomImage: '',
+        roomImageFile: null,
         roomImages: [],
+        roomImagesFiles: [],
         virtualTourUrl: '',
         facilities: [],
         totalCapacity: ''
@@ -56,6 +59,13 @@ const AddHostel = () => {
         }
     };
 
+    const createPreview = (file) => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => resolve(event.target.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+
     const addFacility = (facility) => {
         if (facility && !currentRoom.facilities.includes(facility)) {
             setCurrentRoom({...currentRoom, facilities: [...currentRoom.facilities, facility]});
@@ -81,7 +91,9 @@ const AddHostel = () => {
             price: '',
             gender: 'Not Specified',
             roomImage: '',
+            roomImageFile: null,
             roomImages: [],
+            roomImagesFiles: [],
             virtualTourUrl: '',
             facilities: [],
             totalCapacity: ''
@@ -108,16 +120,43 @@ const AddHostel = () => {
         setError('');
         
         try {
-            const formData = {
+            const payload = {
                 name: name.trim(),
                 location: location.trim(),
                 description: description.trim(),
-                hostelViewImage,
-                hostelImages,
                 virtualTourUrl: virtualTourUrl.trim(),
-                roomTypes
+                roomTypes: roomTypes.map((room) => ({
+                    type: room.type,
+                    price: room.price,
+                    gender: room.gender,
+                    virtualTourUrl: room.virtualTourUrl,
+                    facilities: room.facilities,
+                    totalCapacity: room.totalCapacity,
+                    roomImages: []
+                }))
             };
-            
+
+            const formData = new FormData();
+            formData.append('payload', JSON.stringify(payload));
+
+            if (hostelViewImageFile) {
+                formData.append('hostelViewImage', hostelViewImageFile);
+            }
+
+            hostelImages.forEach((image) => {
+                formData.append('hostelImages', image.file);
+            });
+
+            roomTypes.forEach((room, index) => {
+                if (room.roomImageFile) {
+                    formData.append(`roomImage_${index}`, room.roomImageFile);
+                }
+
+                (room.roomImagesFiles || []).forEach((file) => {
+                    formData.append(`roomImages_${index}`, file);
+                });
+            });
+
             await axios.post(API_ENDPOINTS.HOSTELS, formData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -223,15 +262,10 @@ const AddHostel = () => {
                                     onChange={async (e) => {
                                         const file = e.target.files[0];
                                         if (file) {
-                                            console.log('Hostel View Image - Selected file:', file.name, file.size, 'bytes');
                                             const compressed = await compressImage(file);
-                                            console.log('Hostel View Image - After compression:', compressed.size, 'bytes');
-                                            const reader = new FileReader();
-                                            reader.onload = (event) => {
-                                                console.log('Hostel View Image - Loaded, length:', event.target.result.length);
-                                                setHostelViewImage(event.target.result);
-                                            };
-                                            reader.readAsDataURL(compressed);
+                                            const preview = await createPreview(compressed);
+                                            setHostelViewImage(preview);
+                                            setHostelViewImageFile(compressed);
                                         }
                                     }}
                                     className="w-full border-2 border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-blue-500 mb-3 text-base file:mr-4 file:py-3 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
@@ -241,7 +275,10 @@ const AddHostel = () => {
                                         <img src={hostelViewImage} alt="Hostel View" className="w-full h-64 object-cover" />
                                         <button
                                             type="button"
-                                            onClick={() => setHostelViewImage('')}
+                                            onClick={() => {
+                                                setHostelViewImage('');
+                                                setHostelViewImageFile(null);
+                                            }}
                                             className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg"
                                         >
                                             <X className="w-5 h-5" />
@@ -267,14 +304,8 @@ const AddHostel = () => {
                                             const newImages = [];
                                             for (const file of files) {
                                                 const compressed = await compressImage(file);
-                                                const reader = new FileReader();
-                                                await new Promise((resolve) => {
-                                                    reader.onload = (event) => {
-                                                        newImages.push(event.target.result);
-                                                        resolve();
-                                                    };
-                                                    reader.readAsDataURL(compressed);
-                                                });
+                                                const preview = await createPreview(compressed);
+                                                newImages.push({ file: compressed, preview });
                                             }
                                             setHostelImages([...hostelImages, ...newImages]);
                                         }
@@ -285,7 +316,7 @@ const AddHostel = () => {
                                     <div className="grid grid-cols-3 gap-2">
                                         {hostelImages.map((img, idx) => (
                                             <div key={idx} className="relative group border rounded-lg overflow-hidden">
-                                                <img src={img} alt={`Hostel ${idx + 1}`} className="w-full h-24 object-cover" />
+                                                <img src={img.preview} alt={`Hostel ${idx + 1}`} className="w-full h-24 object-cover" />
                                                 <button
                                                     type="button"
                                                     onClick={() => setHostelImages(hostelImages.filter((_, i) => i !== idx))}
@@ -424,15 +455,13 @@ const AddHostel = () => {
                                             onChange={async (e) => {
                                                 const file = e.target.files[0];
                                                 if (file) {
-                                                    console.log('Room Image - Selected file:', file.name, file.size, 'bytes');
                                                     const compressed = await compressImage(file);
-                                                    console.log('Room Image - After compression:', compressed.size, 'bytes');
-                                                    const reader = new FileReader();
-                                                    reader.onload = (event) => {
-                                                        console.log('Room Image - Loaded, length:', event.target.result.length);
-                                                        setCurrentRoom({...currentRoom, roomImage: event.target.result});
-                                                    };
-                                                    reader.readAsDataURL(compressed);
+                                                    const preview = await createPreview(compressed);
+                                                    setCurrentRoom({
+                                                        ...currentRoom,
+                                                        roomImage: preview,
+                                                        roomImageFile: compressed
+                                                    });
                                                 }
                                             }}
                                             className="w-full border-2 border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-blue-500 mb-2 bg-white text-base file:mr-4 file:py-3 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
@@ -442,7 +471,7 @@ const AddHostel = () => {
                                                 <img src={currentRoom.roomImage} alt="Room" className="w-full h-48 object-cover" />
                                                 <button
                                                     type="button"
-                                                    onClick={() => setCurrentRoom({...currentRoom, roomImage: ''})}
+                                                    onClick={() => setCurrentRoom({...currentRoom, roomImage: '', roomImageFile: null})}
                                                     className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-red-600 shadow-lg"
                                                 >
                                                     <X className="w-5 h-5" />
@@ -466,18 +495,18 @@ const AddHostel = () => {
                                                 const files = Array.from(e.target.files);
                                                 if (files.length > 0) {
                                                     const newImages = [];
+                                                    const newImageFiles = [];
                                                     for (const file of files) {
                                                         const compressed = await compressImage(file);
-                                                        const reader = new FileReader();
-                                                        await new Promise((resolve) => {
-                                                            reader.onload = (event) => {
-                                                                newImages.push(event.target.result);
-                                                                resolve();
-                                                            };
-                                                            reader.readAsDataURL(compressed);
-                                                        });
+                                                        const preview = await createPreview(compressed);
+                                                        newImages.push(preview);
+                                                        newImageFiles.push(compressed);
                                                     }
-                                                    setCurrentRoom({...currentRoom, roomImages: [...currentRoom.roomImages, ...newImages]});
+                                                    setCurrentRoom({
+                                                        ...currentRoom,
+                                                        roomImages: [...currentRoom.roomImages, ...newImages],
+                                                        roomImagesFiles: [...(currentRoom.roomImagesFiles || []), ...newImageFiles]
+                                                    });
                                                 }
                                             }}
                                             className="w-full border-2 border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-blue-500 mb-2 bg-white text-base file:mr-4 file:py-3 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
@@ -489,7 +518,11 @@ const AddHostel = () => {
                                                         <img src={img} alt={`Room ${idx + 1}`} className="w-full h-20 object-cover" />
                                                         <button
                                                             type="button"
-                                                            onClick={() => setCurrentRoom({...currentRoom, roomImages: currentRoom.roomImages.filter((_, i) => i !== idx)})}
+                                                            onClick={() => setCurrentRoom({
+                                                                ...currentRoom,
+                                                                roomImages: currentRoom.roomImages.filter((_, i) => i !== idx),
+                                                                roomImagesFiles: (currentRoom.roomImagesFiles || []).filter((_, i) => i !== idx)
+                                                            })}
                                                             className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 shadow-lg"
                                                         >
                                                             <X className="w-3 h-3" />

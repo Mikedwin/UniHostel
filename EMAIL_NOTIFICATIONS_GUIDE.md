@@ -69,7 +69,7 @@ Comprehensive email notification system implemented for all critical user action
    - Copy the 16-character password
 4. Update `.env` file:
    ```
-   EMAIL_USER=1mikedwin@gmail.com
+   EMAIL_USER=admin@example.com
    EMAIL_PASSWORD=xxxx xxxx xxxx xxxx  # Your app password
    ```
 

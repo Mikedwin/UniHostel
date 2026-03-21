@@ -1,6 +1,9 @@
 {
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "build",
   "env": {
-    "REACT_APP_API_URL": "https://unihostel.onrender.com/api",
-    "REACT_APP_PAYSTACK_PUBLIC_KEY": "pk_live_eb0f80d31cbab0aea6cbf905036e6b3a096d888c"
+    "VITE_API_URL": "https://unihostel.onrender.com",
+    "VITE_PAYSTACK_PUBLIC_KEY": "pk_test_your_public_key_here"
   }
 }

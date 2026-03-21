@@ -48,6 +48,34 @@ const sendPasswordResetEmail = async (email, resetToken) => {
   });
 };
 
+const sendVerificationEmail = async (email, name, verificationToken) => {
+  const transporter = createTransporter();
+  const verificationUrl = `${process.env.FRONTEND_URL}/verify-email/${verificationToken}`;
+
+  if (!transporter) {
+    logger.warn('Email not configured. Verification link:', verificationUrl);
+    return false;
+  }
+
+  await transporter.sendMail({
+    from: `"UniHostel" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: 'Verify Your Email - UniHostel',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #23817A;">Verify Your Email Address</h2>
+        <p>Hi ${name},</p>
+        <p>Welcome to UniHostel. Please verify your email address before signing in.</p>
+        <a href="${verificationUrl}" style="display: inline-block; padding: 12px 24px; background-color: #23817A; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0;">Verify Email</a>
+        <p>Or copy this link: <a href="${verificationUrl}">${verificationUrl}</a></p>
+        <p style="color: #666; font-size: 14px;">This link will expire in 24 hours.</p>
+      </div>
+    `
+  });
+
+  return true;
+};
+
 const sendApplicationSubmittedEmail = async (studentEmail, studentName, hostelName, roomType, semester) => {
   const transporter = createTransporter();
   if (!transporter) return;
@@ -203,6 +231,7 @@ const sendNewApplicationNotificationToManager = async (managerEmail, managerName
 };
 
 module.exports = { 
+  sendVerificationEmail,
   sendPasswordResetEmail,
   sendApplicationSubmittedEmail,
   sendApplicationApprovedForPaymentEmail,

@@ -10,6 +10,7 @@ const UserActivity = require('../models/UserActivity');
 const ImpersonationLog = require('../models/ImpersonationLog');
 const Visitor = require('../models/Visitor');
 const { auth, checkRole } = require('../middleware/auth');
+const { sanitizeAdminUser, sanitizeAdminUsers } = require('../utils/userSanitizer');
 
 const checkAdmin = checkRole('admin');
 
@@ -344,10 +345,10 @@ router.get('/users', auth, checkAdmin, async (req, res) => {
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const [users, total] = await Promise.all([
-      User.find(query).select('-password -temporaryPassword').sort({ createdAt: -1 }).skip(skip).limit(parseInt(limit)).lean(),
+      User.find(query).sort({ createdAt: -1 }).skip(skip).limit(parseInt(limit)).lean(),
       User.countDocuments(query)
     ]);
-    res.json({ users, total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) });
+    res.json({ users: sanitizeAdminUsers(users), total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -355,9 +356,9 @@ router.get('/users', auth, checkAdmin, async (req, res) => {
 
 router.get('/users/:id', auth, checkAdmin, async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password -temporaryPassword').populate('suspendedBy', 'name email').lean();
+    const user = await User.findById(req.params.id).populate('suspendedBy', 'name email').lean();
     if (!user) return res.status(404).json({ error: 'User not found' });
-    res.json(user);
+    res.json(sanitizeAdminUser(user));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -387,7 +388,7 @@ router.patch('/users/:id/suspend', auth, checkAdmin, async (req, res) => {
     user.suspendedAt = new Date();
     await user.save();
     await logAdminAction(req.user.id, 'SUSPEND_USER', 'user', user._id, `Suspended ${user.role}: ${user.name} - Reason: ${reason}`);
-    res.json({ message: 'User suspended successfully', user });
+    res.json({ message: 'User suspended successfully', user: sanitizeAdminUser(user) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -407,7 +408,7 @@ router.patch('/users/:id/ban', auth, checkAdmin, async (req, res) => {
     user.suspendedAt = new Date();
     await user.save();
     await logAdminAction(req.user.id, 'BAN_USER', 'user', user._id, `Banned ${user.role}: ${user.name} - Reason: ${reason}`);
-    res.json({ message: 'User banned successfully', user });
+    res.json({ message: 'User banned successfully', user: sanitizeAdminUser(user) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -425,7 +426,7 @@ router.patch('/users/:id/activate', auth, checkAdmin, async (req, res) => {
     user.suspendedAt = null;
     await user.save();
     await logAdminAction(req.user.id, 'ACTIVATE_USER', 'user', user._id, `Activated ${user.role}: ${user.name}`);
-    res.json({ message: 'User activated successfully', user });
+    res.json({ message: 'User activated successfully', user: sanitizeAdminUser(user) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -441,7 +442,7 @@ router.patch('/users/:id/verify', auth, checkAdmin, async (req, res) => {
     user.accountStatus = 'active';
     await user.save();
     await logAdminAction(req.user.id, 'VERIFY_MANAGER', 'user', user._id, `Verified manager: ${user.name}`);
-    res.json({ message: 'Manager verified successfully', user });
+    res.json({ message: 'Manager verified successfully', user: sanitizeAdminUser(user) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -461,7 +462,7 @@ router.patch('/users/:id/reject', auth, checkAdmin, async (req, res) => {
     user.suspendedAt = new Date();
     await user.save();
     await logAdminAction(req.user.id, 'REJECT_MANAGER', 'user', user._id, `Rejected manager: ${user.name} - Reason: ${reason}`);
-    res.json({ message: 'Manager rejected successfully', user });
+    res.json({ message: 'Manager rejected successfully', user: sanitizeAdminUser(user) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -918,16 +919,43 @@ router.get('/analytics/locations', auth, checkAdmin, async (req, res) => {
 
     const locationData = await Hostel.aggregate([
       { $match: dateQuery },
-      { $group: { _id: '$location', hostelCount: { $sum: 1 }, totalApplications: { $sum: 0 } } },
+      { $group: { _id: '$location', hostelCount: { $sum: 1 }, hostelIds: { $push: '$_id' } } },
       { $sort: { hostelCount: -1 } },
-      { $limit: 10 }
+      { $limit: 10 },
+      {
+        $lookup: {
+          from: Application.collection.name,
+          let: { hostelIds: '$hostelIds' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $in: ['$hostelId', '$$hostelIds']
+                }
+              }
+            },
+            { $count: 'count' }
+          ],
+          as: 'applicationStats'
+        }
+      },
+      {
+        $addFields: {
+          totalApplications: {
+            $ifNull: [
+              { $arrayElemAt: ['$applicationStats.count', 0] },
+              0
+            ]
+          }
+        }
+      },
+      {
+        $project: {
+          hostelIds: 0,
+          applicationStats: 0
+        }
+      }
     ]);
-
-    for (let loc of locationData) {
-      const hostels = await Hostel.find({ location: loc._id }).select('_id');
-      const hostelIds = hostels.map(h => h._id);
-      loc.totalApplications = await Application.countDocuments({ hostelId: { $in: hostelIds } });
-    }
 
     res.json(locationData);
   } catch (err) {
@@ -1222,11 +1250,10 @@ router.get('/trash/hostels', auth, checkAdmin, async (req, res) => {
 router.get('/trash/users', auth, checkAdmin, async (req, res) => {
   try {
     const users = await User.find({ isDeleted: true })
-      .select('-password -temporaryPassword')
       .populate('deletedBy', 'name')
       .sort({ deletedAt: -1 })
       .lean();
-    res.json(users);
+    res.json(sanitizeAdminUsers(users));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -432,6 +432,6 @@ The platform is now secure for production deployment with:
 
 ## Contact
 
-**Security Issues:** 1mikedwin@gmail.com  
+**Security Issues:** admin@example.com  
 **Response Time:** Within 24 hours  
 **Severity Levels:** Critical (4h), High (24h), Medium (7d), Low (30d)

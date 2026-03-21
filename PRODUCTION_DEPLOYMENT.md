@@ -30,7 +30,7 @@
 ### Step 2: Verify Connection String
 Your current connection string:
 ```
-mongodb+srv://1mikedwin_db_user:yzIGoYtxR1SW7AXN@cluster0.paznchc.mongodb.net/unihostel?retryWrites=true&w=majority&appName=Cluster0
+mongodb+srv://username:password@cluster.mongodb.net/unihostel?retryWrites=true&w=majority&appName=Cluster0
 ```
 
 Ensure it includes:
@@ -40,7 +40,7 @@ Ensure it includes:
 
 ### Step 3: Check Database User Permissions
 1. Go to **Database Access** in MongoDB Atlas
-2. Verify user `1mikedwin_db_user` has:
+2. Verify user `admin_user` has:
    - **Read and write to any database** role
    - OR **Atlas admin** role
 

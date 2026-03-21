@@ -106,7 +106,7 @@ require('dotenv').config();
 ### 3. **Hardcoded Email in Code (MEDIUM)**
 **Status:** ⚠️ NEEDS CLEANUP  
 **Location:** `server.js` line 256 (update-subaccount-now endpoint)  
-**Issue:** Contains hardcoded email `3mikedwin@gmail.com`
+**Issue:** Contains hardcoded email `support@example.com`
 
 **Action Required:**
 - Remove or secure this one-time endpoint

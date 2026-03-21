@@ -62,6 +62,7 @@ const csrfProtection = (req, res, next) => {
   const publicEndpoints = [
     '/api/auth/login',
     '/api/auth/register',
+    '/api/auth/resend-verification',
     '/api/auth/forgot-password',
     '/api/auth/reset-password',
     '/api/auth/reset-verify',

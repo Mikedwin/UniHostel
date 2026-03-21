@@ -5,8 +5,8 @@
 1. **Login as Admin**:
    - Go to: https://uni-hostel-two.vercel.app/login
    - Use Manager Login option
-   - Email: `1mikedwin@gmail.com`
-   - Password: `GguzgpD0t5XXe0ms`
+   - Email: `admin@example.com`
+   - Password: `<secure_password_here>`
 
 2. **Navigate to Applications Tab**:
    - Click "Admin Dashboard" in navbar

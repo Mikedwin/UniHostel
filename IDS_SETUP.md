@@ -227,7 +227,7 @@ Review logs to adjust detection patterns.
 
 ### "Not receiving alerts"
 
-- **Email:** Check `EMAIL_USER` and `EMAIL_PASS` are set
+- **Email:** Check `EMAIL_USER` and `EMAIL_PASSWORD` are set
 - **Telegram:** Verify `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`
 - **Discord:** Verify `DISCORD_WEBHOOK_URL`
 

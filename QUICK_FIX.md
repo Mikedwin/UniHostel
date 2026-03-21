@@ -14,7 +14,7 @@
 
 ### Step 2: Verify Database User
 1. Click **Database Access** (left sidebar)
-2. Find user: `1mikedwin_db_user`
+2. Find user: `admin_user`
 3. Ensure role is: **Atlas admin** or **Read and write to any database**
 4. If not, click **Edit** → Change role → **Save**
 
@@ -41,12 +41,12 @@
 ### Verify Environment Variables
 Ensure these are set in Railway:
 ```
-MONGO_URI=mongodb+srv://1mikedwin_db_user:yzIGoYtxR1SW7AXN@cluster0.paznchc.mongodb.net/unihostel?retryWrites=true&w=majority&appName=Cluster0
+MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/unihostel?retryWrites=true&w=majority&appName=Cluster0
 NODE_ENV=production
-JWT_SECRET=uH8$mK9#pL2@nQ5*vR7&wT3!xY6^zA1%bC4+dE0-fG8~hJ2
-CLOUDINARY_CLOUD_NAME=dcpqsgmso
-CLOUDINARY_API_KEY=696388963616524
-CLOUDINARY_API_SECRET=pjDFbwNJ71j-A4gaCXLf94jAYU4
+JWT_SECRET=<generate_a_strong_jwt_secret>
+CLOUDINARY_CLOUD_NAME=<your_cloudinary_cloud_name>
+CLOUDINARY_API_KEY=<your_cloudinary_api_key>
+CLOUDINARY_API_SECRET=<your_cloudinary_api_secret>
 ```
 
 ---

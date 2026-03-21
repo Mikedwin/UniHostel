@@ -371,7 +371,7 @@ Application.aggregate([
 
 **URL**: https://uni-hostel-two.vercel.app/admin-dashboard
 
-**Login**: 1mikedwin@gmail.com / GguzgpD0t5XXe0ms
+**Login**: admin@example.com / <secure_password_here>
 
 **Navigate**: Admin Dashboard → Analytics Tab (2nd tab)
 

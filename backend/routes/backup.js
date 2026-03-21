@@ -7,13 +7,14 @@ const User = require('../models/User');
 const Hostel = require('../models/Hostel');
 const Application = require('../models/Application');
 const Transaction = require('../models/Transaction');
+const { sanitizeAdminUsers } = require('../utils/userSanitizer');
 
 // Manual backup endpoint - Admin only
 router.get('/export', auth, checkRole('admin'), async (req, res) => {
   try {
     const backupData = {
       timestamp: new Date().toISOString(),
-      users: await User.find().select('-password').lean(),
+      users: sanitizeAdminUsers(await User.find().lean()),
       hostels: await Hostel.find().lean(),
       applications: await Application.find().lean(),
       transactions: await Transaction.find().lean()

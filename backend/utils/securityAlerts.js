@@ -5,12 +5,15 @@ const axios = require('axios');
 const sendSecurityAlert = async (attackDetails) => {
   if (!process.env.SECURITY_ALERT_EMAIL) return;
 
+  const emailPassword = process.env.EMAIL_PASSWORD || process.env.EMAIL_PASS;
+  if (!process.env.EMAIL_USER || !emailPassword) return;
+
   try {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
+        pass: emailPassword
       }
     });
 

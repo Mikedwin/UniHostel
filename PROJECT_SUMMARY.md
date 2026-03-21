@@ -9,8 +9,8 @@
 - GitHub: https://github.com/Mikedwin/UniHostel
 
 **Admin Credentials:**
-- Email: 1mikedwin@gmail.com
-- Password: GguzgpD0t5XXe0ms
+- Email: admin@example.com
+- Password: <secure_password_here>
 - Login at: https://uni-hostel-two.vercel.app/manager-login
 
 ---
@@ -375,12 +375,12 @@ frontend/
 
 ### Database
 - **Provider**: MongoDB Atlas
-- **Connection**: mongodb+srv://1mikedwin_db_user:GguzgpD0t5XXe0ms@cluster0.paznchc.mongodb.net/unihostel
+- **Connection**: mongodb+srv://username:password@cluster.mongodb.net/unihostel
 - **Current Users**: 4 (1 admin, others auto-verified)
 
 ### Admin Account
-- **Email**: 1mikedwin@gmail.com
-- **Password**: GguzgpD0t5XXe0ms
+- **Email**: admin@example.com
+- **Password**: <secure_password_here>
 - **Role**: admin
 - **Access**: Full system control
 

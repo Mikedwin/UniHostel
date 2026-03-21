@@ -1,7 +1,7 @@
 # Manager Dashboard Access - Changes Summary
 
 ## Issue
-You couldn't access the manager dashboard with your email (1mikedwin@gmail.com) and password.
+You couldn't access the manager dashboard with your email (admin@example.com) and password.
 
 ## Root Causes Identified
 1. **No manager account existed** in the database with your credentials
@@ -75,8 +75,8 @@ npm run init-admin
 2. Press any key when prompted
 3. Wait for "Admin account created successfully"
 4. Go to your webapp and login with:
-   - Email: 1mikedwin@gmail.com
-   - Password: GguzgpD0t5XXe0ms
+   - Email: admin@example.com
+   - Password: <secure_password_here>
 
 ### Manual Method
 ```bash
@@ -96,8 +96,8 @@ npm run init-admin
 - [ ] Verify success message appears
 - [ ] Open webapp in browser
 - [ ] Go to login page
-- [ ] Enter email: 1mikedwin@gmail.com
-- [ ] Enter password: GguzgpD0t5XXe0ms
+- [ ] Enter email: admin@example.com
+- [ ] Enter password: <secure_password_here>
 - [ ] Click login
 - [ ] Should redirect to Manager Dashboard
 - [ ] Verify "List New Hostel" button appears

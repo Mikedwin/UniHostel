@@ -12,7 +12,7 @@ Your `.env` file contains sensitive credentials that are visible in this convers
 1. Go to [MongoDB Atlas](https://cloud.mongodb.com/)
 2. Log in with your account
 3. Click **Database Access** in the left sidebar
-4. Find user: `1mikedwin_db_user`
+4. Find user: `admin_user`
 5. Click **Edit** (pencil icon)
 6. Click **Edit Password**
 7. Click **Autogenerate Secure Password** (recommended)
@@ -21,7 +21,7 @@ Your `.env` file contains sensitive credentials that are visible in this convers
 
 ### Update Your .env File:
 ```env
-MONGO_URI=mongodb+srv://1mikedwin_db_user:NEW_PASSWORD_HERE@cluster0.paznchc.mongodb.net/unihostel?retryWrites=true&w=majority&appName=Cluster0
+MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/unihostel?retryWrites=true&w=majority&appName=Cluster0
 ```
 
 **Replace `NEW_PASSWORD_HERE` with the password you copied.**

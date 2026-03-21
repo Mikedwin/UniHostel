@@ -4,7 +4,7 @@ echo UniHostel - Admin Account Initialization
 echo ========================================
 echo.
 echo This will create a manager account with:
-echo Email: 1mikedwin@gmail.com
+echo Email: admin@example.com
 echo Role: Manager
 echo.
 pause

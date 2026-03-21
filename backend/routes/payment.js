@@ -1,13 +1,108 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
+const mongoose = require('mongoose');
 const Application = require('../models/Application');
 const Hostel = require('../models/Hostel');
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
-const { auth } = require('../middleware/auth');
+const { auth, checkRole } = require('../middleware/auth');
 const { sendPaymentSuccessEmail } = require('../utils/emailService');
 const logger = require('../config/logger');
+
+const canAccessApplicationPayment = (user, application) => {
+  if (!user || !application) return false;
+
+  if (user.role === 'admin') {
+    return true;
+  }
+
+  const studentId = application.studentId && application.studentId.toString
+    ? application.studentId.toString()
+    : String(application.studentId);
+
+  return user.role === 'student' && studentId === user.id;
+};
+
+const ensureApplicationPaymentAccess = (req, res, application) => {
+  if (canAccessApplicationPayment(req.user, application)) {
+    return true;
+  }
+
+  res.status(403).json({ message: 'Access denied: You can only access your own payment records.' });
+  return false;
+};
+
+const MAX_BATCH_STATUS_IDS = 25;
+
+const formatPaymentStatus = (application) => ({
+  applicationId: application._id,
+  paymentStatus: application.paymentStatus,
+  status: application.status,
+  paymentReference: application.paymentReference,
+  paidAt: application.paidAt,
+  canPay: application.status === 'approved_for_payment' && application.paymentStatus !== 'paid'
+});
+
+const syncApplicationPaymentStatus = async (application) => {
+  if (!application?.paymentReference || application.paymentStatus === 'paid') {
+    return application;
+  }
+
+  try {
+    const paystackResponse = await axios.get(
+      `https://api.paystack.co/transaction/verify/${application.paymentReference}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
+        }
+      }
+    );
+
+    const { status } = paystackResponse.data.data;
+
+    if (status === 'success') {
+      const existingTransaction = await Transaction.findOne({ paymentReference: application.paymentReference });
+
+      if (!existingTransaction) {
+        const hostel = application.hostelId?.managerId
+          ? application.hostelId
+          : await Hostel.findById(application.hostelId).select('managerId');
+
+        if (!hostel || !hostel.managerId) {
+          throw new Error(`Hostel manager not found for application ${application._id}`);
+        }
+
+        const transaction = new Transaction({
+          applicationId: application._id,
+          studentId: application.studentId,
+          hostelId: hostel._id,
+          managerId: hostel.managerId,
+          hostelFee: application.hostelFee,
+          adminCommission: application.adminCommission,
+          totalAmount: application.totalAmount,
+          roomType: application.roomType,
+          semester: application.semester,
+          paymentReference: application.paymentReference,
+          paymentStatus: 'paid',
+          paidAt: new Date()
+        });
+        await transaction.save();
+      }
+
+      application.paymentStatus = 'paid';
+      application.status = 'paid_awaiting_final';
+      application.paidAt = new Date();
+      await application.save();
+
+      logger.info(`Auto-fixed payment status for application ${application._id}`);
+    }
+  } catch (paystackError) {
+    logger.error('Paystack verification error:', paystackError.message);
+  }
+
+  return application;
+};
 
 // Step 4: Initialize payment (only for approved_for_payment applications)
 router.post('/initialize', auth, async (req, res) => {
@@ -35,6 +130,11 @@ router.post('/initialize', auth, async (req, res) => {
       console.error('Application not found:', applicationId);
       return res.status(404).json({ message: 'Application not found' });
     }
+
+    if (!ensureApplicationPaymentAccess(req, res, application)) {
+      return;
+    }
+
     console.log('Application found:', application._id);
     console.log('Application status:', application.status);
     console.log('Payment status:', application.paymentStatus);
@@ -211,6 +311,10 @@ router.get('/verify/:reference', auth, async (req, res) => {
     if (status === 'success') {
       const application = await Application.findById(metadata.applicationId).populate('hostelId');
       if (application) {
+        if (!ensureApplicationPaymentAccess(req, res, application)) {
+          return;
+        }
+
         const existingTransaction = await Transaction.findOne({ paymentReference: reference });
         
         if (!existingTransaction) {
@@ -337,71 +441,70 @@ router.post('/webhook', async (req, res) => {
 });
 
 // NEW: Check payment status for application (prevents duplicate payments)
+router.post('/status/batch', auth, async (req, res) => {
+  try {
+    const applicationIds = Array.isArray(req.body.applicationIds)
+      ? [...new Set(req.body.applicationIds.filter((id) => typeof id === 'string' && id.trim()))]
+      : null;
+
+    if (!applicationIds) {
+      return res.status(400).json({ message: 'applicationIds must be an array of application IDs' });
+    }
+
+    if (applicationIds.length === 0) {
+      return res.json({ statuses: [] });
+    }
+
+    if (applicationIds.length > MAX_BATCH_STATUS_IDS) {
+      return res.status(400).json({ message: `You can only check up to ${MAX_BATCH_STATUS_IDS} applications at a time` });
+    }
+
+    const invalidId = applicationIds.find((id) => !mongoose.Types.ObjectId.isValid(id));
+    if (invalidId) {
+      return res.status(400).json({ message: `Invalid application ID: ${invalidId}` });
+    }
+
+    const applications = await Application.find({ _id: { $in: applicationIds } })
+      .populate('hostelId', 'managerId');
+
+    if (applications.length !== applicationIds.length) {
+      return res.status(404).json({ message: 'One or more applications were not found' });
+    }
+
+    const unauthorizedApplication = applications.find((application) => !canAccessApplicationPayment(req.user, application));
+    if (unauthorizedApplication) {
+      return res.status(403).json({ message: 'Access denied: You can only access your own payment records.' });
+    }
+
+    const syncedApplications = await Promise.all(applications.map(syncApplicationPaymentStatus));
+    const statusMap = new Map(
+      syncedApplications.map((application) => [application._id.toString(), formatPaymentStatus(application)])
+    );
+
+    res.json({
+      statuses: applicationIds.map((applicationId) => statusMap.get(applicationId)).filter(Boolean)
+    });
+  } catch (error) {
+    logger.error('Batch payment status check error:', error);
+    res.status(500).json({ message: 'Failed to check payment statuses' });
+  }
+});
+
 router.get('/status/:applicationId', auth, async (req, res) => {
   try {
     const { applicationId } = req.params;
     
-    const application = await Application.findById(applicationId);
+    const application = await Application.findById(applicationId).populate('hostelId', 'managerId');
     if (!application) {
       return res.status(404).json({ message: 'Application not found' });
     }
-    
-    // If application has payment reference, check with Paystack
-    if (application.paymentReference && application.paymentStatus !== 'paid') {
-      try {
-        const paystackResponse = await axios.get(
-          `https://api.paystack.co/transaction/verify/${application.paymentReference}`,
-          {
-            headers: {
-              Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
-            }
-          }
-        );
-        
-        const { status, metadata } = paystackResponse.data.data;
-        
-        if (status === 'success') {
-          // Payment was successful but not updated in our system
-          const existingTransaction = await Transaction.findOne({ paymentReference: application.paymentReference });
-          
-          if (!existingTransaction) {
-            const transaction = new Transaction({
-              applicationId: application._id,
-              studentId: application.studentId,
-              hostelId: application.hostelId,
-              managerId: application.hostelId,
-              hostelFee: application.hostelFee,
-              adminCommission: application.adminCommission,
-              totalAmount: application.totalAmount,
-              roomType: application.roomType,
-              semester: application.semester,
-              paymentReference: application.paymentReference,
-              paymentStatus: 'paid',
-              paidAt: new Date()
-            });
-            await transaction.save();
-          }
-          
-          application.paymentStatus = 'paid';
-          application.status = 'paid_awaiting_final';
-          application.paidAt = new Date();
-          await application.save();
-          
-          logger.info(`Auto-fixed payment status for application ${applicationId}`);
-        }
-      } catch (paystackError) {
-        logger.error('Paystack verification error:', paystackError.message);
-      }
+
+    if (!ensureApplicationPaymentAccess(req, res, application)) {
+      return;
     }
-    
-    res.json({
-      applicationId: application._id,
-      paymentStatus: application.paymentStatus,
-      status: application.status,
-      paymentReference: application.paymentReference,
-      paidAt: application.paidAt,
-      canPay: application.status === 'approved_for_payment' && application.paymentStatus !== 'paid'
-    });
+
+    await syncApplicationPaymentStatus(application);
+    res.json(formatPaymentStatus(application));
   } catch (error) {
     logger.error('Payment status check error:', error);
     res.status(500).json({ message: 'Failed to check payment status' });
@@ -409,7 +512,7 @@ router.get('/status/:applicationId', auth, async (req, res) => {
 });
 
 // NEW: Admin endpoint to manually verify payment
-router.post('/admin/verify-payment', auth, async (req, res) => {
+router.post('/admin/verify-payment', auth, checkRole('admin'), async (req, res) => {
   try {
     const { applicationId, paymentReference } = req.body;
     
