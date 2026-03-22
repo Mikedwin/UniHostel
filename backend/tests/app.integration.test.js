@@ -91,6 +91,9 @@ before(async () => {
   process.env.ADMIN_COMMISSION_PERCENT = '3';
   process.env.PAYSTACK_SECRET_KEY = 'sk_test_integration_key';
   process.env.VISITOR_TRACKING_ENABLED = 'false';
+  process.env.TURNSTILE_ENABLED = 'false';
+  process.env.TURNSTILE_SECRET_KEY = '';
+  process.env.TURNSTILE_EXPECTED_HOSTNAME = '';
 
   nodemailer.createTransport = () => ({
     sendMail: async (message) => {
@@ -380,6 +383,104 @@ test('forgot password stores a hashed reset token and accepts the emailed token 
     .expect(200);
 
   assert.ok(loginResponse.body.csrfToken);
+});
+
+test('turnstile can protect register, login, and forgot-password flows when enabled', async () => {
+  const previousTurnstileEnabled = process.env.TURNSTILE_ENABLED;
+  const previousTurnstileSecret = process.env.TURNSTILE_SECRET_KEY;
+  const previousTurnstileHostname = process.env.TURNSTILE_EXPECTED_HOSTNAME;
+  const originalFetch = global.fetch;
+
+  process.env.TURNSTILE_ENABLED = 'true';
+  process.env.TURNSTILE_SECRET_KEY = 'turnstile-secret-key';
+  process.env.TURNSTILE_EXPECTED_HOSTNAME = 'localhost';
+
+  global.fetch = async (_url, options = {}) => {
+    const params = new URLSearchParams(options.body);
+    const responseToken = params.get('response');
+
+    const actionByToken = {
+      'register-token': 'register',
+      'login-token': 'login',
+      'forgot-token': 'forgot_password'
+    };
+
+    return {
+      ok: true,
+      json: async () => ({
+        success: true,
+        action: actionByToken[responseToken],
+        hostname: 'localhost'
+      })
+    };
+  };
+
+  const missingRegisterToken = await request(app)
+    .post('/api/auth/register')
+    .send({
+      name: 'Turnstile Student',
+      email: 'turnstile.student@example.com',
+      password: 'Password123!',
+      tosAccepted: true,
+      privacyPolicyAccepted: true
+    })
+    .expect(400);
+
+  assert.match(missingRegisterToken.body.message, /security check/i);
+
+  const registerResponse = await request(app)
+    .post('/api/auth/register')
+    .send({
+      name: 'Turnstile Student',
+      email: 'turnstile.student@example.com',
+      password: 'Password123!',
+      tosAccepted: true,
+      privacyPolicyAccepted: true,
+      turnstileToken: 'register-token'
+    })
+    .expect(201);
+
+  assert.match(registerResponse.body.message, /now sign in/i);
+
+  const missingLoginToken = await request(app)
+    .post('/api/auth/login')
+    .send({ email: 'turnstile.student@example.com', password: 'Password123!' })
+    .expect(400);
+
+  assert.match(missingLoginToken.body.message, /security check/i);
+
+  const loginResponse = await request(app)
+    .post('/api/auth/login')
+    .send({
+      email: 'turnstile.student@example.com',
+      password: 'Password123!',
+      turnstileToken: 'login-token'
+    })
+    .expect(200);
+
+  assert.ok(loginResponse.body.csrfToken);
+
+  const missingForgotToken = await request(app)
+    .post('/api/auth/forgot-password')
+    .send({ email: 'turnstile.student@example.com' })
+    .expect(400);
+
+  assert.match(missingForgotToken.body.message, /security check/i);
+
+  const forgotPasswordResponse = await request(app)
+    .post('/api/auth/forgot-password')
+    .send({
+      email: 'turnstile.student@example.com',
+      turnstileToken: 'forgot-token'
+    })
+    .expect(200);
+
+  assert.match(forgotPasswordResponse.body.message, /if an account exists/i);
+
+  global.fetch = originalFetch;
+  process.env.TURNSTILE_ENABLED = previousTurnstileEnabled;
+  process.env.TURNSTILE_SECRET_KEY = previousTurnstileSecret;
+  process.env.TURNSTILE_EXPECTED_HOSTNAME = previousTurnstileHostname;
 });
 
 test('legacy security-question password reset endpoints are disabled', async () => {

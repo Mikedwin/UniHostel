@@ -3,12 +3,22 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { Mail, ArrowLeft } from 'lucide-react';
 import API_URL from '../config';
+import TurnstileWidget from '../components/security/TurnstileWidget';
+import useTurnstileGate from '../utils/useTurnstileGate';
 
 const ForgotPassword = () => {
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const {
+        turnstileEnabled,
+        turnstileResetKey,
+        turnstileToken,
+        setTurnstileToken,
+        resetTurnstile,
+        validateTurnstile
+    } = useTurnstileGate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -16,12 +26,20 @@ const ForgotPassword = () => {
         setError('');
         setMessage('');
         try {
-            const res = await axios.post(`${API_URL}/api/auth/forgot-password`, { email });
+            if (!validateTurnstile(setError)) {
+                return;
+            }
+
+            const res = await axios.post(`${API_URL}/api/auth/forgot-password`, {
+                email,
+                turnstileToken
+            });
             setMessage(res.data.message);
             setEmail('');
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to send reset link');
         } finally {
+            resetTurnstile();
             setLoading(false);
         }
     };
@@ -63,6 +81,15 @@ const ForgotPassword = () => {
                             onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                         />
                     </div>
+
+                    {turnstileEnabled && (
+                        <TurnstileWidget
+                            action="forgot_password"
+                            resetKey={turnstileResetKey}
+                            onTokenChange={setTurnstileToken}
+                            onError={setError}
+                        />
+                    )}
 
                     <button
                         type="submit"

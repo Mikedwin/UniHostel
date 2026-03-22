@@ -3,6 +3,8 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { GraduationCap, Eye, EyeOff, User, Mail, Lock, CheckCircle } from 'lucide-react';
 import { API_ENDPOINTS } from '../config/api';
+import TurnstileWidget from '../components/security/TurnstileWidget';
+import useTurnstileGate from '../utils/useTurnstileGate';
 
 const StudentRegister = () => {
     const [formData, setFormData] = useState({ 
@@ -19,6 +21,14 @@ const StudentRegister = () => {
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const {
+        turnstileEnabled,
+        turnstileResetKey,
+        turnstileToken,
+        setTurnstileToken,
+        resetTurnstile,
+        validateTurnstile
+    } = useTurnstileGate();
 
     const resetForm = () => {
         setFormData({
@@ -53,14 +63,24 @@ const StudentRegister = () => {
                 setError('Password must be at least 8 characters long');
                 return;
             }
+
+            if (!validateTurnstile(setError)) {
+                return;
+            }
             
             const { confirmPassword, ...submitData } = formData;
-            const res = await axios.post(API_ENDPOINTS.REGISTER, { ...submitData, tosAccepted, privacyPolicyAccepted: privacyAccepted });
+            const res = await axios.post(API_ENDPOINTS.REGISTER, {
+                ...submitData,
+                tosAccepted,
+                privacyPolicyAccepted: privacyAccepted,
+                turnstileToken
+            });
             setSuccessMessage(res.data?.message || 'Registration successful. You can now sign in.');
             resetForm();
         } catch (err) {
             setError(err.response?.data?.message || err.message || 'Registration failed');
         } finally {
+            resetTurnstile();
             setLoading(false);
         }
     };
@@ -216,6 +236,15 @@ const StudentRegister = () => {
                                 <span className="text-sm text-gray-700">I accept the <Link to="/privacy" target="_blank" className="font-semibold hover:underline" style={{ color: '#23817A' }}>Privacy Policy</Link></span>
                             </label>
                         </div>
+
+                        {turnstileEnabled && (
+                            <TurnstileWidget
+                                action="register"
+                                resetKey={turnstileResetKey}
+                                onTokenChange={setTurnstileToken}
+                                onError={setError}
+                            />
+                        )}
                         
                         <button 
                             type="submit" 

@@ -50,6 +50,11 @@ const visitorRoutes = require('./routes/visitors');
 const { generateCsrfToken } = require('./middleware/csrf');
 const { setAuthCookie } = require('./utils/authCookies');
 const { sendServerError } = require('./utils/serverError');
+const {
+  getTurnstileRemoteIp,
+  isTurnstileEnabled,
+  verifyTurnstileToken
+} = require('./utils/turnstile');
 
 const app = express();
 const VERIFICATION_TOKEN_EXPIRY_HOURS = parseInt(process.env.VERIFICATION_TOKEN_EXPIRY_HOURS, 10) || 24;
@@ -411,6 +416,47 @@ const DUMMY_PASSWORD_HASH = bcrypt.hashSync('UniHostel-login-placeholder-passwor
 const shouldExposeApiDocs = () => (
   process.env.NODE_ENV !== 'production' || process.env.ENABLE_API_DOCS_IN_PRODUCTION === 'true'
 );
+const TURNSTILE_ROUTE_MESSAGES = {
+  forgot_password: 'Please complete the security check before requesting a reset link.',
+  login: 'Please complete the security check before signing in.',
+  register: 'Please complete the security check before creating an account.'
+};
+
+const verifyTurnstileForRequest = async (req, res, expectedAction) => {
+  if (!isTurnstileEnabled()) {
+    return true;
+  }
+
+  const result = await verifyTurnstileToken({
+    token: req.body?.turnstileToken,
+    remoteIp: getTurnstileRemoteIp(req),
+    expectedAction
+  });
+
+  if (result.success) {
+    return true;
+  }
+
+  if (result.configError) {
+    logger.error('Turnstile is enabled but not configured correctly');
+    res.status(503).json({ message: result.message });
+    return false;
+  }
+
+  if (result.errorCodes || result.action || result.hostname) {
+    logger.warn('Turnstile verification rejected request', {
+      action: expectedAction,
+      errorCodes: result.errorCodes,
+      verifiedAction: result.action,
+      verifiedHostname: result.hostname
+    });
+  }
+
+  res.status(400).json({
+    message: TURNSTILE_ROUTE_MESSAGES[expectedAction] || result.message
+  });
+  return false;
+};
 
 const createAuthToken = (user) => jwt.sign(
   {
@@ -602,6 +648,10 @@ app.post('/api/auth/register', validateInput, async (req, res) => {
     if (role && role !== 'student') {
       return res.status(403).json({ message: 'Only student registration is allowed. Managers must be registered by administrators.' });
     }
+
+    if (!await verifyTurnstileForRequest(req, res, 'register')) {
+      return;
+    }
     
     const normalizedEmail = email.toLowerCase().trim();
     const normalizedName = name.trim();
@@ -732,6 +782,10 @@ app.post('/api/auth/login', validateInput, async (req, res) => {
     
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
+    }
+
+    if (!await verifyTurnstileForRequest(req, res, 'login')) {
+      return;
     }
     
     const user = await User.findOne({ email: email.toLowerCase().trim() });
@@ -883,6 +937,10 @@ app.post('/api/auth/forgot-password', forgotPasswordLimiter, async (req, res) =>
     
     if (!email) {
       return res.status(400).json({ message: 'Email is required' });
+    }
+
+    if (!await verifyTurnstileForRequest(req, res, 'forgot_password')) {
+      return;
     }
     
     const user = await User.findOne({ email: email.toLowerCase().trim() });

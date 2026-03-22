@@ -8,5 +8,7 @@ const API_URL = normalizeApiRoot(runtimeEnv.VITE_API_URL || legacyEnv.REACT_APP_
 export const API_BASE_URL = `${API_URL}/api`;
 
 export const PAYSTACK_PUBLIC_KEY = (runtimeEnv.VITE_PAYSTACK_PUBLIC_KEY || legacyEnv.REACT_APP_PAYSTACK_PUBLIC_KEY || '').trim();
+export const TURNSTILE_SITE_KEY = (runtimeEnv.VITE_TURNSTILE_SITE_KEY || '').trim();
+export const TURNSTILE_ENABLED = (runtimeEnv.VITE_TURNSTILE_ENABLED || '').trim() === 'true' && Boolean(TURNSTILE_SITE_KEY);
 
 export default API_URL;

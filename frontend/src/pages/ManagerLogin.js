@@ -4,6 +4,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Building2, Eye, EyeOff } from 'lucide-react';
 import { API_ENDPOINTS } from '../config/api';
+import TurnstileWidget from '../components/security/TurnstileWidget';
+import useTurnstileGate from '../utils/useTurnstileGate';
 
 const ManagerLogin = () => {
     const [formData, setFormData] = useState({ email: '', password: '' });
@@ -12,6 +14,14 @@ const ManagerLogin = () => {
     const [showPassword, setShowPassword] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
+    const {
+        turnstileEnabled,
+        turnstileResetKey,
+        turnstileToken,
+        setTurnstileToken,
+        resetTurnstile,
+        validateTurnstile
+    } = useTurnstileGate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -19,7 +29,14 @@ const ManagerLogin = () => {
         setError('');
         
         try {
-            const res = await axios.post(API_ENDPOINTS.LOGIN, formData);
+            if (!validateTurnstile(setError)) {
+                return;
+            }
+
+            const res = await axios.post(API_ENDPOINTS.LOGIN, {
+                ...formData,
+                turnstileToken
+            });
             
             const role = res.data.user.role;
             
@@ -38,6 +55,7 @@ const ManagerLogin = () => {
         } catch (err) {
             setError(err.response?.data?.message || 'Unable to sign in right now. Please try again later.');
         } finally {
+            resetTurnstile();
             setLoading(false);
         }
     };
@@ -112,6 +130,15 @@ const ManagerLogin = () => {
                                 </Link>
                             </div>
                         </div>
+
+                        {turnstileEnabled && (
+                            <TurnstileWidget
+                                action="login"
+                                resetKey={turnstileResetKey}
+                                onTokenChange={setTurnstileToken}
+                                onError={setError}
+                            />
+                        )}
                         
                         <button 
                             type="submit" 

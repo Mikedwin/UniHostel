@@ -5,6 +5,9 @@ const request = require('supertest');
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-with-at-least-thirty-two-characters';
 process.env.MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/unihostel-test';
+process.env.TURNSTILE_ENABLED = 'false';
+process.env.TURNSTILE_SECRET_KEY = '';
+process.env.TURNSTILE_EXPECTED_HOSTNAME = '';
 
 const { app, shouldExposeApiDocs } = require('../server');
 
