@@ -69,7 +69,7 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <Suspense fallback={<LoadingSpinner message="Loading page..." />}>
+      <Suspense fallback={<LoadingSpinner message="Loading page..." fullScreen />}>
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/hostels" element={<HostelList />} />

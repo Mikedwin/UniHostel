@@ -429,9 +429,13 @@ const ManagerDashboard = () => {
 
   const tabFallback = (message) => (
     <div className="rounded-lg bg-white shadow-sm">
-      <LoadingSpinner message={message} />
+      <LoadingSpinner message={message} className="min-h-[24rem]" />
     </div>
   );
+
+  if (loading) {
+    return <LoadingSpinner message="Loading your dashboard..." fullScreen />;
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -471,8 +475,6 @@ const ManagerDashboard = () => {
       )}
 
       <ManagerDashboardHeader activeTab={activeTab} onTabChange={setActiveTab} />
-
-      {loading && <LoadingSpinner message="Loading your dashboard..." />}
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">

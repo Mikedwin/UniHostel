@@ -1,7 +1,7 @@
 import React from 'react';
 import { Home } from 'lucide-react';
 
-const LoadingSpinner = ({ message = 'Loading...', fullScreen = false }) => {
+const LoadingSpinner = ({ message = 'Loading...', fullScreen = false, className = '' }) => {
     const content = (
         <div className="flex flex-col items-center justify-center gap-4">
             <div className="relative">
@@ -13,14 +13,14 @@ const LoadingSpinner = ({ message = 'Loading...', fullScreen = false }) => {
 
     if (fullScreen) {
         return (
-            <div className="fixed inset-0 bg-white bg-opacity-90 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/90 px-4 backdrop-blur-sm">
                 {content}
             </div>
         );
     }
 
     return (
-        <div className="flex items-center justify-center py-12">
+        <div className={`flex min-h-[60vh] w-full items-center justify-center px-4 ${className}`}>
             {content}
         </div>
     );

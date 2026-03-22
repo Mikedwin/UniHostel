@@ -298,7 +298,7 @@ const StudentDashboard = () => {
                 </div>
             )}
 
-            {loading ? <LoadingSpinner /> : applications.length === 0 ? (
+            {loading ? <LoadingSpinner message="Loading your applications..." fullScreen /> : applications.length === 0 ? (
                 <div className="bg-white p-8 rounded-lg text-center">
                     <p className="text-gray-500">No applications yet.</p>
                 </div>
