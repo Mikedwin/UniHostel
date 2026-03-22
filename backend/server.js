@@ -36,7 +36,6 @@ const { cacheMiddleware } = require('./middleware/cache');
 const { scheduleDataRetentionCleanup } = require('./services/dataRetention');
 const cache = require('./services/cache');
 const { uploadBuffer } = require('./utils/cloudinary');
-const { sendVerificationEmail } = require('./utils/emailService');
 const adminRoutes = require('./routes/admin');
 const authRoutes = require('./routes/auth');
 const paymentRoutes = require('./routes/payment');
@@ -78,16 +77,6 @@ const validateRuntimeEnv = ({ requireDatabase = true } = {}) => {
 
   if (process.env.JWT_SECRET.length < 32) {
     throw new Error('JWT_SECRET must be at least 32 characters long');
-  }
-};
-
-const applyVerificationToken = (user) => {
-  user.verificationToken = crypto.randomBytes(32).toString('hex');
-  user.verificationTokenExpires = new Date(Date.now() + VERIFICATION_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000);
-  user.isVerified = false;
-
-  if (user.role === 'student') {
-    user.accountStatus = 'pending_verification';
   }
 };
 
@@ -556,31 +545,6 @@ app.post('/api/auth/register', validateInput, async (req, res) => {
     const existingUser = await User.findOne({ email: normalizedEmail });
 
     if (existingUser) {
-      if (existingUser.role === 'student' && !existingUser.isVerified) {
-        applyVerificationToken(existingUser);
-        await existingUser.save();
-        try {
-          const verificationSent = await sendVerificationEmail(existingUser.email, existingUser.name, existingUser.verificationToken);
-
-          if (!verificationSent) {
-            return res.status(503).json({
-              message: 'Email verification is temporarily unavailable. Please try again later.'
-            });
-          }
-        } catch (emailError) {
-          logger.error('Verification email resend failed during registration:', emailError);
-          return res.status(503).json({
-            message: 'Email verification is temporarily unavailable. Please try again later.'
-          });
-        }
-
-        return res.status(409).json({
-          message: 'An account with this email already exists and is awaiting verification. We sent a new verification email.',
-          verificationRequired: true,
-          email: existingUser.email
-        });
-      }
-
       return res.status(400).json({ message: 'User already exists' });
     }
 
@@ -591,38 +555,20 @@ app.post('/api/auth/register', validateInput, async (req, res) => {
       email: normalizedEmail, 
       password: hashedPassword, 
       role: 'student',
+      isVerified: true,
+      accountStatus: 'active',
       tosAccepted: true,
       tosAcceptedAt: new Date(),
       privacyPolicyAccepted: true,
       privacyPolicyAcceptedAt: new Date()
     });
-
-    applyVerificationToken(newUser);
     await newUser.save();
-
-    try {
-      const verificationSent = await sendVerificationEmail(newUser.email, newUser.name, newUser.verificationToken);
-
-      if (!verificationSent) {
-        await User.deleteOne({ _id: newUser._id });
-        return res.status(503).json({
-          message: 'Registration is temporarily unavailable because email verification is not configured. Please try again later.'
-        });
-      }
-    } catch (emailError) {
-      await User.deleteOne({ _id: newUser._id });
-      logger.error('Verification email send failed during registration:', emailError);
-      return res.status(503).json({
-        message: 'Registration is temporarily unavailable because we could not send the verification email. Please try again later.'
-      });
-    }
 
     logger.info(`New student registered: ${newUser._id}`);
 
     res.status(201).json({
-      verificationRequired: true,
       email: newUser.email,
-      message: 'Registration successful. Please check your email to verify your account.'
+      message: 'Registration successful. You can now sign in.'
     });
   } catch (err) {
     console.error('Registration error:', err);
@@ -672,39 +618,9 @@ app.post('/api/auth/resend-verification', verificationEmailLimiter, async (req, 
       return res.status(400).json({ message: 'Email is required' });
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
-    const user = await User.findOne({ email: normalizedEmail, role: 'student' });
-
-    if (!user) {
-      return res.json({ message: 'If an unverified student account exists, a new verification email has been sent.' });
-    }
-
-    if (user.isVerified) {
-      return res.json({ message: 'This email has already been verified. Please sign in.' });
-    }
-
-    applyVerificationToken(user);
-    await user.save();
-    let verificationSent = false;
-    try {
-      verificationSent = await sendVerificationEmail(user.email, user.name, user.verificationToken);
-    } catch (emailError) {
-      logger.error('Verification email resend failed:', emailError);
-      return res.status(503).json({
-        message: 'Email verification is temporarily unavailable. Please try again later.'
-      });
-    }
-
-    if (!verificationSent) {
-      return res.status(503).json({
-        message: 'Email verification is temporarily unavailable. Please try again later.'
-      });
-    }
-
     res.json({
-      message: 'A new verification email has been sent.',
-      verificationRequired: true,
-      email: user.email
+      message: 'Email verification is not required. You can sign in once your account is created.',
+      email: email.toLowerCase().trim()
     });
   } catch (err) {
     logger.error('Resend verification error:', err);
@@ -811,25 +727,13 @@ app.post('/api/auth/login', validateInput, async (req, res) => {
       });
     }
 
-    const isStudentAwaitingVerification =
-      user.role === 'student'
-      && !user.isVerified
-      && user.accountStatus === 'pending_verification';
-
-    if (isStudentAwaitingVerification) {
-      return res.status(403).json({
-        message: 'Please verify your email address before signing in.',
-        verificationRequired: true,
-        email: user.email
-      });
-    }
-
-    // Auto-heal legacy student accounts that predate the verification rollout.
-    if (user.role === 'student' && !user.isVerified && user.accountStatus === 'active') {
+    // Student accounts no longer require email verification.
+    if (user.role === 'student' && !user.isVerified) {
       user.isVerified = true;
+      user.accountStatus = 'active';
       user.verificationToken = undefined;
       user.verificationTokenExpires = undefined;
-      logger.info(`Auto-verified legacy student account during login: ${user.email}`);
+      logger.info(`Auto-activated student account during login: ${user.email}`);
     }
 
     // Successful login - reset failed attempts

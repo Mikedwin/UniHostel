@@ -132,7 +132,7 @@ after(async () => {
   }
 });
 
-test('student registration requires verification before login and succeeds after verification', async () => {
+test('student registration creates an active account that can sign in immediately', async () => {
   const registrationPayload = {
     name: 'Ama Student',
     email: 'ama.student@example.com',
@@ -146,33 +146,14 @@ test('student registration requires verification before login and succeeds after
     .send(registrationPayload)
     .expect(201);
 
-  assert.equal(registrationResponse.body.verificationRequired, true);
   assert.equal(registrationResponse.body.email, registrationPayload.email);
-  assert.equal(sentEmails.length, 1);
+  assert.match(registrationResponse.body.message, /now sign in/i);
+  assert.equal(sentEmails.length, 0);
 
   const registeredUser = await User.findOne({ email: registrationPayload.email });
   assert.ok(registeredUser);
-  assert.equal(registeredUser.isVerified, false);
-  assert.equal(registeredUser.accountStatus, 'pending_verification');
-  assert.ok(registeredUser.verificationToken);
-
-  const blockedLogin = await request(app)
-    .post('/api/auth/login')
-    .send({ email: registrationPayload.email, password: registrationPayload.password })
-    .expect(403);
-
-  assert.equal(blockedLogin.body.verificationRequired, true);
-
-  const verifyResponse = await request(app)
-    .get(`/api/auth/verify-email/${registeredUser.verificationToken}`)
-    .expect(200);
-
-  assert.match(verifyResponse.body.message, /verified successfully/i);
-
-  const verifiedUser = await User.findById(registeredUser._id);
-  assert.equal(verifiedUser.isVerified, true);
-  assert.equal(verifiedUser.accountStatus, 'active');
-  assert.equal(verifiedUser.verificationToken, undefined);
+  assert.equal(registeredUser.isVerified, true);
+  assert.equal(registeredUser.accountStatus, 'active');
 
   const loginResponse = await request(app)
     .post('/api/auth/login')
@@ -189,7 +170,7 @@ test('student registration requires verification before login and succeeds after
   assert.equal(loggedInUser.failedLoginAttempts, 0);
 });
 
-test('legacy active student accounts can log in while pending verification accounts stay blocked', async () => {
+test('legacy student accounts are normalized on login even if they were previously unverified', async () => {
   const password = 'Password123!';
 
   const legacyStudent = await createUser({
@@ -224,10 +205,13 @@ test('legacy active student accounts can log in while pending verification accou
   const pendingLogin = await request(app)
     .post('/api/auth/login')
     .send({ email: 'pending.student@example.com', password })
-    .expect(403);
+    .expect(200);
 
-  assert.equal(pendingLogin.body.verificationRequired, true);
-  assert.match(pendingLogin.body.message, /verify your email/i);
+  assert.ok(pendingLogin.body.token);
+
+  const activatedPendingStudent = await User.findOne({ email: 'pending.student@example.com' });
+  assert.equal(activatedPendingStudent.isVerified, true);
+  assert.equal(activatedPendingStudent.accountStatus, 'active');
 });
 
 test('public hostel listing returns only active available hostels with manager names', async () => {

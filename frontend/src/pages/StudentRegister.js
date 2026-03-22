@@ -16,9 +16,6 @@ const StudentRegister = () => {
     const [privacyAccepted, setPrivacyAccepted] = useState(false);
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
-    const [registeredEmail, setRegisteredEmail] = useState('');
-    const [resendMessage, setResendMessage] = useState('');
-    const [resending, setResending] = useState(false);
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -35,31 +32,11 @@ const StudentRegister = () => {
         setPrivacyAccepted(false);
     };
 
-    const handleResendVerification = async () => {
-        if (!registeredEmail) {
-            return;
-        }
-
-        setResending(true);
-        setError('');
-        setResendMessage('');
-
-        try {
-            const res = await axios.post(API_ENDPOINTS.RESEND_VERIFICATION, { email: registeredEmail });
-            setResendMessage(res.data?.message || 'A new verification email has been sent.');
-        } catch (err) {
-            setError(err.response?.data?.message || 'Unable to resend verification email right now.');
-        } finally {
-            setResending(false);
-        }
-    };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
         setSuccessMessage('');
-        setResendMessage('');
         
         try {
             if (!tosAccepted || !privacyAccepted) {
@@ -79,16 +56,9 @@ const StudentRegister = () => {
             
             const { confirmPassword, ...submitData } = formData;
             const res = await axios.post(API_ENDPOINTS.REGISTER, { ...submitData, tosAccepted, privacyPolicyAccepted: privacyAccepted });
-            setRegisteredEmail(res.data?.email || submitData.email.trim().toLowerCase());
-            setSuccessMessage(res.data?.message || 'Registration successful. Please check your email to verify your account.');
+            setSuccessMessage(res.data?.message || 'Registration successful. You can now sign in.');
             resetForm();
         } catch (err) {
-            if (err.response?.data?.verificationRequired) {
-                setRegisteredEmail(err.response?.data?.email || formData.email.trim().toLowerCase());
-                setSuccessMessage(err.response?.data?.message || 'Your account is waiting for email verification.');
-                return;
-            }
-
             setError(err.response?.data?.message || err.message || 'Registration failed');
         } finally {
             setLoading(false);
@@ -120,14 +90,8 @@ const StudentRegister = () => {
                             <div className="flex items-start gap-3">
                                 <CheckCircle className="h-6 w-6 text-green-600 mt-0.5" />
                                 <div className="flex-1">
-                                    <h3 className="text-base font-semibold text-green-800">Check your email</h3>
+                                    <h3 className="text-base font-semibold text-green-800">Account created</h3>
                                     <p className="mt-1 text-sm text-green-700">{successMessage}</p>
-                                    {registeredEmail && (
-                                        <p className="mt-2 text-sm text-green-800 font-medium">{registeredEmail}</p>
-                                    )}
-                                    {resendMessage && (
-                                        <p className="mt-3 text-sm text-green-700">{resendMessage}</p>
-                                    )}
                                     <div className="mt-4 flex flex-col sm:flex-row gap-3">
                                         <Link
                                             to="/student-login"
@@ -136,14 +100,6 @@ const StudentRegister = () => {
                                         >
                                             Go to Student Login
                                         </Link>
-                                        <button
-                                            type="button"
-                                            onClick={handleResendVerification}
-                                            disabled={resending}
-                                            className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-green-300 text-green-800 font-medium disabled:opacity-50"
-                                        >
-                                            {resending ? 'Sending...' : 'Resend Verification Email'}
-                                        </button>
                                     </div>
                                 </div>
                             </div>

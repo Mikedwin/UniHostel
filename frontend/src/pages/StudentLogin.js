@@ -9,40 +9,16 @@ const StudentLogin = () => {
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [error, setError] = useState('');
     const [infoMessage, setInfoMessage] = useState('');
-    const [resending, setResending] = useState(false);
-    const [verificationEmail, setVerificationEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
-
-    const handleResendVerification = async () => {
-        const email = verificationEmail || formData.email.trim().toLowerCase();
-        if (!email) {
-            setError('Enter your email address first.');
-            return;
-        }
-
-        setResending(true);
-        setError('');
-        setInfoMessage('');
-
-        try {
-            const res = await axios.post(API_ENDPOINTS.RESEND_VERIFICATION, { email });
-            setInfoMessage(res.data?.message || 'A new verification email has been sent.');
-        } catch (err) {
-            setError(err.response?.data?.message || 'Unable to resend verification email right now.');
-        } finally {
-            setResending(false);
-        }
-    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
         setInfoMessage('');
-        setVerificationEmail('');
         
         try {
             const res = await axios.post(API_ENDPOINTS.LOGIN, formData);
@@ -55,10 +31,7 @@ const StudentLogin = () => {
             login(res.data.user, res.data.token);
             navigate('/hostels');
         } catch (err) {
-            if (err.response?.data?.verificationRequired) {
-                setVerificationEmail(err.response?.data?.email || formData.email.trim().toLowerCase());
-                setError(err.response?.data?.message || 'Please verify your email before signing in.');
-            } else if (err.response?.status === 423) {
+            if (err.response?.status === 423) {
                 // Account locked
                 setError(err.response?.data?.message || 'Account temporarily locked');
             } else if (err.response?.data?.attemptsLeft !== undefined) {
@@ -169,17 +142,6 @@ const StudentLogin = () => {
                     </form>
                     
                     <div className="mt-6 text-center">
-                        {verificationEmail && (
-                            <button
-                                type="button"
-                                onClick={handleResendVerification}
-                                disabled={resending}
-                                className="mb-4 text-sm font-medium disabled:opacity-50"
-                                style={{ color: '#23817A' }}
-                            >
-                                {resending ? 'Sending verification email...' : 'Resend verification email'}
-                            </button>
-                        )}
                         <p className="text-sm text-gray-600">
                             Don't have an account?{' '}
                             <Link to="/student-register" className="font-medium" style={{ color: '#23817A' }}>
