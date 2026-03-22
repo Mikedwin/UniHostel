@@ -10,6 +10,7 @@
     "seed": "node seed.js",
     "init-admin": "node initAdmin.js",
     "ensure-indexes": "node ensureIndexes.js",
+    "pentest:check": "node pentest-readiness-check.js",
     "backup": "node scripts/backup.js",
     "backup-now": "node scripts/manual-backup.js",
     "restore": "node scripts/restore.js"
