@@ -25,7 +25,7 @@ const getSessionId = () => {
   return nextSessionId;
 };
 
-export const trackPageView = async ({ pathname, search = '', hash = '', token }) => {
+export const trackPageView = async ({ pathname, search = '', hash = '' }) => {
   if (typeof window === 'undefined') {
     return;
   }
@@ -38,18 +38,13 @@ export const trackPageView = async ({ pathname, search = '', hash = '', token })
     referrer: document.referrer || ''
   };
 
-  const headers = {
-    'Content-Type': 'application/json'
-  };
-
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
   try {
     await fetch(API_ENDPOINTS.VISITOR_TRACK, {
       method: 'POST',
-      headers,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
       body: JSON.stringify(payload),
       keepalive: true
     });

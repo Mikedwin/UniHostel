@@ -40,8 +40,9 @@ function AppContent() {
   const lastTrackedRouteRef = useRef('');
 
   useEffect(() => {
-    setupAxiosInterceptors(logout, navigate);
-  }, [logout, navigate]);
+    const cleanupInterceptors = setupAxiosInterceptors(logout, navigate, () => token);
+    return cleanupInterceptors;
+  }, [logout, navigate, token]);
 
   // Scroll to top on route change
   useEffect(() => {

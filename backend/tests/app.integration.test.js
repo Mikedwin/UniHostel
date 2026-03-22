@@ -26,6 +26,10 @@ const createJwt = (user) => jwt.sign(
   { expiresIn: '30d', algorithm: 'HS256' }
 );
 
+const getCookieHeader = (setCookieHeaders = [], cookieName = 'unihostel_auth') => (
+  setCookieHeaders.find((header) => header.startsWith(`${cookieName}=`))
+);
+
 const createUser = async ({
   name,
   email,
@@ -162,7 +166,7 @@ test('student registration creates an active account that can sign in immediatel
     .send({ email: registrationPayload.email, password: registrationPayload.password })
     .expect(200);
 
-  assert.ok(loginResponse.body.token);
+  assert.ok(loginResponse.body.csrfToken);
   assert.equal(loginResponse.body.user.email, registrationPayload.email);
   assert.equal(loginResponse.body.user.isVerified, true);
 
@@ -197,7 +201,7 @@ test('legacy student accounts are normalized on login even if they were previous
     .send({ email: 'legacy.student@example.com', password })
     .expect(200);
 
-  assert.ok(legacyLogin.body.token);
+  assert.ok(legacyLogin.body.csrfToken);
   assert.equal(legacyLogin.body.user.email, 'legacy.student@example.com');
 
   const healedStudent = await User.findById(legacyStudent._id);
@@ -208,11 +212,66 @@ test('legacy student accounts are normalized on login even if they were previous
     .send({ email: 'pending.student@example.com', password })
     .expect(200);
 
-  assert.ok(pendingLogin.body.token);
+  assert.ok(pendingLogin.body.csrfToken);
 
   const activatedPendingStudent = await User.findOne({ email: 'pending.student@example.com' });
   assert.equal(activatedPendingStudent.isVerified, true);
   assert.equal(activatedPendingStudent.accountStatus, 'active');
+});
+
+test('login sets an httpOnly auth cookie and cookie-authenticated writes require a CSRF token', async () => {
+  const email = 'cookie.student@example.com';
+  const password = 'Password123!';
+  const newPassword = 'FreshPassword123!';
+
+  const user = await createUser({
+    name: 'Cookie Student',
+    email,
+    role: 'student',
+    password
+  });
+
+  const loginResponse = await request(app)
+    .post('/api/auth/login')
+    .send({ email, password })
+    .expect(200);
+
+  const rawAuthCookie = getCookieHeader(loginResponse.headers['set-cookie']);
+  assert.ok(rawAuthCookie, 'login should set the auth cookie');
+  assert.match(rawAuthCookie, /HttpOnly/i);
+  assert.ok(loginResponse.body.csrfToken);
+
+  const authCookie = rawAuthCookie.split(';')[0];
+
+  const sessionResponse = await request(app)
+    .get('/api/auth/session')
+    .set('Cookie', authCookie)
+    .expect(200);
+
+  assert.equal(sessionResponse.body.user.email, email);
+  assert.ok(sessionResponse.body.csrfToken);
+
+  const migratedSessionResponse = await request(app)
+    .get('/api/auth/session')
+    .set('Authorization', `Bearer ${createJwt(user)}`)
+    .expect(200);
+
+  assert.ok(getCookieHeader(migratedSessionResponse.headers['set-cookie']));
+
+  await request(app)
+    .post('/api/auth/change-password')
+    .set('Cookie', authCookie)
+    .send({ currentPassword: password, newPassword })
+    .expect(403);
+
+  const passwordChangeResponse = await request(app)
+    .post('/api/auth/change-password')
+    .set('Cookie', authCookie)
+    .set('X-CSRF-Token', loginResponse.body.csrfToken)
+    .send({ currentPassword: password, newPassword })
+    .expect(200);
+
+  assert.match(passwordChangeResponse.body.message, /password changed successfully/i);
 });
 
 test('forgot password stores a hashed reset token and accepts the emailed token for password reset', async () => {
@@ -264,7 +323,7 @@ test('forgot password stores a hashed reset token and accepts the emailed token 
     .send({ email, password: newPassword })
     .expect(200);
 
-  assert.ok(loginResponse.body.token);
+  assert.ok(loginResponse.body.csrfToken);
 });
 
 test('legacy security-question password reset endpoints are disabled', async () => {

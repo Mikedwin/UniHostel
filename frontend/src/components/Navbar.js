@@ -10,8 +10,8 @@ const Navbar = () => {
   const [showLoginMenu, setShowLoginMenu] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
     setMobileMenuOpen(false);
   };

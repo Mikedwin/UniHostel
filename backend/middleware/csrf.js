@@ -3,8 +3,8 @@ const crypto = require('crypto');
 // Store for CSRF tokens (in production, use Redis)
 const csrfTokens = new Map();
 
-// Clean up old tokens every hour
-setInterval(() => {
+// Clean up old tokens every hour without keeping Node test processes alive.
+const cleanupInterval = setInterval(() => {
   const now = Date.now();
   for (const [token, data] of csrfTokens.entries()) {
     if (now - data.timestamp > 3600000) { // 1 hour
@@ -13,15 +13,12 @@ setInterval(() => {
   }
 }, 3600000);
 
+if (typeof cleanupInterval.unref === 'function') {
+  cleanupInterval.unref();
+}
+
 // Generate CSRF token
 const generateCsrfToken = (userId) => {
-  // Invalidate old tokens for this user
-  for (const [token, data] of csrfTokens.entries()) {
-    if (data.userId === userId) {
-      csrfTokens.delete(token);
-    }
-  }
-  
   const token = crypto.randomBytes(32).toString('hex');
   csrfTokens.set(token, {
     userId,
@@ -88,4 +85,4 @@ const csrfProtection = (req, res, next) => {
   next();
 };
 
-module.exports = { generateCsrfToken, csrfProtection, invalidateCsrfToken };
+module.exports = { generateCsrfToken, verifyCsrfToken, csrfProtection, invalidateCsrfToken };

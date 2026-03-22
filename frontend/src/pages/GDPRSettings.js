@@ -3,18 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { Download, Trash2, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
 import API_URL from '../config';
+import { useAuth } from '../context/AuthContext';
 
 const GDPRSettings = () => {
   const [loading, setLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { token, logout } = useAuth();
 
   const handleExportData = async () => {
     setLoading(true);
     setError('');
     try {
-      const token = localStorage.getItem('token');
       const res = await axios.get(`${API_URL}/api/gdpr/export-data`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -38,12 +39,10 @@ const GDPRSettings = () => {
     setLoading(true);
     setError('');
     try {
-      const token = localStorage.getItem('token');
       await axios.delete(`${API_URL}/api/gdpr/delete-account`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      await logout({ notifyServer: false });
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to delete account');

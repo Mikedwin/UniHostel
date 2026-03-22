@@ -28,7 +28,7 @@ const StudentLogin = () => {
                 return;
             }
             
-            login(res.data.user, res.data.token);
+            login(res.data.user, res.data.csrfToken);
             navigate('/hostels');
         } catch (err) {
             if (err.response?.status === 423) {

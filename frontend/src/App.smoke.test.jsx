@@ -5,11 +5,12 @@ import axios from 'axios';
 
 vi.mock('axios', () => ({
   default: {
+    defaults: {},
     get: vi.fn(),
     post: vi.fn(),
     interceptors: {
-      request: { use: vi.fn() },
-      response: { use: vi.fn() }
+      request: { use: vi.fn(() => 1), eject: vi.fn() },
+      response: { use: vi.fn(() => 1), eject: vi.fn() }
     }
   }
 }));
@@ -18,6 +19,19 @@ beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: true })));
   window.sessionStorage.clear();
   localStorage.clear();
+  axios.get.mockImplementation((url) => {
+    if (url.includes('/auth/session')) {
+      return Promise.resolve({ data: {} });
+    }
+
+    if (url.includes('/auth/verify-email/test-token')) {
+      return Promise.resolve({
+        data: { message: 'Email verified successfully! You can now login.' }
+      });
+    }
+
+    return Promise.resolve({ data: {} });
+  });
 });
 
 afterEach(() => {
@@ -42,10 +56,6 @@ describe('App smoke tests', () => {
   });
 
   it('renders the verify email route and calls the verification endpoint', async () => {
-    axios.get.mockResolvedValueOnce({
-      data: { message: 'Email verified successfully! You can now login.' }
-    });
-
     window.history.pushState({}, '', '/verify-email/test-token');
 
     render(<App />);

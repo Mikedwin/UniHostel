@@ -1,6 +1,7 @@
 const Visitor = require('../models/Visitor');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
+const { AUTH_COOKIE_NAME } = require('../utils/authCookies');
 
 const parseUserAgent = (userAgent) => {
   if (!userAgent) return { device: 'Unknown', browser: 'Unknown', os: 'Unknown' };
@@ -39,13 +40,12 @@ const getClientIp = (req) => {
   return req.ip || req.connection?.remoteAddress || 'Unknown';
 };
 
-const getUserFromAuthHeader = (authHeader) => {
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+const decodeUserFromToken = (token) => {
+  if (!token) {
     return {};
   }
 
   try {
-    const token = authHeader.substring(7);
     const decoded = jwt.verify(token, process.env.JWT_SECRET, {
       algorithms: ['HS256'],
       maxAge: '30d'
@@ -64,6 +64,23 @@ const getUserFromAuthHeader = (authHeader) => {
   return {};
 };
 
+const getUserFromRequest = (req) => {
+  const cookieToken = req.cookies?.[AUTH_COOKIE_NAME];
+  if (cookieToken) {
+    const cookieAuthData = decodeUserFromToken(cookieToken);
+    if (cookieAuthData.userId) {
+      return cookieAuthData;
+    }
+  }
+
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return decodeUserFromToken(authHeader.substring(7));
+  }
+
+  return {};
+};
+
 const recordVisitorEvent = async (req, overrides = {}) => {
   if (mongoose.connection.readyState !== 1) {
     throw new Error('Visitor tracking unavailable: database is not connected');
@@ -71,7 +88,7 @@ const recordVisitorEvent = async (req, overrides = {}) => {
 
   const userAgent = req.get('user-agent');
   const { device, browser, os } = parseUserAgent(userAgent);
-  const authData = getUserFromAuthHeader(req.headers.authorization);
+  const authData = getUserFromRequest(req);
 
   const visitorData = {
     ip: getClientIp(req),

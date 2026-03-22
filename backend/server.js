@@ -7,6 +7,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 const hpp = require('hpp');
+const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
 const morgan = require('morgan');
 const fs = require('fs');
@@ -46,6 +47,8 @@ const dataRetentionRoutes = require('./routes/dataRetention');
 const cacheRoutes = require('./routes/cache');
 const payoutRoutes = require('./routes/payout');
 const visitorRoutes = require('./routes/visitors');
+const { generateCsrfToken } = require('./middleware/csrf');
+const { setAuthCookie } = require('./utils/authCookies');
 
 const app = express();
 const VERIFICATION_TOKEN_EXPIRY_HOURS = parseInt(process.env.VERIFICATION_TOKEN_EXPIRY_HOURS, 10) || 24;
@@ -192,6 +195,7 @@ app.use(morgan('dev')); // Console logging in development
 // Body parser with size limits (reduced for security)
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ limit: '2mb', extended: true }));
+app.use(cookieParser());
 
 // CORS Configuration - MUST BE BEFORE OTHER MIDDLEWARE
 const allowedOrigins = [
@@ -217,7 +221,7 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token']
 }));
 
 app.options('*', cors());
@@ -382,6 +386,25 @@ const generateAccessCode = () => {
 };
 
 const hashResetToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
+
+const createAuthToken = (user) => jwt.sign(
+  {
+    id: user._id ? user._id.toString() : user.id,
+    role: user.role,
+    iat: Math.floor(Date.now() / 1000)
+  },
+  process.env.JWT_SECRET,
+  { expiresIn: '30d', algorithm: 'HS256' }
+);
+
+const serializeAuthenticatedUser = (user) => ({
+  id: user._id ? user._id.toString() : user.id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  isVerified: user.isVerified,
+  accountStatus: user.accountStatus
+});
 
 // Health check endpoint
 app.get('/', (req, res) => {
@@ -758,29 +781,43 @@ app.post('/api/auth/login', validateInput, async (req, res) => {
     }
     await user.save();
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role, iat: Math.floor(Date.now() / 1000) }, 
-      process.env.JWT_SECRET, 
-      { expiresIn: '30d', algorithm: 'HS256' }
-    );
+    const token = createAuthToken(user);
+    const csrfToken = generateCsrfToken(user._id.toString());
+    setAuthCookie(res, token);
     
     logger.info(`Successful login for user: ${user.email}`);
     
     res.json({ 
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        isVerified: user.isVerified,
-        accountStatus: user.accountStatus
-      },
+      csrfToken,
+      user: serializeAuthenticatedUser(user),
       passwordResetRequired: user.passwordResetRequired
     });
   } catch (err) {
     logger.error('Login error:', err);
     res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/auth/session', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('name email role isVerified accountStatus');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const refreshedToken = createAuthToken(user);
+    const csrfToken = generateCsrfToken(user._id.toString());
+    setAuthCookie(res, refreshedToken);
+
+    res.json({
+      user: serializeAuthenticatedUser(user),
+      csrfToken
+    });
+  } catch (err) {
+    logger.error('Session restore error:', err);
+    res.status(500).json({ message: 'Failed to restore session' });
   }
 });
 

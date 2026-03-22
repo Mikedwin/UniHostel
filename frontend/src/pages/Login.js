@@ -20,7 +20,7 @@ const Login = () => {
         setInfoMessage('');
         try {
             const res = await axios.post(API_ENDPOINTS.LOGIN, formData);
-            login(res.data.user, res.data.token);
+            login(res.data.user, res.data.csrfToken);
             const role = res.data.user.role;
             if (role === 'admin') navigate('/admin-dashboard');
             else if (role === 'manager') navigate('/manager-dashboard');

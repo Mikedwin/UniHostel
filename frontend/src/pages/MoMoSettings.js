@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import API_URL from '../config';
+import { useAuth } from '../context/AuthContext';
 
 const MoMoSettings = () => {
   const navigate = useNavigate();
@@ -10,6 +11,7 @@ const MoMoSettings = () => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [hasSetup, setHasSetup] = useState(false);
+  const { token } = useAuth();
   
   const [formData, setFormData] = useState({
     momoProvider: '',
@@ -23,8 +25,6 @@ const MoMoSettings = () => {
 
   const fetchMoMoDetails = async () => {
     try {
-      const token = localStorage.getItem('token');
-      
       const response = await axios.get(`${API_URL}/api/payout/momo-details`, {
         headers: {
           Authorization: `Bearer ${token}`
@@ -59,8 +59,6 @@ const MoMoSettings = () => {
     setMessage('');
 
     try {
-      const token = localStorage.getItem('token');
-      
       const endpoint = hasSetup ? '/api/payout/update-momo' : '/api/payout/setup-momo';
       
       const response = await axios({
