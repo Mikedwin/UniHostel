@@ -3,8 +3,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "build",
   "env": {
-    "VITE_API_URL": "https://unihostel.onrender.com",
-    "VITE_PAYSTACK_PUBLIC_KEY": "pk_test_your_public_key_here"
+    "VITE_API_URL": "https://unihostel.onrender.com"
   },
   "rewrites": [
     {

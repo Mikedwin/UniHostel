@@ -7,6 +7,6 @@ const legacyEnv = typeof process !== 'undefined' && process.env ? process.env : 
 const API_URL = normalizeApiRoot(runtimeEnv.VITE_API_URL || legacyEnv.REACT_APP_API_URL || 'https://unihostel.onrender.com');
 export const API_BASE_URL = `${API_URL}/api`;
 
-export const PAYSTACK_PUBLIC_KEY = runtimeEnv.VITE_PAYSTACK_PUBLIC_KEY || legacyEnv.REACT_APP_PAYSTACK_PUBLIC_KEY || 'pk_test_your_public_key_here';
+export const PAYSTACK_PUBLIC_KEY = (runtimeEnv.VITE_PAYSTACK_PUBLIC_KEY || legacyEnv.REACT_APP_PAYSTACK_PUBLIC_KEY || '').trim();
 
 export default API_URL;

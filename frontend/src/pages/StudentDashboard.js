@@ -6,6 +6,8 @@ import { API_ENDPOINTS, PAYSTACK_PUBLIC_KEY } from '../config/api';
 import Swal from 'sweetalert2';
 import LoadingSpinner from '../components/LoadingSpinner';
 
+const isConfiguredPaystackKey = (key) => /^pk_(test|live)_[\w-]+$/.test((key || '').trim());
+
 const StudentDashboard = () => {
     const [applications, setApplications] = useState([]);
     const { token, user } = useAuth();
@@ -72,6 +74,15 @@ const StudentDashboard = () => {
 
     const handleProceedToPayment = async (app) => {
         try {
+            if (!isConfiguredPaystackKey(PAYSTACK_PUBLIC_KEY)) {
+                Swal.fire(
+                    'Payment unavailable',
+                    'Paystack is not configured for this frontend deployment. Set VITE_PAYSTACK_PUBLIC_KEY in Vercel and redeploy.',
+                    'error'
+                );
+                return;
+            }
+
             // First check if payment status has changed
             const statusCheck = await axios.get(API_ENDPOINTS.PAYMENT_STATUS(app._id), {
                 headers: { Authorization: `Bearer ${token}` }
