@@ -95,13 +95,29 @@ const ManagerApplicationsSection = ({
       </div>
 
       {selectedApps.length > 0 && (
-        <div className="mt-4 flex items-center gap-3 flex-wrap">
-          <span className="text-sm text-gray-600">{selectedApps.length} selected</span>
+        <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3 sm:p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex min-w-8 items-center justify-center rounded-full bg-primary-50 px-2.5 py-1 text-xs font-semibold text-primary-700">
+                {selectedApps.length}
+              </span>
+              <span className="text-sm text-gray-600">
+                {selectedApps.length === 1 ? 'application selected' : 'applications selected'}
+              </span>
+            </div>
+            <button
+              onClick={() => setSelectedApps([])}
+              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 sm:w-auto"
+            >
+              Clear Selection
+            </button>
+          </div>
+
           {viewMode === 'active' ? (
-            <>
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
               <button
                 onClick={() => onBulkAction('approve_for_payment')}
-                className="text-white px-3 py-1 rounded text-sm"
+                className="rounded-md px-3 py-2 text-sm font-medium text-white"
                 style={{ backgroundColor: '#23817A' }}
                 onMouseEnter={(event) => {
                   event.currentTarget.style.backgroundColor = '#1a6159';
@@ -114,24 +130,26 @@ const ManagerApplicationsSection = ({
               </button>
               <button
                 onClick={() => onBulkAction('reject')}
-                className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+                className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
               >
-                Reject All
+                Reject Selected
               </button>
               <button
                 onClick={onBulkMoveToHistory}
-                className="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700"
+                className="rounded-md bg-gray-600 px-3 py-2 text-sm font-medium text-white hover:bg-gray-700"
               >
-                Move to History
+                Move Selected to History
               </button>
-            </>
+            </div>
           ) : (
-            <button
-              onClick={onBulkDeletePermanent}
-              className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
-            >
-              Delete Permanently
-            </button>
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button
+                onClick={onBulkDeletePermanent}
+                className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+              >
+                Delete Selected Permanently
+              </button>
+            </div>
           )}
         </div>
       )}
