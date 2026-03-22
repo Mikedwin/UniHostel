@@ -52,6 +52,7 @@ const { setAuthCookie } = require('./utils/authCookies');
 
 const app = express();
 const VERIFICATION_TOKEN_EXPIRY_HOURS = parseInt(process.env.VERIFICATION_TOKEN_EXPIRY_HOURS, 10) || 24;
+const GENERIC_LOGIN_FAILURE_MESSAGE = 'Invalid email or password';
 const parseEnvInt = (value, fallback) => {
   const parsed = parseInt(value, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
@@ -386,6 +387,7 @@ const generateAccessCode = () => {
 };
 
 const hashResetToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
+const DUMMY_PASSWORD_HASH = bcrypt.hashSync('UniHostel-login-placeholder-password', 12);
 
 const createAuthToken = (user) => jwt.sign(
   {
@@ -683,9 +685,9 @@ app.post('/api/auth/resend-verification', verificationEmailLimiter, async (req, 
  *                 csrfToken: { type: string }
  *                 user: { $ref: '#/components/schemas/User' }
  *       400:
- *         description: Invalid credentials
- *       423:
- *         description: Account locked
+ *         description: Authentication failed
+ *       500:
+ *         description: Unable to sign in right now
  */
 app.post('/api/auth/login', validateInput, async (req, res) => {
   try {
@@ -696,15 +698,15 @@ app.post('/api/auth/login', validateInput, async (req, res) => {
     }
     
     const user = await User.findOne({ email: email.toLowerCase().trim() });
-    if (!user) return res.status(400).json({ message: 'User does not exist' });
+    if (!user) {
+      await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
+      return res.status(400).json({ message: GENERIC_LOGIN_FAILURE_MESSAGE });
+    }
 
     // Check if account is locked
     if (user.accountLockedUntil && user.accountLockedUntil > new Date()) {
-      const minutesLeft = Math.ceil((user.accountLockedUntil - new Date()) / 60000);
-      return res.status(423).json({ 
-        message: `Account locked due to multiple failed login attempts. Try again in ${minutesLeft} minutes.`,
-        lockedUntil: user.accountLockedUntil
-      });
+      logger.warn(`Blocked login attempt for locked account: ${user.email}`);
+      return res.status(400).json({ message: GENERIC_LOGIN_FAILURE_MESSAGE });
     }
 
     // Reset lock if lockout period has passed
@@ -716,10 +718,12 @@ app.post('/api/auth/login', validateInput, async (req, res) => {
 
     // Check account status
     if (user.accountStatus === 'suspended') {
-      return res.status(403).json({ message: `Account suspended. Reason: ${user.suspensionReason || 'Contact admin'}` });
+      logger.warn(`Blocked login attempt for suspended account: ${user.email}`);
+      return res.status(400).json({ message: GENERIC_LOGIN_FAILURE_MESSAGE });
     }
     if (user.accountStatus === 'banned') {
-      return res.status(403).json({ message: `Account banned. Reason: ${user.suspensionReason || 'Contact admin'}` });
+      logger.warn(`Blocked login attempt for banned account: ${user.email}`);
+      return res.status(400).json({ message: GENERIC_LOGIN_FAILURE_MESSAGE });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -738,20 +742,11 @@ app.post('/api/auth/login', validateInput, async (req, res) => {
         await user.save();
         
         logger.warn(`Account locked for user: ${user.email} after ${maxAttempts} failed attempts`);
-        
-        return res.status(423).json({ 
-          message: `Account locked due to ${maxAttempts} failed login attempts. Try again in ${lockoutDuration} minutes.`,
-          lockedUntil: user.accountLockedUntil
-        });
+        return res.status(400).json({ message: GENERIC_LOGIN_FAILURE_MESSAGE });
       }
       
       await user.save();
-      
-      const attemptsLeft = maxAttempts - user.failedLoginAttempts;
-      return res.status(400).json({ 
-        message: `Invalid credentials. ${attemptsLeft} attempt(s) remaining before account lockout.`,
-        attemptsLeft
-      });
+      return res.status(400).json({ message: GENERIC_LOGIN_FAILURE_MESSAGE });
     }
 
     // Student accounts no longer require email verification.
@@ -795,7 +790,7 @@ app.post('/api/auth/login', validateInput, async (req, res) => {
     });
   } catch (err) {
     logger.error('Login error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ message: 'Unable to sign in right now. Please try again later.' });
   }
 });
 

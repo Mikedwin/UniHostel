@@ -87,6 +87,7 @@ before(async () => {
   process.env.EMAIL_PASSWORD = 'integration-test-app-password';
   process.env.MAX_LOGIN_ATTEMPTS = '5';
   process.env.LOCKOUT_DURATION_MINUTES = '30';
+  process.env.AUTH_RATE_LIMIT_MAX = '100';
   process.env.ADMIN_COMMISSION_PERCENT = '3';
   process.env.PAYSTACK_SECRET_KEY = 'sk_test_integration_key';
   process.env.VISITOR_TRACKING_ENABLED = 'false';
@@ -217,6 +218,61 @@ test('legacy student accounts are normalized on login even if they were previous
   const activatedPendingStudent = await User.findOne({ email: 'pending.student@example.com' });
   assert.equal(activatedPendingStudent.isVerified, true);
   assert.equal(activatedPendingStudent.accountStatus, 'active');
+});
+
+test('login uses generic failure responses for invalid, locked, and blocked accounts', async () => {
+  const email = 'generic.student@example.com';
+  const password = 'Password123!';
+
+  const user = await createUser({
+    name: 'Generic Student',
+    email,
+    role: 'student',
+    password
+  });
+
+  const unknownUserResponse = await request(app)
+    .post('/api/auth/login')
+    .send({ email: 'unknown.student@example.com', password: 'WrongPassword123!' })
+    .expect(400);
+
+  assert.equal(unknownUserResponse.body.message, 'Invalid email or password');
+  assert.equal(unknownUserResponse.body.attemptsLeft, undefined);
+  assert.equal(unknownUserResponse.body.lockedUntil, undefined);
+
+  const wrongPasswordResponse = await request(app)
+    .post('/api/auth/login')
+    .send({ email, password: 'WrongPassword123!' })
+    .expect(400);
+
+  assert.equal(wrongPasswordResponse.body.message, 'Invalid email or password');
+  assert.equal(wrongPasswordResponse.body.attemptsLeft, undefined);
+  assert.equal(wrongPasswordResponse.body.lockedUntil, undefined);
+
+  const updatedUser = await User.findById(user._id);
+  assert.equal(updatedUser.failedLoginAttempts, 1);
+
+  updatedUser.accountLockedUntil = new Date(Date.now() + 15 * 60 * 1000);
+  await updatedUser.save();
+
+  const lockedResponse = await request(app)
+    .post('/api/auth/login')
+    .send({ email, password })
+    .expect(400);
+
+  assert.equal(lockedResponse.body.message, 'Invalid email or password');
+  assert.equal(lockedResponse.body.lockedUntil, undefined);
+
+  updatedUser.accountLockedUntil = null;
+  updatedUser.accountStatus = 'suspended';
+  await updatedUser.save();
+
+  const suspendedResponse = await request(app)
+    .post('/api/auth/login')
+    .send({ email, password })
+    .expect(400);
+
+  assert.equal(suspendedResponse.body.message, 'Invalid email or password');
 });
 
 test('login sets an httpOnly auth cookie and cookie-authenticated writes require a CSRF token', async () => {

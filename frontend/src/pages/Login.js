@@ -26,7 +26,7 @@ const Login = () => {
             else if (role === 'manager') navigate('/manager-dashboard');
             else navigate('/hostels');
         } catch (err) {
-            setError(err.response?.data?.message || 'Invalid credentials');
+            setError(err.response?.data?.message || 'Unable to sign in right now. Please try again later.');
         } finally {
             setLoading(false);
         }

@@ -36,15 +36,7 @@ const ManagerLogin = () => {
                 navigate('/manager-dashboard');
             }
         } catch (err) {
-            if (err.response?.status === 423) {
-                // Account locked
-                setError(err.response?.data?.message || 'Account temporarily locked');
-            } else if (err.response?.data?.attemptsLeft !== undefined) {
-                // Show remaining attempts
-                setError(err.response?.data?.message || 'Invalid credentials');
-            } else {
-                setError(err.response?.data?.message || 'Invalid credentials');
-            }
+            setError(err.response?.data?.message || 'Unable to sign in right now. Please try again later.');
         } finally {
             setLoading(false);
         }
