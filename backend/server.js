@@ -408,6 +408,9 @@ const generateAccessCode = () => {
 
 const hashResetToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
 const DUMMY_PASSWORD_HASH = bcrypt.hashSync('UniHostel-login-placeholder-password', 12);
+const shouldExposeApiDocs = () => (
+  process.env.NODE_ENV !== 'production' || process.env.ENABLE_API_DOCS_IN_PRODUCTION === 'true'
+);
 
 const createAuthToken = (user) => jwt.sign(
   {
@@ -430,20 +433,31 @@ const serializeAuthenticatedUser = (user) => ({
 
 // Health check endpoint
 app.get('/', (req, res) => {
-  res.json({ 
+  const responsePayload = {
     status: 'ok', 
     message: 'UniHostel API is running',
     timestamp: new Date().toISOString(),
-    version: '1.0.8',
-    documentation: '/api-docs'
-  });
+    version: '1.0.8'
+  };
+
+  if (shouldExposeApiDocs()) {
+    responsePayload.documentation = '/api-docs';
+  }
+
+  res.json(responsePayload);
 });
 
 // Remove debug endpoint - security risk
 // app.get('/update-subaccount-now', ...) - REMOVED
 
 // API Documentation
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+app.use('/api-docs', (req, res, next) => {
+  if (!shouldExposeApiDocs()) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+
+  return next();
+}, swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'UniHostel API Documentation'
 }));
@@ -2034,7 +2048,8 @@ module.exports = {
   app,
   startServer,
   closeServer,
-  connectDB
+  connectDB,
+  shouldExposeApiDocs
 };
 
 

@@ -2,10 +2,11 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const request = require('supertest');
 
+process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-with-at-least-thirty-two-characters';
 process.env.MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/unihostel-test';
 
-const { app } = require('../server');
+const { app, shouldExposeApiDocs } = require('../server');
 
 test('GET / returns API metadata', async () => {
   const response = await request(app)
@@ -14,6 +15,48 @@ test('GET / returns API metadata', async () => {
 
   assert.equal(response.body.status, 'ok');
   assert.equal(response.body.documentation, '/api-docs');
+});
+
+test('shouldExposeApiDocs disables docs in production unless explicitly enabled', () => {
+  const previousNodeEnv = process.env.NODE_ENV;
+  const previousDocsFlag = process.env.ENABLE_API_DOCS_IN_PRODUCTION;
+
+  process.env.NODE_ENV = 'production';
+  delete process.env.ENABLE_API_DOCS_IN_PRODUCTION;
+  assert.equal(shouldExposeApiDocs(), false);
+
+  process.env.ENABLE_API_DOCS_IN_PRODUCTION = 'true';
+  assert.equal(shouldExposeApiDocs(), true);
+
+  process.env.NODE_ENV = previousNodeEnv;
+
+  if (typeof previousDocsFlag === 'undefined') {
+    delete process.env.ENABLE_API_DOCS_IN_PRODUCTION;
+  } else {
+    process.env.ENABLE_API_DOCS_IN_PRODUCTION = previousDocsFlag;
+  }
+});
+
+test('GET /api-docs returns 404 in production when docs are disabled', async () => {
+  const previousNodeEnv = process.env.NODE_ENV;
+  const previousDocsFlag = process.env.ENABLE_API_DOCS_IN_PRODUCTION;
+
+  process.env.NODE_ENV = 'production';
+  delete process.env.ENABLE_API_DOCS_IN_PRODUCTION;
+
+  const response = await request(app)
+    .get('/api-docs')
+    .expect(404);
+
+  assert.equal(response.body.error, 'Not found');
+
+  process.env.NODE_ENV = previousNodeEnv;
+
+  if (typeof previousDocsFlag === 'undefined') {
+    delete process.env.ENABLE_API_DOCS_IN_PRODUCTION;
+  } else {
+    process.env.ENABLE_API_DOCS_IN_PRODUCTION = previousDocsFlag;
+  }
 });
 
 test('CORS allows the configured frontend origin and blocks unrelated preview origins', async () => {
