@@ -811,12 +811,25 @@ app.post('/api/auth/login', validateInput, async (req, res) => {
       });
     }
 
-    if (user.role === 'student' && !user.isVerified) {
+    const isStudentAwaitingVerification =
+      user.role === 'student'
+      && !user.isVerified
+      && user.accountStatus === 'pending_verification';
+
+    if (isStudentAwaitingVerification) {
       return res.status(403).json({
         message: 'Please verify your email address before signing in.',
         verificationRequired: true,
         email: user.email
       });
+    }
+
+    // Auto-heal legacy student accounts that predate the verification rollout.
+    if (user.role === 'student' && !user.isVerified && user.accountStatus === 'active') {
+      user.isVerified = true;
+      user.verificationToken = undefined;
+      user.verificationTokenExpires = undefined;
+      logger.info(`Auto-verified legacy student account during login: ${user.email}`);
     }
 
     // Successful login - reset failed attempts
