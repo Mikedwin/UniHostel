@@ -39,9 +39,4 @@ export const API_ENDPOINTS = {
   UPLOAD_IMAGE: `${API_BASE_URL}/upload`,
 };
 
-export const SUPABASE_CONFIG = {
-  URL: 'https://fvkucgyqvuroxbrjdpkx.supabase.co',
-  ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2a3VjZ3lxdnVyb3hicmpkcGt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MTcyMDUsImV4cCI6MjA4NjM5MzIwNX0.QjySGy5BjkX_QJOYn4z_U74ViKYVTACb9lY2xihW7ik'
-};
-
 export default API_ENDPOINTS;

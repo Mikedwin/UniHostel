@@ -1,10 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { TURNSTILE_ENABLED, TURNSTILE_SITE_KEY } from '../../config';
+import { loadExternalScript } from '../../utils/loadExternalScript';
 
 const TURNSTILE_SCRIPT_ID = 'cloudflare-turnstile-script';
 const TURNSTILE_SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
-
-let turnstileScriptPromise;
 
 const getTurnstile = () => (
   typeof window !== 'undefined' ? window.turnstile : undefined
@@ -16,40 +15,17 @@ const ensureTurnstileScript = () => {
     return Promise.resolve(existingTurnstile);
   }
 
-  if (turnstileScriptPromise) {
-    return turnstileScriptPromise;
-  }
-
-  turnstileScriptPromise = new Promise((resolve, reject) => {
-    const existingScript = document.getElementById(TURNSTILE_SCRIPT_ID);
-    if (existingScript) {
-      existingScript.addEventListener('load', () => resolve(getTurnstile()));
-      existingScript.addEventListener('error', () => reject(new Error('Failed to load Turnstile')));
-      return;
+  return loadExternalScript({
+    id: TURNSTILE_SCRIPT_ID,
+    src: TURNSTILE_SCRIPT_SRC
+  }).then(() => {
+    const turnstile = getTurnstile();
+    if (turnstile?.render) {
+      return turnstile;
     }
 
-    const script = document.createElement('script');
-    script.id = TURNSTILE_SCRIPT_ID;
-    script.src = TURNSTILE_SCRIPT_SRC;
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      const turnstile = getTurnstile();
-      if (turnstile?.render) {
-        resolve(turnstile);
-        return;
-      }
-
-      reject(new Error('Turnstile failed to initialize'));
-    };
-    script.onerror = () => reject(new Error('Failed to load Turnstile'));
-    document.head.appendChild(script);
-  }).catch((error) => {
-    turnstileScriptPromise = null;
-    throw error;
+    throw new Error('Turnstile failed to initialize');
   });
-
-  return turnstileScriptPromise;
 };
 
 const TurnstileWidget = ({
@@ -82,7 +58,7 @@ const TurnstileWidget = ({
           return;
         }
 
-        containerRef.current.innerHTML = '';
+        containerRef.current.textContent = '';
         setWidgetError('');
         widgetIdRef.current = turnstile.render(containerRef.current, {
           sitekey: TURNSTILE_SITE_KEY,

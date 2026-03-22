@@ -5,8 +5,28 @@ import { CreditCard, Archive } from 'lucide-react';
 import { API_ENDPOINTS, PAYSTACK_PUBLIC_KEY } from '../config/api';
 import Swal from 'sweetalert2';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { loadExternalScript } from '../utils/loadExternalScript';
 
 const isConfiguredPaystackKey = (key) => /^pk_(test|live)_[\w-]+$/.test((key || '').trim());
+const PAYSTACK_SCRIPT_ID = 'paystack-inline-script';
+const PAYSTACK_SCRIPT_SRC = 'https://js.paystack.co/v1/inline.js';
+
+const ensurePaystack = async () => {
+    if (typeof window !== 'undefined' && window.PaystackPop?.setup) {
+        return window.PaystackPop;
+    }
+
+    await loadExternalScript({
+        id: PAYSTACK_SCRIPT_ID,
+        src: PAYSTACK_SCRIPT_SRC
+    });
+
+    if (typeof window !== 'undefined' && window.PaystackPop?.setup) {
+        return window.PaystackPop;
+    }
+
+    throw new Error('Paystack failed to initialize');
+};
 
 const StudentDashboard = () => {
     const [applications, setApplications] = useState([]);
@@ -98,8 +118,10 @@ const StudentDashboard = () => {
                 { applicationId: app._id, email: user.email, amount: app.totalAmount },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
+
+            const paystack = await ensurePaystack();
             
-            const handler = window.PaystackPop.setup({
+            const handler = paystack.setup({
                 key: PAYSTACK_PUBLIC_KEY,
                 email: user.email,
                 amount: app.totalAmount * 100,
@@ -165,6 +187,8 @@ const StudentDashboard = () => {
             cancelButtonColor: '#6b7280',
             confirmButtonText: 'Yes, Delete Permanently',
             cancelButtonText: 'Cancel',
+            text: `Are you sure you want to permanently delete this application for ${hostelName || 'this hostel'}? This action cannot be undone.`,
+            html: undefined,
             customClass: {
                 confirmButton: 'px-4 py-2 rounded-md font-medium',
                 cancelButton: 'px-4 py-2 rounded-md font-medium'
@@ -268,7 +292,9 @@ const StudentDashboard = () => {
                                         confirmButtonColor: '#ef4444',
                                         cancelButtonColor: '#6b7280',
                                         confirmButtonText: 'Yes, Delete Permanently',
-                                        cancelButtonText: 'Cancel'
+                                        cancelButtonText: 'Cancel',
+                                        text: `Are you sure you want to permanently delete ${selectedApps.length} application(s)? This action cannot be undone.`,
+                                        html: undefined
                                     });
                                     if (result.isConfirmed) {
                                         try {

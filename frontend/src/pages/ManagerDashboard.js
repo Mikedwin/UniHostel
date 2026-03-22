@@ -137,6 +137,8 @@ const ManagerDashboard = () => {
       cancelButtonColor: '#6b7280',
       confirmButtonText: 'Yes, Delete Permanently',
       cancelButtonText: 'Cancel',
+      text: `Are you sure you want to permanently delete this application for ${studentName || 'this student'} in ${hostelName || 'this hostel'}? This action cannot be undone.`,
+      html: undefined,
       customClass: {
         confirmButton: 'px-4 py-2 rounded-md font-medium',
         cancelButton: 'px-4 py-2 rounded-md font-medium'
@@ -358,7 +360,9 @@ const ManagerDashboard = () => {
       confirmButtonColor: '#ef4444',
       cancelButtonColor: '#6b7280',
       confirmButtonText: 'Yes, Delete Permanently',
-      cancelButtonText: 'Cancel'
+      cancelButtonText: 'Cancel',
+      text: `Are you sure you want to permanently delete ${selectedApps.length} application(s)? This action cannot be undone.`,
+      html: undefined
     });
 
     if (result.isConfirmed) {
