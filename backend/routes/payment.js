@@ -9,6 +9,7 @@ const Transaction = require('../models/Transaction');
 const { auth, checkRole } = require('../middleware/auth');
 const { sendPaymentSuccessEmail } = require('../utils/emailService');
 const logger = require('../config/logger');
+const { sendServerError } = require('../utils/serverError');
 
 const canAccessApplicationPayment = (user, application) => {
   if (!user || !application) return false;
@@ -281,12 +282,12 @@ router.post('/initialize', auth, async (req, res) => {
         headers: error.response.headers
       });
     }
-    
-    res.status(500).json({ 
-      message: 'Payment initialization failed', 
-      error: error.message,
-      details: error.response?.data,
-      hint: 'Check Railway logs for detailed error information'
+
+    return sendServerError(res, error, {
+      field: 'message',
+      clientMessage: 'Payment initialization failed',
+      logMessage: 'Payment initialization error',
+      developmentDetails: error.response?.data || error.message
     });
   }
 });
@@ -367,7 +368,12 @@ router.get('/verify/:reference', auth, async (req, res) => {
     }
   } catch (error) {
     console.error('Payment verification error:', error.response?.data || error.message);
-    res.status(500).json({ message: 'Payment verification failed', error: error.message });
+    return sendServerError(res, error, {
+      field: 'message',
+      clientMessage: 'Payment verification failed',
+      logMessage: 'Payment verification error',
+      developmentDetails: error.response?.data || error.message
+    });
   }
 });
 
@@ -590,9 +596,11 @@ router.post('/admin/verify-payment', auth, checkRole('admin'), async (req, res) 
     }
   } catch (error) {
     logger.error('Admin payment verification error:', error);
-    res.status(500).json({
-      message: 'Payment verification failed',
-      error: error.response?.data || error.message
+    return sendServerError(res, error, {
+      field: 'message',
+      clientMessage: 'Payment verification failed',
+      logMessage: 'Admin payment verification error',
+      developmentDetails: error.response?.data || error.message
     });
   }
 });

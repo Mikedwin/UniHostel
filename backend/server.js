@@ -49,6 +49,7 @@ const payoutRoutes = require('./routes/payout');
 const visitorRoutes = require('./routes/visitors');
 const { generateCsrfToken } = require('./middleware/csrf');
 const { setAuthCookie } = require('./utils/authCookies');
+const { sendServerError } = require('./utils/serverError');
 
 const app = express();
 const VERIFICATION_TOKEN_EXPIRY_HOURS = parseInt(process.env.VERIFICATION_TOKEN_EXPIRY_HOURS, 10) || 24;
@@ -619,8 +620,11 @@ app.post('/api/auth/register', validateInput, async (req, res) => {
       message: 'Registration successful. You can now sign in.'
     });
   } catch (err) {
-    console.error('Registration error:', err);
-    res.status(500).json({ message: err.message || 'Registration failed' });
+    return sendServerError(res, err, {
+      field: 'message',
+      clientMessage: 'Registration failed',
+      logMessage: 'Registration error'
+    });
   }
 });
 
@@ -1144,8 +1148,11 @@ app.post('/api/hostels', checkDBConnection, auth, checkRole('manager'), hostelUp
     logger.info(`Hostel created successfully: ${savedHostel._id}`);
     res.status(201).json(savedHostel);
   } catch (err) {
-    logger.error('Hostel creation error:', { message: err.message, stack: err.stack });
-    res.status(500).json({ message: err.message || 'Failed to create hostel' });
+    return sendServerError(res, err, {
+      field: 'message',
+      clientMessage: 'Failed to create hostel',
+      logMessage: 'Hostel creation error'
+    });
   }
 });
 
@@ -1158,8 +1165,10 @@ app.get('/api/hostels/my-listings', checkDBConnection, auth, checkRole('manager'
     
     res.json(hostels);
   } catch (err) {
-    console.error('Error fetching manager hostels:', err);
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, {
+      clientMessage: 'Failed to fetch manager hostels',
+      logMessage: 'Error fetching manager hostels'
+    });
   }
 });
 
@@ -1171,7 +1180,10 @@ app.get('/api/hostels/my-trash', checkDBConnection, auth, checkRole('manager'), 
       .lean();
     res.json(hostels);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, {
+      clientMessage: 'Failed to fetch deleted hostels',
+      logMessage: 'Error fetching deleted hostels'
+    });
   }
 });
 
@@ -1189,7 +1201,10 @@ app.patch('/api/hostels/:id/restore', checkDBConnection, auth, checkRole('manage
     await hostel.save();
     res.json({ message: 'Hostel restored successfully' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, {
+      clientMessage: 'Failed to restore hostel',
+      logMessage: 'Error restoring hostel'
+    });
   }
 });
 
@@ -1323,8 +1338,11 @@ app.put('/api/hostels/:id', checkDBConnection, auth, checkRole('manager'), hoste
     
     res.json(updatedHostel);
   } catch (err) {
-    console.error('Error updating hostel:', err);
-    res.status(500).json({ message: err.message || 'Failed to update hostel' });
+    return sendServerError(res, err, {
+      field: 'message',
+      clientMessage: 'Failed to update hostel',
+      logMessage: 'Error updating hostel'
+    });
   }
 });
 
@@ -1355,8 +1373,11 @@ app.delete('/api/hostels/:id', checkDBConnection, auth, checkRole('manager'), as
     
     res.json({ message: 'Hostel deleted successfully' });
   } catch (err) {
-    console.error('Error deleting hostel:', err);
-    res.status(500).json({ message: err.message || 'Failed to delete hostel' });
+    return sendServerError(res, err, {
+      field: 'message',
+      clientMessage: 'Failed to delete hostel',
+      logMessage: 'Error deleting hostel'
+    });
   }
 });
 
@@ -1748,8 +1769,10 @@ app.patch('/api/applications/:id/status', checkDBConnection, auth, checkRole('ma
     
     res.status(400).json({ error: `Invalid action: ${action}. Valid actions are: approve_for_payment, reject, final_approve` });
   } catch (err) {
-    logger.error('Error updating application status:', err);
-    res.status(500).json({ error: 'Failed to update application status: ' + err.message });
+    return sendServerError(res, err, {
+      clientMessage: 'Failed to update application status',
+      logMessage: 'Error updating application status'
+    });
   }
 });
 
@@ -1914,14 +1937,15 @@ app.delete('/api/applications/:id/permanent', checkDBConnection, auth, async (re
 
 // Global error handler
 app.use((err, req, res, next) => {
-  logger.error('Unhandled error:', {
-    error: err.message,
-    stack: err.stack,
-    url: req.url,
-    method: req.method,
-    ip: req.ip
+  return sendServerError(res, err, {
+    clientMessage: 'Internal server error',
+    logMessage: 'Unhandled error',
+    logExtra: {
+      url: req.url,
+      method: req.method,
+      ip: req.ip
+    }
   });
-  res.status(500).json({ error: 'Internal server error' });
 });
 
 const closeServer = async () => {

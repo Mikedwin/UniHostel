@@ -4,6 +4,7 @@ const axios = require('axios');
 const { auth, checkRole } = require('../middleware/auth');
 const User = require('../models/User');
 const logger = require('../config/logger');
+const { sendServerError } = require('../utils/serverError');
 
 // Create Paystack Subaccount
 const createPaystackSubaccount = async (businessName, accountNumber, bankCode, percentageCharge) => {
@@ -99,15 +100,17 @@ router.post('/setup-momo', auth, checkRole('manager'), async (req, res) => {
       manager.payoutEnabled = false;
       await manager.save();
       
-      return res.status(500).json({ 
-        message: 'Mobile Money details saved, but automatic payout setup failed. Contact support.',
-        error: paystackError.response?.data?.message || 'Paystack API error'
+      return sendServerError(res, paystackError, {
+        field: 'message',
+        clientMessage: 'Mobile Money details saved, but automatic payout setup failed. Contact support.',
+        logMessage: 'Paystack Mobile Money setup error'
       });
     }
   } catch (err) {
-    logger.error('Mobile Money setup error:', err);
-    res.status(500).json({ 
-      message: 'Failed to setup Mobile Money. Please try again.' 
+    return sendServerError(res, err, {
+      field: 'message',
+      clientMessage: 'Failed to setup Mobile Money. Please try again.',
+      logMessage: 'Mobile Money setup error'
     });
   }
 });
@@ -139,9 +142,10 @@ router.put('/update-momo', auth, checkRole('manager'), async (req, res) => {
     logger.info(`Mobile Money details updated for manager: ${manager.email}`);
     res.json({ message: 'Mobile Money details updated successfully!' });
   } catch (err) {
-    logger.error('Mobile Money update error:', err);
-    res.status(500).json({ 
-      message: 'Failed to update Mobile Money details' 
+    return sendServerError(res, err, {
+      field: 'message',
+      clientMessage: 'Failed to update Mobile Money details',
+      logMessage: 'Mobile Money update error'
     });
   }
 });
@@ -159,8 +163,11 @@ router.get('/momo-details', auth, checkRole('manager'), async (req, res) => {
       hasSubaccount: !!manager.paystackSubaccountCode
     });
   } catch (err) {
-    logger.error('Get MoMo details error:', err);
-    res.status(500).json({ message: 'Failed to fetch Mobile Money details' });
+    return sendServerError(res, err, {
+      field: 'message',
+      clientMessage: 'Failed to fetch Mobile Money details',
+      logMessage: 'Get MoMo details error'
+    });
   }
 });
 

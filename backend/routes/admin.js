@@ -11,8 +11,14 @@ const ImpersonationLog = require('../models/ImpersonationLog');
 const Visitor = require('../models/Visitor');
 const { auth, checkRole } = require('../middleware/auth');
 const { sanitizeAdminUser, sanitizeAdminUsers } = require('../utils/userSanitizer');
+const { sendServerError } = require('../utils/serverError');
 
 const checkAdmin = checkRole('admin');
+const getBulkActionErrorMessage = () => (
+  process.env.NODE_ENV === 'production'
+    ? 'Unable to process this item'
+    : 'Unable to process this item right now'
+);
 
 const logAdminAction = async (adminId, action, targetType, targetId, details) => {
   try {
@@ -54,7 +60,7 @@ router.get('/dashboard/stats', auth, checkAdmin, async (req, res) => {
 
     res.json({ overview: { totalHostels, activeHostels, totalManagers, totalStudents, totalApplications, pendingApplications, approvedApplications }, roomStats });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -71,7 +77,7 @@ router.get('/hostels', auth, checkAdmin, async (req, res) => {
     const hostels = await Hostel.find(query).populate('managerId', 'name email').sort({ createdAt: -1 }).lean();
     res.json(hostels);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -85,7 +91,7 @@ router.patch('/hostels/:id/toggle-active', auth, checkAdmin, async (req, res) =>
     await logAdminAction(req.user.id, hostel.isActive ? 'ACTIVATE_HOSTEL' : 'DEACTIVATE_HOSTEL', 'hostel', hostel._id, `${hostel.isActive ? 'Activated' : 'Deactivated'} hostel: ${hostel.name}`);
     res.json({ message: `Hostel ${hostel.isActive ? 'activated' : 'deactivated'}`, hostel });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -101,7 +107,7 @@ router.patch('/hostels/:id/flag', auth, checkAdmin, async (req, res) => {
     await logAdminAction(req.user.id, hostel.isFlagged ? 'FLAG_HOSTEL' : 'UNFLAG_HOSTEL', 'hostel', hostel._id, reason || 'Unflagged hostel');
     res.json({ message: `Hostel ${hostel.isFlagged ? 'flagged' : 'unflagged'}`, hostel });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -118,7 +124,7 @@ router.delete('/hostels/:id', auth, checkAdmin, async (req, res) => {
     await logAdminAction(req.user.id, 'DELETE_HOSTEL', 'hostel', hostel._id, `Deleted hostel: ${hostel.name}`);
     res.json({ message: 'Hostel deleted successfully' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -140,7 +146,7 @@ router.patch('/hostels/:hostelId/rooms/:roomType/reset-capacity', auth, checkAdm
     await logAdminAction(req.user.id, 'RESET_ROOM_CAPACITY', 'room', hostel._id, `Reset ${roomType} capacity from ${oldCapacity} to ${newOccupiedCapacity} in ${hostel.name}`);
     res.json({ message: 'Room capacity reset successfully', hostel });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -175,7 +181,7 @@ router.get('/applications', auth, checkAdmin, async (req, res) => {
     ]);
     res.json({ applications, total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -216,7 +222,7 @@ router.get('/managers', auth, checkAdmin, async (req, res) => {
     
     res.json(managersWithStats);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -227,7 +233,7 @@ router.get('/insights/room-demand', auth, checkAdmin, async (req, res) => {
     applications.forEach(app => { roomDemand[app.roomType] = (roomDemand[app.roomType] || 0) + 1; });
     res.json(roomDemand);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -244,7 +250,7 @@ router.get('/insights/full-rooms', auth, checkAdmin, async (req, res) => {
     });
     res.json(fullRooms);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -255,7 +261,7 @@ router.get('/logs', auth, checkAdmin, async (req, res) => {
     const logs = await AdminLog.find(query).populate('adminId', 'name email').sort({ timestamp: -1 }).limit(parseInt(limit)).lean();
     res.json(logs);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -279,7 +285,7 @@ router.patch('/logs/archive', auth, checkAdmin, async (req, res) => {
     await logAdminAction(req.user.id, 'ARCHIVE_LOGS', 'system', null, `Archived ${result.modifiedCount} log(s)`);
     res.json({ message: `${result.modifiedCount} log(s) moved to history`, count: result.modifiedCount });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -295,7 +301,7 @@ router.get('/logs/history', auth, checkAdmin, async (req, res) => {
       .lean();
     res.json(logs);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -319,7 +325,7 @@ router.patch('/logs/restore', auth, checkAdmin, async (req, res) => {
     await logAdminAction(req.user.id, 'RESTORE_LOGS', 'system', null, `Restored ${result.modifiedCount} log(s) from history`);
     res.json({ message: `${result.modifiedCount} log(s) restored from history`, count: result.modifiedCount });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -330,7 +336,7 @@ router.delete('/logs/:id', auth, checkAdmin, async (req, res) => {
     if (!log) return res.status(404).json({ error: 'Log not found' });
     res.json({ message: 'Log deleted successfully' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -350,7 +356,7 @@ router.get('/users', auth, checkAdmin, async (req, res) => {
     ]);
     res.json({ users: sanitizeAdminUsers(users), total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -360,7 +366,7 @@ router.get('/users/:id', auth, checkAdmin, async (req, res) => {
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json(sanitizeAdminUser(user));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -370,7 +376,7 @@ router.get('/users/:id/activity', auth, checkAdmin, async (req, res) => {
     const activities = await UserActivity.find({ userId: req.params.id }).sort({ timestamp: -1 }).limit(parseInt(limit)).lean();
     res.json(activities);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -390,7 +396,7 @@ router.patch('/users/:id/suspend', auth, checkAdmin, async (req, res) => {
     await logAdminAction(req.user.id, 'SUSPEND_USER', 'user', user._id, `Suspended ${user.role}: ${user.name} - Reason: ${reason}`);
     res.json({ message: 'User suspended successfully', user: sanitizeAdminUser(user) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -410,7 +416,7 @@ router.patch('/users/:id/ban', auth, checkAdmin, async (req, res) => {
     await logAdminAction(req.user.id, 'BAN_USER', 'user', user._id, `Banned ${user.role}: ${user.name} - Reason: ${reason}`);
     res.json({ message: 'User banned successfully', user: sanitizeAdminUser(user) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -428,7 +434,7 @@ router.patch('/users/:id/activate', auth, checkAdmin, async (req, res) => {
     await logAdminAction(req.user.id, 'ACTIVATE_USER', 'user', user._id, `Activated ${user.role}: ${user.name}`);
     res.json({ message: 'User activated successfully', user: sanitizeAdminUser(user) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -444,7 +450,7 @@ router.patch('/users/:id/verify', auth, checkAdmin, async (req, res) => {
     await logAdminAction(req.user.id, 'VERIFY_MANAGER', 'user', user._id, `Verified manager: ${user.name}`);
     res.json({ message: 'Manager verified successfully', user: sanitizeAdminUser(user) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -464,7 +470,7 @@ router.patch('/users/:id/reject', auth, checkAdmin, async (req, res) => {
     await logAdminAction(req.user.id, 'REJECT_MANAGER', 'user', user._id, `Rejected manager: ${user.name} - Reason: ${reason}`);
     res.json({ message: 'Manager rejected successfully', user: sanitizeAdminUser(user) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -482,7 +488,7 @@ router.post('/users/:id/reset-password', auth, checkAdmin, async (req, res) => {
     await logAdminAction(req.user.id, 'RESET_PASSWORD', 'user', user._id, `Reset password for ${user.role}: ${user.name}`);
     res.json({ message: 'Password reset successfully', temporaryPassword: tempPassword });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -500,7 +506,7 @@ router.delete('/users/:id', auth, checkAdmin, async (req, res) => {
     await logAdminAction(req.user.id, 'DELETE_USER', 'user', user._id, `Deleted ${user.role}: ${user.name} (${user.email})`);
     res.json({ message: 'User deleted successfully' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -547,13 +553,13 @@ router.post('/users/bulk-action', auth, checkAdmin, async (req, res) => {
         results.success.push(userId);
         await logAdminAction(req.user.id, `BULK_${action.toUpperCase()}_USER`, 'user', userId, `Bulk ${action} user: ${user.name}`);
       } catch (err) {
-        results.failed.push({ userId, error: err.message });
+        results.failed.push({ userId, error: getBulkActionErrorMessage() });
       }
     }
 
     res.json({ message: 'Bulk action completed', results });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -574,7 +580,7 @@ router.post('/users/:id/impersonate', auth, checkAdmin, async (req, res) => {
     await logAdminAction(req.user.id, 'START_IMPERSONATION', 'user', targetUser._id, `Started impersonating ${targetUser.role}: ${targetUser.name}`);
     res.json({ message: 'Impersonation started', impersonationId: impersonationLog._id, targetUser: { id: targetUser._id, name: targetUser.name, email: targetUser.email, role: targetUser.role } });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -589,7 +595,7 @@ router.post('/impersonate/exit', auth, checkAdmin, async (req, res) => {
     await logAdminAction(req.user.id, 'END_IMPERSONATION', 'user', log.targetUserId, 'Ended impersonation session');
     res.json({ message: 'Impersonation ended successfully' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -606,7 +612,7 @@ router.get('/applications/:id', auth, checkAdmin, async (req, res) => {
     if (!application) return res.status(404).json({ error: 'Application not found' });
     res.json(application);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -655,7 +661,7 @@ router.patch('/applications/:id/override', auth, checkAdmin, async (req, res) =>
     await logAdminAction(req.user.id, 'OVERRIDE_APPLICATION', 'application', app._id, `Overrode application status to ${status} - Reason: ${reason}`);
     res.json({ message: 'Application status overridden successfully', application: app });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -673,7 +679,7 @@ router.post('/applications/:id/note', auth, checkAdmin, async (req, res) => {
     await logAdminAction(req.user.id, 'ADD_APPLICATION_NOTE', 'application', app._id, `Added note to application`);
     res.json({ message: 'Note added successfully', application: app });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -694,7 +700,7 @@ router.post('/applications/:id/dispute', auth, checkAdmin, async (req, res) => {
     await logAdminAction(req.user.id, 'CREATE_DISPUTE', 'application', app._id, `Created dispute: ${disputeReason}`);
     res.json({ message: 'Dispute created successfully', application: app });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -741,7 +747,7 @@ router.patch('/applications/:id/dispute/resolve', auth, checkAdmin, async (req, 
     await logAdminAction(req.user.id, 'RESOLVE_DISPUTE', 'application', app._id, `Resolved dispute: ${resolution}`);
     res.json({ message: 'Dispute resolved successfully', application: app });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -796,13 +802,13 @@ router.post('/applications/bulk-action', auth, checkAdmin, async (req, res) => {
         results.success.push(appId);
         await logAdminAction(req.user.id, `BULK_${action.toUpperCase()}_APPLICATION`, 'application', appId, `Bulk ${action}: ${reason}`);
       } catch (err) {
-        results.failed.push({ appId, error: err.message });
+        results.failed.push({ appId, error: getBulkActionErrorMessage() });
       }
     }
 
     res.json({ message: 'Bulk action completed', results });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -829,7 +835,7 @@ router.post('/applications/:id/refund', auth, checkAdmin, async (req, res) => {
     await logAdminAction(req.user.id, 'PROCESS_REFUND', 'application', app._id, `Processed refund of ${refundAmount} - Reason: ${reason || 'N/A'}`);
     res.json({ message: 'Refund processed successfully', application: app });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -855,7 +861,7 @@ router.delete('/applications/:id', auth, checkAdmin, async (req, res) => {
     await logAdminAction(req.user.id, 'DELETE_APPLICATION', 'application', app._id, `Deleted application for student: ${app.studentName}`);
     res.json({ message: 'Application deleted successfully' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -884,7 +890,7 @@ router.get('/analytics/overview', auth, checkAdmin, async (req, res) => {
 
     res.json({ totalUsers, totalStudents, totalManagers, totalApplications, approvedApps, rejectedApps, approvalRate, rejectionRate, totalHostels, activeHostels });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -905,7 +911,7 @@ router.get('/analytics/growth', auth, checkAdmin, async (req, res) => {
 
     res.json({ studentGrowth, managerGrowth, hostelGrowth, applicationGrowth });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -959,7 +965,7 @@ router.get('/analytics/locations', auth, checkAdmin, async (req, res) => {
 
     res.json(locationData);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -973,7 +979,7 @@ router.get('/analytics/peak-seasons', auth, checkAdmin, async (req, res) => {
 
     res.json(peakData);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -983,7 +989,7 @@ router.post('/analytics/export', auth, checkAdmin, async (req, res) => {
     await logAdminAction(req.user.id, 'EXPORT_ANALYTICS', 'report', null, `Exported ${reportType} report as ${format} for ${startDate} to ${endDate}`);
     res.json({ message: 'Export logged successfully', timestamp: new Date() });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -1039,7 +1045,7 @@ router.post('/managers/create', auth, checkAdmin, async (req, res) => {
       } 
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -1081,7 +1087,7 @@ router.post('/students/create', auth, checkAdmin, async (req, res) => {
       } 
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -1130,7 +1136,7 @@ router.patch('/managers/:id/subaccount', auth, checkAdmin, async (req, res) => {
       } 
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -1159,7 +1165,7 @@ router.get('/visitors', auth, checkAdmin, async (req, res) => {
     
     res.json({ visitors, total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -1188,7 +1194,7 @@ router.get('/visitors/stats', auth, checkAdmin, async (req, res) => {
     
     res.json({ totalVisits, uniqueIPs, uniqueSessions, deviceStats, browserStats, osStats, topPages });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -1233,7 +1239,7 @@ router.post('/fix-room-availability', auth, checkAdmin, async (req, res) => {
       fixes 
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -1250,7 +1256,7 @@ router.get('/trash/hostels', auth, checkAdmin, async (req, res) => {
       .lean();
     res.json(hostels);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -1262,7 +1268,7 @@ router.get('/trash/users', auth, checkAdmin, async (req, res) => {
       .lean();
     res.json(sanitizeAdminUsers(users));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -1278,7 +1284,7 @@ router.patch('/trash/hostels/:id/restore', auth, checkAdmin, async (req, res) =>
     await logAdminAction(req.user.id, 'RESTORE_HOSTEL', 'hostel', hostel._id, `Restored hostel: ${hostel.name}`);
     res.json({ message: 'Hostel restored successfully' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });
 
@@ -1294,6 +1300,6 @@ router.patch('/trash/users/:id/restore', auth, checkAdmin, async (req, res) => {
     await logAdminAction(req.user.id, 'RESTORE_USER', 'user', user._id, `Restored user: ${user.name}`);
     res.json({ message: 'User restored successfully' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
   }
 });

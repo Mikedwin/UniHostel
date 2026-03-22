@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Transaction = require('../models/Transaction');
 const { auth, checkRole } = require('../middleware/auth');
+const { sendServerError } = require('../utils/serverError');
 
 // Manager: Get transactions for their hostels only
 router.get('/manager', auth, checkRole('manager'), async (req, res) => {
@@ -43,7 +44,7 @@ router.get('/manager', auth, checkRole('manager'), async (req, res) => {
     res.json({ transactions, summary });
   } catch (err) {
     console.error('Manager transactions error:', err);
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete transaction request' });
   }
 });
 
@@ -115,7 +116,7 @@ router.get('/admin', auth, checkRole('admin'), async (req, res) => {
     res.json({ transactions, summary });
   } catch (err) {
     console.error('Admin transactions error:', err);
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete transaction request' });
   }
 });
 
@@ -126,7 +127,7 @@ router.delete('/admin/reset', auth, checkRole('admin'), async (req, res) => {
     res.json({ message: `All transactions reset. ${result.deletedCount} transactions deleted.` });
   } catch (err) {
     console.error('Admin reset transactions error:', err);
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete transaction request' });
   }
 });
 
@@ -137,7 +138,7 @@ router.delete('/manager/reset', auth, checkRole('manager'), async (req, res) => 
     res.json({ message: `Your transactions reset. ${result.deletedCount} transactions deleted.` });
   } catch (err) {
     console.error('Manager reset transactions error:', err);
-    res.status(500).json({ error: err.message });
+    return sendServerError(res, err, { clientMessage: 'Unable to complete transaction request' });
   }
 });
 
