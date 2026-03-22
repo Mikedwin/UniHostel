@@ -104,6 +104,7 @@ const RESET_PASSWORD_RATE_LIMIT_WINDOW_MS = parseEnvInt(process.env.RESET_PASSWO
 const RESET_PASSWORD_RATE_LIMIT_MAX = parseEnvInt(process.env.RESET_PASSWORD_RATE_LIMIT_MAX, 5);
 const VERIFICATION_EMAIL_RATE_LIMIT_WINDOW_MS = parseEnvInt(process.env.VERIFICATION_EMAIL_RATE_LIMIT_WINDOW_MS, 60 * 60 * 1000);
 const VERIFICATION_EMAIL_RATE_LIMIT_MAX = parseEnvInt(process.env.VERIFICATION_EMAIL_RATE_LIMIT_MAX, 3);
+const TRUST_PROXY_HOPS = parseEnvInt(process.env.TRUST_PROXY_HOPS, 1);
 const VISITOR_TRACKING_ENABLED = process.env.VISITOR_TRACKING_ENABLED === 'true';
 
 const validateRuntimeEnv = ({ requireDatabase = true } = {}) => {
@@ -224,8 +225,9 @@ const processHostelMediaPayload = async (payload = {}, filesByField = {}) => {
   };
 };
 
-// Trust proxy - required for Railway/Heroku/production
-app.set('trust proxy', 1);
+// Trust proxy - keep this configurable so rate limiting/logging use the correct client IP.
+// Direct Render traffic typically needs 1 hop. Cloudflare -> Render needs 2 hops.
+app.set('trust proxy', TRUST_PROXY_HOPS);
 
 // Create logs directory if it doesn't exist
 const logsDir = path.join(__dirname, 'logs');
