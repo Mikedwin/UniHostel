@@ -39,6 +39,11 @@ const StudentLogin = () => {
                 ...formData,
                 turnstileToken
             });
+
+            if (res.data?.mfaRequired) {
+                setError('This login is for students only. Please use the manager login.');
+                return;
+            }
             
             if (res.data.user.role !== 'student') {
                 setError('This login is for students only. Please use the manager login.');

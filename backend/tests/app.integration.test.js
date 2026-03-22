@@ -30,6 +30,11 @@ const getCookieHeader = (setCookieHeaders = [], cookieName = 'unihostel_auth') =
   setCookieHeaders.find((header) => header.startsWith(`${cookieName}=`))
 );
 
+const extractPrivilegedMfaCode = (html = '') => {
+  const match = String(html).match(/Security Code[\s\S]*?(\d{6})/i);
+  return match ? match[1] : null;
+};
+
 const createUser = async ({
   name,
   email,
@@ -94,6 +99,10 @@ before(async () => {
   process.env.TURNSTILE_ENABLED = 'false';
   process.env.TURNSTILE_SECRET_KEY = '';
   process.env.TURNSTILE_EXPECTED_HOSTNAME = '';
+  process.env.PRIVILEGED_MFA_ENABLED = 'true';
+  process.env.PRIVILEGED_MFA_CODE_EXPIRY_MINUTES = '10';
+  process.env.PRIVILEGED_MFA_MAX_ATTEMPTS = '5';
+  process.env.PRIVILEGED_MFA_RESEND_COOLDOWN_SECONDS = '60';
 
   nodemailer.createTransport = () => ({
     sendMail: async (message) => {
@@ -121,7 +130,9 @@ before(async () => {
 
 beforeEach(async () => {
   sentEmails.length = 0;
-  cache.flush();
+  if (cache) {
+    cache.flush();
+  }
 
   const collections = Object.values(mongoose.connection.collections);
   for (const collection of collections) {
@@ -130,7 +141,9 @@ beforeEach(async () => {
 });
 
 after(async () => {
-  cache.flush();
+  if (cache) {
+    cache.flush();
+  }
 
   if (mongoose.connection.readyState !== 0) {
     await mongoose.disconnect();
@@ -331,6 +344,126 @@ test('login sets an httpOnly auth cookie and cookie-authenticated writes require
     .expect(200);
 
   assert.match(passwordChangeResponse.body.message, /password changed successfully/i);
+});
+
+test('manager login requires MFA and only creates a session after the security code is verified', async () => {
+  const email = 'manager.mfa@example.com';
+  const password = 'Password123!';
+
+  const manager = await createUser({
+    name: 'Manager MFA',
+    email,
+    role: 'manager',
+    password
+  });
+
+  const loginResponse = await request(app)
+    .post('/api/auth/login')
+    .set('User-Agent', 'Integration Test Browser')
+    .send({ email, password })
+    .expect(200);
+
+  assert.equal(loginResponse.body.mfaRequired, true);
+  assert.equal(loginResponse.body.pendingRole, 'manager');
+  assert.equal(loginResponse.body.csrfToken, undefined);
+  assert.equal(getCookieHeader(loginResponse.headers['set-cookie']), undefined);
+  assert.ok(loginResponse.body.challengeToken);
+  assert.equal(sentEmails.length, 1);
+
+  const emailedCode = extractPrivilegedMfaCode(sentEmails[0].html);
+  assert.match(emailedCode || '', /^\d{6}$/);
+
+  const managerBeforeVerification = await User.findById(manager._id);
+  assert.equal(managerBeforeVerification.loginHistory.length, 0);
+  assert.equal(Boolean(managerBeforeVerification.lastLogin), false);
+  assert.ok(managerBeforeVerification.privilegedMfa?.challengeTokenHash);
+
+  const incorrectCode = emailedCode === '000000' ? '111111' : '000000';
+
+  const invalidCodeResponse = await request(app)
+    .post('/api/auth/verify-mfa')
+    .send({
+      challengeToken: loginResponse.body.challengeToken,
+      code: incorrectCode
+    })
+    .expect(400);
+
+  assert.match(invalidCodeResponse.body.message, /invalid security code/i);
+
+  const verificationResponse = await request(app)
+    .post('/api/auth/verify-mfa')
+    .set('User-Agent', 'Integration Test Browser')
+    .send({
+      challengeToken: loginResponse.body.challengeToken,
+      code: emailedCode
+    })
+    .expect(200);
+
+  const authCookie = getCookieHeader(verificationResponse.headers['set-cookie']);
+  assert.ok(authCookie, 'MFA verification should establish the auth cookie');
+  assert.ok(verificationResponse.body.csrfToken);
+  assert.equal(verificationResponse.body.user.email, email);
+  assert.equal(verificationResponse.body.user.role, 'manager');
+
+  const managerAfterVerification = await User.findById(manager._id);
+  assert.equal(managerAfterVerification.loginHistory.length, 1);
+  assert.ok(managerAfterVerification.lastLogin);
+  assert.equal(managerAfterVerification.privilegedMfa, undefined);
+});
+
+test('resending privileged MFA rotates the code and invalidates the previous one', async () => {
+  const email = 'admin.mfa@example.com';
+  const password = 'Password123!';
+
+  const admin = await createUser({
+    name: 'Admin MFA',
+    email,
+    role: 'admin',
+    password
+  });
+
+  const loginResponse = await request(app)
+    .post('/api/auth/login')
+    .send({ email, password })
+    .expect(200);
+
+  const firstCode = extractPrivilegedMfaCode(sentEmails[0].html);
+  assert.match(firstCode || '', /^\d{6}$/);
+
+  const pendingAdmin = await User.findById(admin._id);
+  pendingAdmin.privilegedMfa.lastSentAt = new Date(Date.now() - 61 * 1000);
+  await pendingAdmin.save();
+
+  const resendResponse = await request(app)
+    .post('/api/auth/mfa/resend')
+    .send({ challengeToken: loginResponse.body.challengeToken })
+    .expect(200);
+
+  assert.match(resendResponse.body.message, /new security code/i);
+  assert.equal(sentEmails.length, 2);
+
+  const secondCode = extractPrivilegedMfaCode(sentEmails[1].html);
+  assert.match(secondCode || '', /^\d{6}$/);
+  assert.notEqual(secondCode, firstCode);
+
+  await request(app)
+    .post('/api/auth/verify-mfa')
+    .send({
+      challengeToken: loginResponse.body.challengeToken,
+      code: firstCode
+    })
+    .expect(400);
+
+  const verificationResponse = await request(app)
+    .post('/api/auth/verify-mfa')
+    .send({
+      challengeToken: loginResponse.body.challengeToken,
+      code: secondCode
+    })
+    .expect(200);
+
+  assert.ok(getCookieHeader(verificationResponse.headers['set-cookie']));
+  assert.equal(verificationResponse.body.user.email, email);
 });
 
 test('forgot password stores a hashed reset token and accepts the emailed token for password reset', async () => {

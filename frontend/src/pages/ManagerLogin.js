@@ -5,13 +5,19 @@ import { useAuth } from '../context/AuthContext';
 import { Building2, Eye, EyeOff } from 'lucide-react';
 import { API_ENDPOINTS } from '../config/api';
 import TurnstileWidget from '../components/security/TurnstileWidget';
+import PrivilegedMfaChallenge from '../components/security/PrivilegedMfaChallenge';
 import useTurnstileGate from '../utils/useTurnstileGate';
 
 const ManagerLogin = () => {
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [error, setError] = useState('');
+    const [infoMessage, setInfoMessage] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [mfaChallenge, setMfaChallenge] = useState(null);
+    const [mfaCode, setMfaCode] = useState('');
+    const [mfaLoading, setMfaLoading] = useState(false);
+    const [mfaResendLoading, setMfaResendLoading] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
     const {
@@ -23,10 +29,47 @@ const ManagerLogin = () => {
         validateTurnstile
     } = useTurnstileGate();
 
+    const resetMfaState = () => {
+        setMfaChallenge(null);
+        setMfaCode('');
+        setMfaLoading(false);
+        setMfaResendLoading(false);
+    };
+
+    const navigateByRole = (role) => {
+        if (role === 'admin') {
+            navigate('/admin-dashboard');
+            return;
+        }
+
+        navigate('/manager-dashboard');
+    };
+
+    const clearUnexpectedSession = async (csrfToken) => {
+        if (!csrfToken) {
+            return;
+        }
+
+        try {
+            await axios.post(
+                API_ENDPOINTS.LOGOUT,
+                {},
+                {
+                    withCredentials: true,
+                    skipAuthRedirect: true,
+                    headers: { 'X-CSRF-Token': csrfToken }
+                }
+            );
+        } catch (logoutError) {
+            // Best effort only.
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
+        setInfoMessage('');
         
         try {
             if (!validateTurnstile(setError)) {
@@ -37,26 +80,100 @@ const ManagerLogin = () => {
                 ...formData,
                 turnstileToken
             });
+
+            if (res.data?.mfaRequired) {
+                setMfaChallenge({
+                    challengeToken: res.data.challengeToken,
+                    maskedEmail: res.data.maskedEmail,
+                    pendingRole: res.data.pendingRole
+                });
+                setMfaCode('');
+                setInfoMessage(res.data.message || 'A security code has been sent to your email.');
+                return;
+            }
             
             const role = res.data.user.role;
             
             if (role === 'student') {
+                await clearUnexpectedSession(res.data.csrfToken);
                 setError('This login is for hostel managers only. Please use the student login.');
                 return;
             }
             
             login(res.data.user, res.data.csrfToken);
-            
-            if (role === 'admin') {
-                navigate('/admin-dashboard');
-            } else {
-                navigate('/manager-dashboard');
-            }
+            navigateByRole(role);
         } catch (err) {
             setError(err.response?.data?.message || 'Unable to sign in right now. Please try again later.');
         } finally {
             resetTurnstile();
             setLoading(false);
+        }
+    };
+
+    const handleVerifyMfa = async (e) => {
+        e.preventDefault();
+
+        if (!mfaChallenge?.challengeToken) {
+            setError('Security verification expired. Please sign in again.');
+            resetMfaState();
+            return;
+        }
+
+        setMfaLoading(true);
+        setError('');
+
+        try {
+            const res = await axios.post(API_ENDPOINTS.VERIFY_MFA, {
+                challengeToken: mfaChallenge.challengeToken,
+                code: mfaCode
+            });
+
+            login(res.data.user, res.data.csrfToken);
+            resetMfaState();
+            setInfoMessage('');
+            navigateByRole(res.data.user?.role || mfaChallenge.pendingRole);
+        } catch (err) {
+            if (err.response?.data?.resetLogin) {
+                resetMfaState();
+            }
+
+            setError(err.response?.data?.message || 'Unable to verify the security code right now. Please try again later.');
+        } finally {
+            setMfaLoading(false);
+        }
+    };
+
+    const handleResendMfa = async () => {
+        if (!mfaChallenge?.challengeToken) {
+            setError('Security verification expired. Please sign in again.');
+            resetMfaState();
+            return;
+        }
+
+        setMfaResendLoading(true);
+        setError('');
+
+        try {
+            const res = await axios.post(API_ENDPOINTS.RESEND_MFA, {
+                challengeToken: mfaChallenge.challengeToken
+            });
+
+            setInfoMessage(res.data?.message || 'A new security code has been sent to your email.');
+
+            if (res.data?.maskedEmail) {
+                setMfaChallenge((current) => current ? {
+                    ...current,
+                    maskedEmail: res.data.maskedEmail
+                } : current);
+            }
+        } catch (err) {
+            if (err.response?.data?.resetLogin) {
+                resetMfaState();
+            }
+
+            setError(err.response?.data?.message || 'Unable to resend the security code right now. Please try again later.');
+        } finally {
+            setMfaResendLoading(false);
         }
     };
 
@@ -79,100 +196,124 @@ const ManagerLogin = () => {
                             {error}
                         </div>
                     )}
-                    
-                    <form className="space-y-6" onSubmit={handleSubmit}>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Email Address
-                            </label>
-                            <input 
-                                type="email" 
-                                required 
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none transition-colors" 
-                                placeholder="Enter your email"
-                                value={formData.email}
-                                onChange={e => setFormData({...formData, email: e.target.value})}
-                                onFocus={(e) => e.target.style.borderColor = '#23817A'}
-                                onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
-                            />
+
+                    {infoMessage && (
+                        <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm">
+                            {infoMessage}
                         </div>
-                        
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Password
-                            </label>
-                            <div className="relative">
-                                <input 
-                                    type={showPassword ? "text" : "password"}
-                                    required 
-                                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none transition-colors" 
-                                    placeholder="Enter your password"
-                                    value={formData.password}
-                                    onChange={e => setFormData({...formData, password: e.target.value})}
-                                    onFocus={(e) => e.target.style.borderColor = '#23817A'}
-                                    onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
-                                />
-                                <button
-                                    type="button"
-                                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                                    onClick={() => setShowPassword(!showPassword)}
+                    )}
+                    
+                    {mfaChallenge ? (
+                        <PrivilegedMfaChallenge
+                            code={mfaCode}
+                            loading={mfaLoading}
+                            maskedEmail={mfaChallenge.maskedEmail}
+                            onBack={() => {
+                                resetMfaState();
+                                setInfoMessage('');
+                            }}
+                            onCodeChange={setMfaCode}
+                            onResend={handleResendMfa}
+                            onSubmit={handleVerifyMfa}
+                            resendLoading={mfaResendLoading}
+                        />
+                    ) : (
+                        <>
+                            <form className="space-y-6" onSubmit={handleSubmit}>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Email Address
+                                    </label>
+                                    <input 
+                                        type="email" 
+                                        required 
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none transition-colors" 
+                                        placeholder="Enter your email"
+                                        value={formData.email}
+                                        onChange={e => setFormData({...formData, email: e.target.value})}
+                                        onFocus={(e) => e.target.style.borderColor = '#23817A'}
+                                        onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                                    />
+                                </div>
+                                
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Password
+                                    </label>
+                                    <div className="relative">
+                                        <input 
+                                            type={showPassword ? 'text' : 'password'}
+                                            required 
+                                            className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none transition-colors" 
+                                            placeholder="Enter your password"
+                                            value={formData.password}
+                                            onChange={e => setFormData({...formData, password: e.target.value})}
+                                            onFocus={(e) => e.target.style.borderColor = '#23817A'}
+                                            onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                                        />
+                                        <button
+                                            type="button"
+                                            className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                        >
+                                            {showPassword ? (
+                                                <EyeOff className="h-4 w-4 text-gray-400" />
+                                            ) : (
+                                                <Eye className="h-4 w-4 text-gray-400" />
+                                            )}
+                                        </button>
+                                    </div>
+                                    <div className="text-right mt-1">
+                                        <Link to="/forgot-password" className="text-xs" style={{ color: '#23817A' }}>
+                                            Forgot password?
+                                        </Link>
+                                    </div>
+                                </div>
+
+                                {turnstileEnabled && (
+                                    <TurnstileWidget
+                                        action="login"
+                                        resetKey={turnstileResetKey}
+                                        onTokenChange={setTurnstileToken}
+                                        onError={setError}
+                                    />
+                                )}
+                                
+                                <button 
+                                    type="submit" 
+                                    disabled={loading}
+                                    className="w-full text-white py-2 px-4 rounded-md font-medium focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                                    style={{ backgroundColor: '#23817A' }}
+                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1a6159'}
+                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#23817A'}
                                 >
-                                    {showPassword ? (
-                                        <EyeOff className="h-4 w-4 text-gray-400" />
+                                    {loading ? (
+                                        <>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                            Signing In...
+                                        </>
                                     ) : (
-                                        <Eye className="h-4 w-4 text-gray-400" />
+                                        'Sign In'
                                     )}
                                 </button>
+                            </form>
+                            
+                            <div className="mt-6 text-center">
+                                <p className="text-sm text-gray-600">
+                                    Need a manager account?{' '}
+                                    <Link to="/contact" className="font-medium" style={{ color: '#23817A' }}>
+                                        Contact support
+                                    </Link>
+                                </p>
+                                <p className="mt-2 text-xs text-gray-500">
+                                    Are you a student?{' '}
+                                    <Link to="/student-login" style={{ color: '#23817A' }}>
+                                        Student Login
+                                    </Link>
+                                </p>
                             </div>
-                            <div className="text-right mt-1">
-                                <Link to="/forgot-password" className="text-xs" style={{ color: '#23817A' }}>
-                                    Forgot password?
-                                </Link>
-                            </div>
-                        </div>
-
-                        {turnstileEnabled && (
-                            <TurnstileWidget
-                                action="login"
-                                resetKey={turnstileResetKey}
-                                onTokenChange={setTurnstileToken}
-                                onError={setError}
-                            />
-                        )}
-                        
-                        <button 
-                            type="submit" 
-                            disabled={loading}
-                            className="w-full text-white py-2 px-4 rounded-md font-medium focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                            style={{ backgroundColor: '#23817A' }}
-                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1a6159'}
-                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#23817A'}
-                        >
-                            {loading ? (
-                                <>
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                    Signing In...
-                                </>
-                            ) : (
-                                'Sign In'
-                            )}
-                        </button>
-                    </form>
-                    
-                    <div className="mt-6 text-center">
-                        <p className="text-sm text-gray-600">
-                            Need a manager account?{' '}
-                            <Link to="/contact" className="font-medium" style={{ color: '#23817A' }}>
-                                Contact support
-                            </Link>
-                        </p>
-                        <p className="mt-2 text-xs text-gray-500">
-                            Are you a student?{' '}
-                            <Link to="/student-login" style={{ color: '#23817A' }}>
-                                Student Login
-                            </Link>
-                        </p>
-                    </div>
+                        </>
+                    )}
                 </div>
             </div>
         </div>

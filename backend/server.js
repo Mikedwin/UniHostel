@@ -49,6 +49,30 @@ const payoutRoutes = require('./routes/payout');
 const visitorRoutes = require('./routes/visitors');
 const { generateCsrfToken } = require('./middleware/csrf');
 const { setAuthCookie } = require('./utils/authCookies');
+const {
+  sendPrivilegedMfaCodeEmail,
+  sendPasswordResetEmail,
+  sendApplicationSubmittedEmail,
+  sendApplicationApprovedForPaymentEmail,
+  sendPaymentSuccessEmail,
+  sendFinalApprovalEmail,
+  sendApplicationRejectedEmail,
+  sendNewApplicationNotificationToManager
+} = require('./utils/emailService');
+const {
+  clearPrivilegedMfaChallenge,
+  clonePrivilegedMfaState,
+  createPrivilegedMfaChallenge,
+  getPrivilegedMfaCodeExpiryMinutes,
+  getPrivilegedMfaResendCooldownSeconds,
+  hashPrivilegedMfaChallengeToken,
+  hasPrivilegedMfaChallenge,
+  isPrivilegedMfaChallengeExpired,
+  maskEmailAddress,
+  normalizeChallengeToken,
+  requiresPrivilegedMfa,
+  verifyPrivilegedMfaCode
+} = require('./utils/mfa');
 const { sendServerError } = require('./utils/serverError');
 const {
   getTurnstileRemoteIp,
@@ -59,6 +83,7 @@ const {
 const app = express();
 const VERIFICATION_TOKEN_EXPIRY_HOURS = parseInt(process.env.VERIFICATION_TOKEN_EXPIRY_HOURS, 10) || 24;
 const GENERIC_LOGIN_FAILURE_MESSAGE = 'Invalid email or password';
+const PRIVILEGED_MFA_DELIVERY_FAILURE_MESSAGE = 'Unable to deliver the security code right now. Please try again later.';
 const parseEnvInt = (value, fallback) => {
   const parsed = parseInt(value, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
@@ -477,6 +502,86 @@ const serializeAuthenticatedUser = (user) => ({
   accountStatus: user.accountStatus
 });
 
+const recordSuccessfulLogin = async (user, req) => {
+  clearPrivilegedMfaChallenge(user);
+  user.lastLogin = new Date();
+  user.loginHistory.push({
+    timestamp: new Date(),
+    ipAddress: req.ip || req.connection?.remoteAddress,
+    userAgent: req.headers['user-agent']
+  });
+
+  if (user.loginHistory.length > 10) {
+    user.loginHistory = user.loginHistory.slice(-10);
+  }
+
+  await user.save();
+};
+
+const completeAuthenticatedLogin = async (user, req, res) => {
+  await recordSuccessfulLogin(user, req);
+
+  const token = createAuthToken(user);
+  const csrfToken = generateCsrfToken(user._id.toString());
+  setAuthCookie(res, token);
+
+  return {
+    token,
+    csrfToken,
+    user: serializeAuthenticatedUser(user),
+    passwordResetRequired: user.passwordResetRequired
+  };
+};
+
+const persistPrivilegedMfaChallenge = async (user, { challengeToken } = {}) => {
+  const previousState = clonePrivilegedMfaState(user);
+  const challenge = await createPrivilegedMfaChallenge({ challengeToken });
+
+  user.privilegedMfa = challenge.state;
+  await user.save();
+
+  try {
+    await sendPrivilegedMfaCodeEmail(
+      user.email,
+      user.name,
+      challenge.code,
+      getPrivilegedMfaCodeExpiryMinutes()
+    );
+  } catch (error) {
+    if (previousState) {
+      user.privilegedMfa = previousState;
+    } else {
+      clearPrivilegedMfaChallenge(user);
+    }
+
+    await user.save();
+    throw error;
+  }
+
+  return challenge;
+};
+
+const createPrivilegedMfaResponse = (user, challengeToken) => ({
+  mfaRequired: true,
+  challengeToken,
+  pendingRole: user.role,
+  maskedEmail: maskEmailAddress(user.email),
+  expiresInMinutes: getPrivilegedMfaCodeExpiryMinutes(),
+  message: 'A security code has been sent to your email.'
+});
+
+const findUserByPrivilegedMfaChallengeToken = async (challengeToken) => {
+  const normalizedChallengeToken = normalizeChallengeToken(challengeToken);
+
+  if (!/^[a-f0-9]{64}$/i.test(normalizedChallengeToken)) {
+    return null;
+  }
+
+  return User.findOne({
+    'privilegedMfa.challengeTokenHash': hashPrivilegedMfaChallengeToken(normalizedChallengeToken)
+  });
+};
+
 // Health check endpoint
 app.get('/', (req, res) => {
   const responsePayload = {
@@ -849,36 +954,29 @@ app.post('/api/auth/login', validateInput, async (req, res) => {
       logger.info(`Auto-activated student account during login: ${user.email}`);
     }
 
-    // Successful login - reset failed attempts
+    // Successful password check - reset password failure counters
     user.failedLoginAttempts = 0;
     user.accountLockedUntil = null;
     user.lastFailedLogin = null;
-    
-    // Update last login and add to login history
-    user.lastLogin = new Date();
-    user.loginHistory.push({
-      timestamp: new Date(),
-      ipAddress: req.ip || req.connection.remoteAddress,
-      userAgent: req.headers['user-agent']
-    });
-    // Keep only last 10 login records
-    if (user.loginHistory.length > 10) {
-      user.loginHistory = user.loginHistory.slice(-10);
-    }
-    await user.save();
 
-    const token = createAuthToken(user);
-    const csrfToken = generateCsrfToken(user._id.toString());
-    setAuthCookie(res, token);
-    
+    if (requiresPrivilegedMfa(user)) {
+      try {
+        const challenge = await persistPrivilegedMfaChallenge(user);
+
+        logger.info(`Privileged MFA challenge created for user: ${user.email}`);
+
+        return res.json(createPrivilegedMfaResponse(user, challenge.challengeToken));
+      } catch (mfaError) {
+        logger.error('Privileged MFA delivery error:', mfaError);
+        return res.status(503).json({ message: PRIVILEGED_MFA_DELIVERY_FAILURE_MESSAGE });
+      }
+    }
+
+    const authenticatedResponse = await completeAuthenticatedLogin(user, req, res);
+
     logger.info(`Successful login for user: ${user.email}`);
-    
-    res.json({ 
-      token,
-      csrfToken,
-      user: serializeAuthenticatedUser(user),
-      passwordResetRequired: user.passwordResetRequired
-    });
+
+    res.json(authenticatedResponse);
   } catch (err) {
     logger.error('Login error:', err);
     res.status(500).json({ message: 'Unable to sign in right now. Please try again later.' });
@@ -894,29 +992,17 @@ app.get('/api/auth/session', auth, async (req, res) => {
     }
 
     const refreshedToken = createAuthToken(user);
-    const csrfToken = generateCsrfToken(user._id.toString());
     setAuthCookie(res, refreshedToken);
 
     res.json({
       user: serializeAuthenticatedUser(user),
-      csrfToken
+      csrfToken: generateCsrfToken(user._id.toString())
     });
   } catch (err) {
     logger.error('Session restore error:', err);
     res.status(500).json({ message: 'Failed to restore session' });
   }
 });
-
-// Forgot password - Request reset
-const { 
-  sendPasswordResetEmail,
-  sendApplicationSubmittedEmail,
-  sendApplicationApprovedForPaymentEmail,
-  sendPaymentSuccessEmail,
-  sendFinalApprovalEmail,
-  sendApplicationRejectedEmail,
-  sendNewApplicationNotificationToManager
-} = require('./utils/emailService');
 
 const forgotPasswordLimiter = rateLimit({
   windowMs: FORGOT_PASSWORD_RATE_LIMIT_WINDOW_MS,
@@ -929,6 +1015,112 @@ const resetPasswordLimiter = rateLimit({
   max: RESET_PASSWORD_RATE_LIMIT_MAX,
   message: 'Too many password reset attempts. Please request a new reset link or try again later.',
   skipSuccessfulRequests: true,
+});
+
+const privilegedMfaVerifyLimiter = rateLimit({
+  windowMs: AUTH_RATE_LIMIT_WINDOW_MS,
+  max: parseEnvInt(process.env.PRIVILEGED_MFA_VERIFY_RATE_LIMIT_MAX, 10),
+  message: 'Too many security code attempts. Please sign in again later.',
+  skipSuccessfulRequests: true,
+});
+
+const privilegedMfaResendLimiter = rateLimit({
+  windowMs: AUTH_RATE_LIMIT_WINDOW_MS,
+  max: parseEnvInt(process.env.PRIVILEGED_MFA_RESEND_RATE_LIMIT_MAX, 5),
+  message: 'Too many security code requests. Please wait and try again.',
+  skipSuccessfulRequests: true,
+});
+
+app.post('/api/auth/verify-mfa', privilegedMfaVerifyLimiter, async (req, res) => {
+  try {
+    const { challengeToken, code } = req.body;
+
+    if (!challengeToken || !code) {
+      return res.status(400).json({ message: 'Security code and challenge token are required.' });
+    }
+
+    const user = await findUserByPrivilegedMfaChallengeToken(challengeToken);
+    if (!user || !requiresPrivilegedMfa(user) || !hasPrivilegedMfaChallenge(user)) {
+      return res.status(400).json({
+        message: 'Security verification expired. Please sign in again.',
+        resetLogin: true
+      });
+    }
+
+    const verificationResult = await verifyPrivilegedMfaCode(user, code);
+
+    if (!verificationResult.success) {
+      await user.save();
+      return res.status(verificationResult.status || 400).json({
+        message: verificationResult.message,
+        resetLogin: verificationResult.resetLogin || false
+      });
+    }
+
+    const authenticatedResponse = await completeAuthenticatedLogin(user, req, res);
+
+    logger.info(`Privileged MFA verified for user: ${user.email}`);
+
+    return res.json(authenticatedResponse);
+  } catch (err) {
+    logger.error('Privileged MFA verification error:', err);
+    return res.status(500).json({ message: 'Unable to verify the security code right now. Please try again later.' });
+  }
+});
+
+app.post('/api/auth/mfa/resend', privilegedMfaResendLimiter, async (req, res) => {
+  try {
+    const { challengeToken } = req.body;
+
+    if (!challengeToken) {
+      return res.status(400).json({ message: 'Challenge token is required.' });
+    }
+
+    const user = await findUserByPrivilegedMfaChallengeToken(challengeToken);
+    if (!user || !requiresPrivilegedMfa(user) || !hasPrivilegedMfaChallenge(user)) {
+      return res.status(400).json({
+        message: 'Security verification expired. Please sign in again.',
+        resetLogin: true
+      });
+    }
+
+    if (isPrivilegedMfaChallengeExpired(user)) {
+      clearPrivilegedMfaChallenge(user);
+      await user.save();
+      return res.status(400).json({
+        message: 'Security code expired. Please sign in again.',
+        resetLogin: true
+      });
+    }
+
+    const resendCooldownSeconds = getPrivilegedMfaResendCooldownSeconds();
+    const lastSentAt = user.privilegedMfa?.lastSentAt ? new Date(user.privilegedMfa.lastSentAt).getTime() : 0;
+    const secondsSinceLastSent = lastSentAt ? Math.floor((Date.now() - lastSentAt) / 1000) : resendCooldownSeconds;
+
+    if (secondsSinceLastSent < resendCooldownSeconds) {
+      return res.status(429).json({
+        message: `Please wait ${resendCooldownSeconds - secondsSinceLastSent} seconds before requesting a new code.`
+      });
+    }
+
+    try {
+      await persistPrivilegedMfaChallenge(user, { challengeToken });
+
+      logger.info(`Privileged MFA challenge resent for user: ${user.email}`);
+
+      return res.json({
+        message: 'A new security code has been sent to your email.',
+        maskedEmail: maskEmailAddress(user.email),
+        expiresInMinutes: getPrivilegedMfaCodeExpiryMinutes()
+      });
+    } catch (mfaError) {
+      logger.error('Privileged MFA resend error:', mfaError);
+      return res.status(503).json({ message: PRIVILEGED_MFA_DELIVERY_FAILURE_MESSAGE });
+    }
+  } catch (err) {
+    logger.error('Privileged MFA resend error:', err);
+    return res.status(500).json({ message: 'Unable to resend the security code right now. Please try again later.' });
+  }
 });
 
 app.post('/api/auth/forgot-password', forgotPasswordLimiter, async (req, res) => {
@@ -993,6 +1185,7 @@ app.post('/api/auth/reset-password/:token', resetPasswordLimiter, async (req, re
     user.resetPasswordExpires = undefined;
     user.passwordResetRequired = false;
     user.temporaryPassword = undefined;
+    clearPrivilegedMfaChallenge(user);
     await user.save();
     
     logger.info(`Password reset successful for user: ${user.email}`);
@@ -1027,6 +1220,7 @@ app.post('/api/auth/change-password', auth, async (req, res) => {
     }
     
     user.password = await bcrypt.hash(newPassword, 12);
+    clearPrivilegedMfaChallenge(user);
     await user.save();
     
     logger.info(`Password changed for user: ${user.email}`);

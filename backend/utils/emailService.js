@@ -76,6 +76,33 @@ const sendVerificationEmail = async (email, name, verificationToken) => {
   return true;
 };
 
+const sendPrivilegedMfaCodeEmail = async (email, name, code, expiresInMinutes = 10) => {
+  const transporter = createTransporter();
+
+  if (!transporter) {
+    throw new Error('Email service is not configured for privileged MFA delivery');
+  }
+
+  await transporter.sendMail({
+    from: `"UniHostel" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: 'Your UniHostel Security Code',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #23817A;">Security Verification Required</h2>
+        <p>Hi ${name},</p>
+        <p>Use the security code below to complete your UniHostel sign-in.</p>
+        <div style="margin: 24px 0; padding: 18px; background: #f5f5f5; border-radius: 8px; text-align: center;">
+          <p style="margin: 0 0 8px; color: #666; font-size: 14px;">Security Code</p>
+          <div style="font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #23817A;">${code}</div>
+        </div>
+        <p style="color: #666; font-size: 14px;">This code expires in ${expiresInMinutes} minutes.</p>
+        <p style="color: #666; font-size: 14px;">If you did not try to sign in, change your password immediately.</p>
+      </div>
+    `
+  });
+};
+
 const sendApplicationSubmittedEmail = async (studentEmail, studentName, hostelName, roomType, semester) => {
   const transporter = createTransporter();
   if (!transporter) return;
@@ -231,6 +258,7 @@ const sendNewApplicationNotificationToManager = async (managerEmail, managerName
 };
 
 module.exports = { 
+  sendPrivilegedMfaCodeEmail,
   sendVerificationEmail,
   sendPasswordResetEmail,
   sendApplicationSubmittedEmail,

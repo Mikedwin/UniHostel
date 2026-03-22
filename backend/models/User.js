@@ -31,6 +31,13 @@ const userSchema = new mongoose.Schema({
   failedLoginAttempts: { type: Number, default: 0 },
   accountLockedUntil: { type: Date },
   lastFailedLogin: { type: Date },
+  privilegedMfa: {
+    challengeTokenHash: { type: String },
+    codeHash: { type: String },
+    expiresAt: { type: Date },
+    failedAttempts: { type: Number, default: 0 },
+    lastSentAt: { type: Date }
+  },
   tosAccepted: { type: Boolean, default: false },
   tosAcceptedAt: { type: Date },
   privacyPolicyAccepted: { type: Boolean, default: false },
@@ -55,5 +62,6 @@ userSchema.index({ createdAt: -1 });
 userSchema.index({ resetPasswordToken: 1 }, { sparse: true });
 userSchema.index({ verificationToken: 1 }, { sparse: true });
 userSchema.index({ accountLockedUntil: 1 }, { sparse: true });
+userSchema.index({ 'privilegedMfa.challengeTokenHash': 1 }, { sparse: true });
 
 module.exports = mongoose.model('User', userSchema);
