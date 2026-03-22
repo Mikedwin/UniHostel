@@ -205,6 +205,14 @@ const StudentDashboard = () => {
         }
     };
 
+    const formatStatusLabel = (status) => (
+        (status || '')
+            .split('_')
+            .filter(Boolean)
+            .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+            .join(' ')
+    );
+
     return (
         <div className="max-w-7xl mx-auto px-4 py-8">
             {toast && (
@@ -390,6 +398,34 @@ const StudentDashboard = () => {
                                                 className="flex-1 bg-red-100 text-red-700 py-2 rounded hover:bg-red-200 font-medium">
                                                 Delete Permanently
                                             </button>
+                                        </div>
+                                    )}
+                                    {app.status === 'approved' && (
+                                        <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-4">
+                                            <div className="mb-3">
+                                                <p className="text-sm font-semibold text-green-800">Final Approval Details</p>
+                                                <p className="text-xs text-green-700">
+                                                    Your payment has been confirmed and final approval has been granted.
+                                                </p>
+                                            </div>
+                                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                                                <div className="rounded-md bg-white p-3 shadow-sm">
+                                                    <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Student</p>
+                                                    <p className="mt-1 font-semibold text-gray-900">{app.studentName || user?.name || 'Student'}</p>
+                                                </div>
+                                                <div className="rounded-md bg-white p-3 shadow-sm">
+                                                    <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Semester</p>
+                                                    <p className="mt-1 font-semibold text-gray-900">{app.semester}</p>
+                                                </div>
+                                                <div className="rounded-md bg-white p-3 shadow-sm">
+                                                    <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Status</p>
+                                                    <p className="mt-1 font-semibold text-gray-900">{formatStatusLabel(app.status)}</p>
+                                                </div>
+                                                <div className="rounded-md bg-white p-3 shadow-sm">
+                                                    <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Access Code</p>
+                                                    <p className="mt-1 font-semibold text-gray-900">{app.accessCode || 'Pending issuance'}</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
