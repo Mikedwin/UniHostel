@@ -401,31 +401,24 @@ const StudentDashboard = () => {
                                         </div>
                                     )}
                                     {app.status === 'approved' && (
-                                        <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-4">
-                                            <div className="mb-3">
-                                                <p className="text-sm font-semibold text-green-800">Final Approval Details</p>
-                                                <p className="text-xs text-green-700">
-                                                    Your payment has been confirmed and final approval has been granted.
-                                                </p>
-                                            </div>
-                                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                                                <div className="rounded-md bg-white p-3 shadow-sm">
-                                                    <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Student</p>
-                                                    <p className="mt-1 font-semibold text-gray-900">{app.studentName || user?.name || 'Student'}</p>
-                                                </div>
-                                                <div className="rounded-md bg-white p-3 shadow-sm">
-                                                    <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Semester</p>
-                                                    <p className="mt-1 font-semibold text-gray-900">{app.semester}</p>
-                                                </div>
-                                                <div className="rounded-md bg-white p-3 shadow-sm">
-                                                    <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Status</p>
-                                                    <p className="mt-1 font-semibold text-gray-900">{formatStatusLabel(app.status)}</p>
-                                                </div>
-                                                <div className="rounded-md bg-white p-3 shadow-sm">
-                                                    <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Access Code</p>
-                                                    <p className="mt-1 font-semibold text-gray-900">{app.accessCode || 'Pending issuance'}</p>
-                                                </div>
-                                            </div>
+                                        <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-700">
+                                            <span className="font-semibold text-green-700">Final Approval Details:</span>
+                                            <span>
+                                                <span className="text-gray-500">Student:</span>{' '}
+                                                <span className="font-semibold text-gray-900">{app.studentName || user?.name || 'Student'}</span>
+                                            </span>
+                                            <span>
+                                                <span className="text-gray-500">Semester:</span>{' '}
+                                                <span className="font-semibold text-gray-900">{app.semester}</span>
+                                            </span>
+                                            <span>
+                                                <span className="text-gray-500">Status:</span>{' '}
+                                                <span className="font-semibold text-gray-900">{formatStatusLabel(app.status)}</span>
+                                            </span>
+                                            <span>
+                                                <span className="text-gray-500">Access Code:</span>{' '}
+                                                <span className="font-semibold text-gray-900">{app.accessCode || 'Pending issuance'}</span>
+                                            </span>
                                         </div>
                                     )}
                                 </div>
