@@ -59,6 +59,8 @@ const AUTH_RATE_LIMIT_WINDOW_MS = parseEnvInt(process.env.AUTH_RATE_LIMIT_WINDOW
 const AUTH_RATE_LIMIT_MAX = parseEnvInt(process.env.AUTH_RATE_LIMIT_MAX, 3);
 const FORGOT_PASSWORD_RATE_LIMIT_WINDOW_MS = parseEnvInt(process.env.FORGOT_PASSWORD_RATE_LIMIT_WINDOW_MS, 60 * 60 * 1000);
 const FORGOT_PASSWORD_RATE_LIMIT_MAX = parseEnvInt(process.env.FORGOT_PASSWORD_RATE_LIMIT_MAX, 3);
+const RESET_PASSWORD_RATE_LIMIT_WINDOW_MS = parseEnvInt(process.env.RESET_PASSWORD_RATE_LIMIT_WINDOW_MS, 60 * 60 * 1000);
+const RESET_PASSWORD_RATE_LIMIT_MAX = parseEnvInt(process.env.RESET_PASSWORD_RATE_LIMIT_MAX, 5);
 const VERIFICATION_EMAIL_RATE_LIMIT_WINDOW_MS = parseEnvInt(process.env.VERIFICATION_EMAIL_RATE_LIMIT_WINDOW_MS, 60 * 60 * 1000);
 const VERIFICATION_EMAIL_RATE_LIMIT_MAX = parseEnvInt(process.env.VERIFICATION_EMAIL_RATE_LIMIT_MAX, 3);
 const VISITOR_TRACKING_ENABLED = process.env.VISITOR_TRACKING_ENABLED === 'true';
@@ -378,6 +380,8 @@ const generateAccessCode = () => {
   const randomChars = crypto.randomBytes(3).toString('hex').toUpperCase().substring(0, 5);
   return `UNI-${randomChars}`;
 };
+
+const hashResetToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
 
 // Health check endpoint
 app.get('/', (req, res) => {
@@ -797,6 +801,13 @@ const forgotPasswordLimiter = rateLimit({
   message: 'Too many password reset requests. Please try again later.',
 });
 
+const resetPasswordLimiter = rateLimit({
+  windowMs: RESET_PASSWORD_RATE_LIMIT_WINDOW_MS,
+  max: RESET_PASSWORD_RATE_LIMIT_MAX,
+  message: 'Too many password reset attempts. Please request a new reset link or try again later.',
+  skipSuccessfulRequests: true,
+});
+
 app.post('/api/auth/forgot-password', forgotPasswordLimiter, async (req, res) => {
   try {
     const { email } = req.body;
@@ -811,7 +822,7 @@ app.post('/api/auth/forgot-password', forgotPasswordLimiter, async (req, res) =>
     }
     
     const resetToken = crypto.randomBytes(32).toString('hex');
-    user.resetPasswordToken = resetToken;
+    user.resetPasswordToken = hashResetToken(resetToken);
     user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000);
     await user.save();
     
@@ -826,7 +837,7 @@ app.post('/api/auth/forgot-password', forgotPasswordLimiter, async (req, res) =>
 });
 
 // Reset password with token
-app.post('/api/auth/reset-password/:token', async (req, res) => {
+app.post('/api/auth/reset-password/:token', resetPasswordLimiter, async (req, res) => {
   try {
     const { token } = req.params;
     const { password } = req.body;
@@ -835,12 +846,14 @@ app.post('/api/auth/reset-password/:token', async (req, res) => {
       return res.status(400).json({ message: 'Password must be at least 8 characters' });
     }
     
-    if (!token || token.length !== 64) {
+    if (!token || !/^[a-f0-9]{64}$/i.test(token)) {
       return res.status(400).json({ message: 'Invalid reset token' });
     }
+
+    const hashedResetToken = hashResetToken(token);
     
     const user = await User.findOne({
-      resetPasswordToken: token,
+      resetPasswordToken: hashedResetToken,
       resetPasswordExpires: { $gt: Date.now() }
     });
     
@@ -852,6 +865,7 @@ app.post('/api/auth/reset-password/:token', async (req, res) => {
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     user.passwordResetRequired = false;
+    user.temporaryPassword = undefined;
     await user.save();
     
     logger.info(`Password reset successful for user: ${user.email}`);
@@ -896,71 +910,16 @@ app.post('/api/auth/change-password', auth, async (req, res) => {
   }
 });
 
-// In-app password reset - Step 1: Verify email and security question
 app.post('/api/auth/reset-verify', async (req, res) => {
-  try {
-    const { email } = req.body;
-    
-    if (!email) {
-      return res.status(400).json({ message: 'Email is required' });
-    }
-    
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
-    if (!user) {
-      return res.status(404).json({ message: 'No account found with this email' });
-    }
-    
-    if (!user.securityQuestion) {
-      // Auto-set a default security question for existing users
-      user.securityQuestion = "What is your email address?";
-      user.securityAnswer = await bcrypt.hash(email.toLowerCase().trim(), 12);
-      await user.save();
-      logger.info(`Auto-set security question for user: ${user.email}`);
-    }
-    
-    res.json({ 
-      securityQuestion: user.securityQuestion,
-      userId: user._id,
-      role: user.role
-    });
-  } catch (err) {
-    logger.error('Reset verify error:', err);
-    res.status(500).json({ message: 'Failed to verify account' });
-  }
+  res.status(410).json({
+    message: 'This password reset method is no longer available. Use Forgot Password to receive a reset link.'
+  });
 });
 
-// In-app password reset - Step 2: Verify answer and reset password
 app.post('/api/auth/reset-with-security', async (req, res) => {
-  try {
-    const { userId, securityAnswer, newPassword } = req.body;
-    
-    if (!userId || !securityAnswer || !newPassword) {
-      return res.status(400).json({ message: 'All fields are required' });
-    }
-    
-    if (newPassword.length < 8) {
-      return res.status(400).json({ message: 'Password must be at least 8 characters' });
-    }
-    
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    
-    const isMatch = await bcrypt.compare(securityAnswer.toLowerCase().trim(), user.securityAnswer);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Security answer is incorrect' });
-    }
-    
-    user.password = await bcrypt.hash(newPassword, 12);
-    await user.save();
-    
-    logger.info(`Password reset via security question for: ${user.email}`);
-    res.json({ message: 'Password reset successful. You can now login with your new password.' });
-  } catch (err) {
-    logger.error('Reset with security error:', err);
-    res.status(500).json({ message: 'Failed to reset password' });
-  }
+  res.status(410).json({
+    message: 'This password reset method is no longer available. Use Forgot Password to receive a reset link.'
+  });
 });
 
 // Set security question (authenticated)

@@ -53,4 +53,12 @@ describe('App smoke tests', () => {
     expect(await screen.findByRole('heading', { name: /email verified/i })).toBeInTheDocument();
     expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('/auth/verify-email/test-token'));
   });
+
+  it('redirects the legacy in-app reset route to forgot password', async () => {
+    window.history.pushState({}, '', '/reset-password-inapp');
+
+    render(<App />);
+
+    expect(await screen.findByRole('button', { name: /send reset link/i })).toBeInTheDocument();
+  });
 });

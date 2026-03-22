@@ -77,7 +77,7 @@ const ForgotPassword = () => {
                 </form>
 
                 <div className="mt-6 text-center">
-                    <Link to="/student-login" className="inline-flex items-center text-sm font-medium" style={{ color: '#23817A' }}>
+                    <Link to="/login" className="inline-flex items-center text-sm font-medium" style={{ color: '#23817A' }}>
                         <ArrowLeft className="w-4 h-4 mr-1" />
                         Back to Login
                     </Link>

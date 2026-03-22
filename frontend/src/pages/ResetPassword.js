@@ -34,7 +34,7 @@ const ResetPassword = () => {
             const res = await axios.post(`${API_URL}/api/auth/reset-password/${token}`, { password });
             setMessage(res.data.message);
             setSuccess(true);
-            setTimeout(() => navigate('/student-login'), 3000);
+            setTimeout(() => navigate('/login'), 3000);
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to reset password');
         } finally {
@@ -117,7 +117,7 @@ const ResetPassword = () => {
                 </form>
 
                 <div className="mt-6 text-center">
-                    <Link to="/student-login" className="text-sm font-medium" style={{ color: '#23817A' }}>
+                    <Link to="/login" className="text-sm font-medium" style={{ color: '#23817A' }}>
                         Back to Login
                     </Link>
                 </div>

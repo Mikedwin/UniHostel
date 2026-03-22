@@ -1,6 +1,7 @@
 const test = require('node:test');
 const { before, after, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
+const crypto = require('node:crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
@@ -212,6 +213,74 @@ test('legacy student accounts are normalized on login even if they were previous
   const activatedPendingStudent = await User.findOne({ email: 'pending.student@example.com' });
   assert.equal(activatedPendingStudent.isVerified, true);
   assert.equal(activatedPendingStudent.accountStatus, 'active');
+});
+
+test('forgot password stores a hashed reset token and accepts the emailed token for password reset', async () => {
+  const originalPassword = 'Password123!';
+  const newPassword = 'NewSecurePass123!';
+  const email = 'reset.student@example.com';
+
+  const user = await createUser({
+    name: 'Reset Student',
+    email,
+    role: 'student',
+    password: originalPassword
+  });
+
+  const forgotPasswordResponse = await request(app)
+    .post('/api/auth/forgot-password')
+    .send({ email })
+    .expect(200);
+
+  assert.match(forgotPasswordResponse.body.message, /if an account exists/i);
+  assert.equal(sentEmails.length, 1);
+
+  const resetEmail = sentEmails[0];
+  const resetLinkMatch = resetEmail.html.match(/\/reset-password\/([a-f0-9]{64})/i);
+  assert.ok(resetLinkMatch, 'reset email should include a raw reset token');
+
+  const rawResetToken = resetLinkMatch[1];
+  const hashedResetToken = crypto.createHash('sha256').update(rawResetToken).digest('hex');
+
+  const updatedUser = await User.findById(user._id);
+  assert.equal(updatedUser.resetPasswordToken, hashedResetToken);
+  assert.notEqual(updatedUser.resetPasswordToken, rawResetToken);
+  assert.ok(updatedUser.resetPasswordExpires);
+
+  const resetResponse = await request(app)
+    .post(`/api/auth/reset-password/${rawResetToken}`)
+    .send({ password: newPassword })
+    .expect(200);
+
+  assert.match(resetResponse.body.message, /password reset successful/i);
+
+  const resetUser = await User.findById(user._id);
+  assert.equal(resetUser.resetPasswordToken, undefined);
+  assert.equal(resetUser.passwordResetRequired, false);
+  assert.equal(resetUser.temporaryPassword, undefined);
+
+  const loginResponse = await request(app)
+    .post('/api/auth/login')
+    .send({ email, password: newPassword })
+    .expect(200);
+
+  assert.ok(loginResponse.body.token);
+});
+
+test('legacy security-question password reset endpoints are disabled', async () => {
+  const resetVerifyResponse = await request(app)
+    .post('/api/auth/reset-verify')
+    .send({ email: 'anyone@example.com' })
+    .expect(410);
+
+  assert.match(resetVerifyResponse.body.message, /no longer available/i);
+
+  const resetWithSecurityResponse = await request(app)
+    .post('/api/auth/reset-with-security')
+    .send({ userId: new mongoose.Types.ObjectId().toString(), securityAnswer: 'guess', newPassword: 'Password123!' })
+    .expect(410);
+
+  assert.match(resetWithSecurityResponse.body.message, /forgot password/i);
 });
 
 test('public hostel listing returns only active available hostels with manager names', async () => {

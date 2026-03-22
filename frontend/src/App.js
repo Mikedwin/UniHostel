@@ -17,7 +17,6 @@ const StudentRegister = lazy(() => import('./pages/StudentRegister'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const ChangePassword = lazy(() => import('./pages/ChangePassword'));
-const InAppPasswordReset = lazy(() => import('./pages/InAppPasswordReset'));
 const SetupSecurityQuestion = lazy(() => import('./pages/SetupSecurityQuestion'));
 const StudentDashboard = lazy(() => import('./pages/StudentDashboard'));
 const ManagerDashboard = lazy(() => import('./pages/ManagerDashboard'));
@@ -94,7 +93,7 @@ function AppContent() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/verify-email/:token" element={<VerifyEmail />} />
-          <Route path="/reset-password-inapp" element={<InAppPasswordReset />} />
+          <Route path="/reset-password-inapp" element={<Navigate to="/forgot-password" replace />} />
           <Route path="/change-password" element={
             <ProtectedRoute>
               <ChangePassword />
