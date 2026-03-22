@@ -230,9 +230,11 @@ const StudentDashboard = () => {
             </div>
 
             {selectedApps.length > 0 && (
-                <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-                    <div className="flex items-center gap-3">
-                        <span className="text-sm text-gray-600">{selectedApps.length} selected</span>
+                <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-3 sm:p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                        <span className="text-sm font-medium text-gray-600">
+                            {selectedApps.length} {selectedApps.length === 1 ? 'application selected' : 'applications selected'}
+                        </span>
                         {viewMode === 'active' ? (
                             <button
                                 onClick={async () => {
@@ -250,7 +252,7 @@ const StudentDashboard = () => {
                                         showToast('Some operations failed', 'error');
                                     }
                                 }}
-                                className="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700"
+                                className="w-full rounded-md bg-gray-600 px-3 py-2 text-sm font-medium text-white hover:bg-gray-700 sm:w-auto"
                             >
                                 Move Selected to History
                             </button>
@@ -294,14 +296,14 @@ const StudentDashboard = () => {
                                         }
                                     }
                                 }}
-                                className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+                                className="w-full rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 sm:w-auto"
                             >
                                 Delete Selected Permanently
                             </button>
                         )}
                         <button
                             onClick={() => setSelectedApps([])}
-                            className="text-gray-600 text-sm hover:underline"
+                            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 sm:w-auto"
                         >
                             Clear Selection
                         </button>
