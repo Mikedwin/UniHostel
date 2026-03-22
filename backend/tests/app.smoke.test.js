@@ -16,6 +16,24 @@ test('GET / returns API metadata', async () => {
   assert.equal(response.body.documentation, '/api-docs');
 });
 
+test('CORS allows the configured frontend origin and blocks unrelated preview origins', async () => {
+  const allowedOrigin = 'https://uni-hostel-two.vercel.app';
+  const allowedResponse = await request(app)
+    .get('/')
+    .set('Origin', allowedOrigin)
+    .expect(200);
+
+  assert.equal(allowedResponse.headers['access-control-allow-origin'], allowedOrigin);
+  assert.equal(allowedResponse.headers['access-control-allow-credentials'], 'true');
+
+  const blockedResponse = await request(app)
+    .get('/')
+    .set('Origin', 'https://preview-attacker.vercel.app')
+    .expect(200);
+
+  assert.equal(blockedResponse.headers['access-control-allow-origin'], undefined);
+});
+
 test('GET /api/health reports unhealthy when runtime has not started the database connection', async () => {
   const response = await request(app)
     .get('/api/health')

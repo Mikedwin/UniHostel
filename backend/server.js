@@ -57,6 +57,12 @@ const parseEnvInt = (value, fallback) => {
   const parsed = parseInt(value, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 };
+const parseEnvList = (value) => (
+  String(value || '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+);
 const RATE_LIMIT_WINDOW_MS = parseEnvInt(process.env.RATE_LIMIT_WINDOW_MS, 15 * 60 * 1000);
 const RATE_LIMIT_MAX_REQUESTS = parseEnvInt(process.env.RATE_LIMIT_MAX_REQUESTS, 60);
 const AUTH_RATE_LIMIT_WINDOW_MS = parseEnvInt(process.env.AUTH_RATE_LIMIT_WINDOW_MS, RATE_LIMIT_WINDOW_MS);
@@ -119,6 +125,14 @@ const groupFilesByField = (files = []) => files.reduce((accumulator, file) => {
 const uploadFiles = async (files, folder) => Promise.all(
   (files || []).map((file) => uploadBuffer(file.buffer, folder, file.mimetype))
 );
+
+const normalizeOrigin = (origin) => {
+  if (typeof origin !== 'string') {
+    return '';
+  }
+
+  return origin.trim().replace(/\/+$/, '');
+};
 
 const normalizeRoomType = (room = {}) => {
   const normalizedRoom = { ...room };
@@ -199,33 +213,38 @@ app.use(express.urlencoded({ limit: '2mb', extended: true }));
 app.use(cookieParser());
 
 // CORS Configuration - MUST BE BEFORE OTHER MIDDLEWARE
-const allowedOrigins = [
+const allowedOrigins = Array.from(new Set([
   'https://uni-hostel-two.vercel.app',
   'http://localhost:3000',
-  'http://localhost:5000'
-];
+  'http://localhost:5000',
+  'http://localhost:5173',
+  ...parseEnvList(process.env.CORS_ALLOWED_ORIGINS),
+  process.env.FRONTEND_URL
+].map(normalizeOrigin).filter(Boolean)));
 
-// Add Render backend URL to allowed origins if deployed on Render
-if (process.env.RENDER_EXTERNAL_URL) {
-  allowedOrigins.push(process.env.RENDER_EXTERNAL_URL);
-}
+const corsOptions = {
+  origin(origin, callback) {
+    const normalizedOrigin = normalizeOrigin(origin);
 
-app.use(cors({
-  origin: function(origin, callback) {
-    // Allow requests with no origin (mobile apps, Postman, etc.)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.vercel.app')) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+    // Allow requests without an Origin header for non-browser clients and verified webhooks.
+    if (!normalizedOrigin) {
+      return callback(null, true);
     }
+
+    if (allowedOrigins.includes(normalizedOrigin)) {
+      return callback(null, true);
+    }
+
+    return callback(null, false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token']
-}));
+};
 
-app.options('*', cors());
+app.use(cors(corsOptions));
+
+app.options('*', cors(corsOptions));
 
 // Security Middleware
 // 1. Helmet - Sets various HTTP headers for security
