@@ -205,14 +205,6 @@ const StudentDashboard = () => {
         }
     };
 
-    const formatStatusLabel = (status) => (
-        (status || '')
-            .split('_')
-            .filter(Boolean)
-            .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-            .join(' ')
-    );
-
     return (
         <div className="max-w-7xl mx-auto px-4 py-8">
             {toast && (
@@ -410,10 +402,6 @@ const StudentDashboard = () => {
                                             <span>
                                                 <span className="text-gray-500">Semester:</span>{' '}
                                                 <span className="font-semibold text-gray-900">{app.semester}</span>
-                                            </span>
-                                            <span>
-                                                <span className="text-gray-500">Status:</span>{' '}
-                                                <span className="font-semibold text-gray-900">{formatStatusLabel(app.status)}</span>
                                             </span>
                                             <span>
                                                 <span className="text-gray-500">Access Code:</span>{' '}
