@@ -1285,6 +1285,52 @@ app.post('/api/auth/reset-password/code', resetPasswordLimiter, async (req, res)
   }
 });
 
+app.post('/api/auth/reset-password/current', resetPasswordLimiter, async (req, res) => {
+  try {
+    const { email, currentPassword, password } = req.body;
+
+    if (!email || !currentPassword || !password) {
+      return res.status(400).json({ message: 'Email, current password, and new password are required' });
+    }
+
+    if (!await verifyTurnstileForRequest(req, res, 'forgot_password')) {
+      return;
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters' });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: normalizedEmail });
+
+    if (!user) {
+      await bcrypt.compare(currentPassword, DUMMY_PASSWORD_HASH);
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
+
+    user.password = await bcrypt.hash(password, 12);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    clearPasswordResetCode(user);
+    user.passwordResetRequired = false;
+    user.temporaryPassword = undefined;
+    clearPrivilegedMfaChallenge(user);
+    await user.save();
+
+    logger.info(`Password reset with current password successful for user: ${user.email}`);
+    return res.json({ message: 'Password reset successful. You can now login with your new password.' });
+  } catch (err) {
+    logger.error('Reset password with current password error:', err);
+    return res.status(500).json({ message: 'Failed to reset password' });
+  }
+});
+
 // Reset password with token
 app.post('/api/auth/reset-password/:token', resetPasswordLimiter, async (req, res) => {
   try {

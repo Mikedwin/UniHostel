@@ -530,6 +530,50 @@ test('forgot password stores a hashed reset code and accepts the emailed code fo
   assert.ok(loginResponse.body.csrfToken);
 });
 
+test('forgot password page can reset with current password instead of a reset code', async () => {
+  const email = 'current.reset@example.com';
+  const originalPassword = 'Password123!';
+  const newPassword = 'Replacement123!';
+
+  await createUser({
+    name: 'Current Reset User',
+    email,
+    role: 'student',
+    password: originalPassword
+  });
+
+  const resetResponse = await request(app)
+    .post('/api/auth/reset-password/current')
+    .send({
+      email,
+      currentPassword: originalPassword,
+      password: newPassword
+    })
+    .expect(200);
+
+  assert.match(resetResponse.body.message, /password reset successful/i);
+
+  const loginResponse = await request(app)
+    .post('/api/auth/login')
+    .send({ email, password: newPassword })
+    .expect(200);
+
+  assert.ok(loginResponse.body.csrfToken);
+});
+
+test('reset with current password uses a generic failure when the email is unknown', async () => {
+  const response = await request(app)
+    .post('/api/auth/reset-password/current')
+    .send({
+      email: 'unknown.reset@example.com',
+      currentPassword: 'Password123!',
+      password: 'Replacement123!'
+    })
+    .expect(400);
+
+  assert.equal(response.body.message, 'Current password is incorrect');
+});
+
 test('forgot password still returns a generic success response when email delivery fails', async () => {
   const email = 'reset.failure@example.com';
   const originalCreateTransport = nodemailer.createTransport;

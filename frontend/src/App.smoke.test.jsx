@@ -69,6 +69,6 @@ describe('App smoke tests', () => {
 
     render(<App />);
 
-    expect(await screen.findByRole('button', { name: /send reset code/i })).toBeInTheDocument();
+    expect(await screen.findByLabelText(/current password/i)).toBeInTheDocument();
   });
 });
