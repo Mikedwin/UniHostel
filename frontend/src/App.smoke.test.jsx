@@ -69,6 +69,6 @@ describe('App smoke tests', () => {
 
     render(<App />);
 
-    expect(await screen.findByRole('button', { name: /send reset link/i })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /send reset code/i })).toBeInTheDocument();
   });
 });

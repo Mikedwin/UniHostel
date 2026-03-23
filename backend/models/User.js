@@ -14,6 +14,12 @@ const userSchema = new mongoose.Schema({
   verificationTokenExpires: { type: Date },
   resetPasswordToken: { type: String },
   resetPasswordExpires: { type: Date },
+  passwordResetCode: {
+    codeHash: { type: String },
+    expiresAt: { type: Date },
+    failedAttempts: { type: Number, default: 0 },
+    lastSentAt: { type: Date }
+  },
   suspensionReason: { type: String },
   suspensionNote: { type: String },
   suspendedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

@@ -1,7 +1,6 @@
 const test = require('node:test');
 const { before, after, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
-const crypto = require('node:crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
@@ -32,6 +31,11 @@ const getCookieHeader = (setCookieHeaders = [], cookieName = 'unihostel_auth') =
 
 const extractPrivilegedMfaCode = (html = '') => {
   const match = String(html).match(/Security Code[\s\S]*?(\d{6})/i);
+  return match ? match[1] : null;
+};
+
+const extractPasswordResetCode = (html = '') => {
+  const match = String(html).match(/Password Reset Code[\s\S]*?(\d{6})/i);
   return match ? match[1] : null;
 };
 
@@ -470,7 +474,7 @@ test('resending privileged MFA rotates the code and invalidates the previous one
   assert.equal(verificationResponse.body.user.email, email);
 });
 
-test('forgot password stores a hashed reset token and accepts the emailed token for password reset', async () => {
+test('forgot password stores a hashed reset code and accepts the emailed code for password reset', async () => {
   const originalPassword = 'Password123!';
   const newPassword = 'NewSecurePass123!';
   const email = 'reset.student@example.com';
@@ -491,26 +495,30 @@ test('forgot password stores a hashed reset token and accepts the emailed token 
   assert.equal(sentEmails.length, 1);
 
   const resetEmail = sentEmails[0];
-  const resetLinkMatch = resetEmail.html.match(/\/reset-password\/([a-f0-9]{64})/i);
-  assert.ok(resetLinkMatch, 'reset email should include a raw reset token');
-
-  const rawResetToken = resetLinkMatch[1];
-  const hashedResetToken = crypto.createHash('sha256').update(rawResetToken).digest('hex');
+  const resetCode = extractPasswordResetCode(resetEmail.html);
+  assert.match(resetCode || '', /^\d{6}$/, 'reset email should include a 6-digit reset code');
 
   const updatedUser = await User.findById(user._id);
-  assert.equal(updatedUser.resetPasswordToken, hashedResetToken);
-  assert.notEqual(updatedUser.resetPasswordToken, rawResetToken);
-  assert.ok(updatedUser.resetPasswordExpires);
+  assert.equal(updatedUser.resetPasswordToken, undefined);
+  assert.equal(updatedUser.resetPasswordExpires, undefined);
+  assert.ok(updatedUser.passwordResetCode?.codeHash);
+  assert.notEqual(updatedUser.passwordResetCode.codeHash, resetCode);
+  assert.ok(updatedUser.passwordResetCode?.expiresAt);
+  assert.equal(updatedUser.passwordResetCode?.failedAttempts, 0);
 
   const resetResponse = await request(app)
-    .post(`/api/auth/reset-password/${rawResetToken}`)
-    .send({ password: newPassword })
+    .post('/api/auth/reset-password/code')
+    .send({ email, code: resetCode, password: newPassword })
     .expect(200);
 
   assert.match(resetResponse.body.message, /password reset successful/i);
 
   const resetUser = await User.findById(user._id);
   assert.equal(resetUser.resetPasswordToken, undefined);
+  assert.equal(resetUser.resetPasswordExpires, undefined);
+  assert.equal(resetUser.passwordResetCode?.codeHash, undefined);
+  assert.equal(resetUser.passwordResetCode?.expiresAt, undefined);
+  assert.equal(resetUser.passwordResetCode?.lastSentAt, undefined);
   assert.equal(resetUser.passwordResetRequired, false);
   assert.equal(resetUser.temporaryPassword, undefined);
 
@@ -548,8 +556,10 @@ test('forgot password still returns a generic success response when email delive
     assert.match(response.body.message, /if an account exists/i);
 
     const updatedUser = await User.findOne({ email });
-    assert.ok(updatedUser.resetPasswordToken);
-    assert.ok(updatedUser.resetPasswordExpires);
+    assert.equal(updatedUser.resetPasswordToken, undefined);
+    assert.equal(updatedUser.resetPasswordExpires, undefined);
+    assert.ok(updatedUser.passwordResetCode?.codeHash);
+    assert.ok(updatedUser.passwordResetCode?.expiresAt);
   } finally {
     nodemailer.createTransport = originalCreateTransport;
   }

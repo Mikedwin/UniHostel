@@ -245,6 +245,11 @@ const Login = () => {
                                             onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                                         />
                                     </div>
+                                    <div className="text-right mt-1">
+                                <Link to="/forgot-password?returnTo=/login" className="text-xs" style={{ color: '#23817A' }}>
+                                    Forgot password?
+                                </Link>
+                                    </div>
                                 </div>
 
                                 {turnstileEnabled && (

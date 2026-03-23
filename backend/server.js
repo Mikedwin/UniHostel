@@ -51,7 +51,7 @@ const { generateCsrfToken } = require('./middleware/csrf');
 const { setAuthCookie } = require('./utils/authCookies');
 const {
   sendPrivilegedMfaCodeEmail,
-  sendPasswordResetEmail,
+  sendPasswordResetCodeEmail,
   sendApplicationSubmittedEmail,
   sendApplicationApprovedForPaymentEmail,
   sendPaymentSuccessEmail,
@@ -106,6 +106,8 @@ const VERIFICATION_EMAIL_RATE_LIMIT_WINDOW_MS = parseEnvInt(process.env.VERIFICA
 const VERIFICATION_EMAIL_RATE_LIMIT_MAX = parseEnvInt(process.env.VERIFICATION_EMAIL_RATE_LIMIT_MAX, 3);
 const TRUST_PROXY_HOPS = parseEnvInt(process.env.TRUST_PROXY_HOPS, 1);
 const VISITOR_TRACKING_ENABLED = process.env.VISITOR_TRACKING_ENABLED === 'true';
+const PASSWORD_RESET_CODE_EXPIRY_MINUTES = parseEnvInt(process.env.PASSWORD_RESET_CODE_EXPIRY_MINUTES, 10);
+const PASSWORD_RESET_CODE_MAX_ATTEMPTS = parseEnvInt(process.env.PASSWORD_RESET_CODE_MAX_ATTEMPTS, 5);
 
 const validateRuntimeEnv = ({ requireDatabase = true } = {}) => {
   const requiredEnvVars = ['JWT_SECRET'];
@@ -439,12 +441,13 @@ const generateAccessCode = () => {
 };
 
 const hashResetToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
+const generatePasswordResetCode = () => String(crypto.randomInt(0, 1000000)).padStart(6, '0');
 const DUMMY_PASSWORD_HASH = bcrypt.hashSync('UniHostel-login-placeholder-password', 12);
 const shouldExposeApiDocs = () => (
   process.env.NODE_ENV !== 'production' || process.env.ENABLE_API_DOCS_IN_PRODUCTION === 'true'
 );
 const TURNSTILE_ROUTE_MESSAGES = {
-  forgot_password: 'Please complete the security check before requesting a reset link.',
+  forgot_password: 'Please complete the security check before requesting a reset code.',
   login: 'Please complete the security check before signing in.',
   register: 'Please complete the security check before creating an account.'
 };
@@ -485,16 +488,72 @@ const verifyTurnstileForRequest = async (req, res, expectedAction) => {
   return false;
 };
 
-const deliverPasswordResetEmail = async (email, resetToken) => {
+const deliverPasswordResetCode = async (email, name, resetCode) => {
   try {
-    await sendPasswordResetEmail(email, resetToken);
-    logger.info(`Password reset requested for: ${email}`);
+    await sendPasswordResetCodeEmail(email, name, resetCode, PASSWORD_RESET_CODE_EXPIRY_MINUTES);
+    logger.info(`Password reset code requested for: ${email}`);
   } catch (error) {
-    logger.error('Password reset email delivery failed', {
+    logger.error('Password reset code delivery failed', {
       email,
       error: error.message
     });
   }
+};
+
+const clearPasswordResetCode = (user) => {
+  if (!user) {
+    return;
+  }
+
+  user.passwordResetCode = undefined;
+};
+
+const createPasswordResetCodeState = async () => {
+  const code = generatePasswordResetCode();
+
+  return {
+    code,
+    state: {
+      codeHash: await bcrypt.hash(code, 12),
+      expiresAt: new Date(Date.now() + PASSWORD_RESET_CODE_EXPIRY_MINUTES * 60000),
+      failedAttempts: 0,
+      lastSentAt: new Date()
+    }
+  };
+};
+
+const verifyPasswordResetCode = async (user, code) => {
+  if (!user?.passwordResetCode?.codeHash || !user?.passwordResetCode?.expiresAt) {
+    return { success: false, status: 400, message: 'Invalid or expired reset code' };
+  }
+
+  if (new Date(user.passwordResetCode.expiresAt).getTime() <= Date.now()) {
+    clearPasswordResetCode(user);
+    return { success: false, status: 400, message: 'Invalid or expired reset code' };
+  }
+
+  const normalizedCode = String(code || '').trim();
+  const isMatch = /^\d{6}$/.test(normalizedCode)
+    ? await bcrypt.compare(normalizedCode, user.passwordResetCode.codeHash)
+    : false;
+
+  if (isMatch) {
+    clearPasswordResetCode(user);
+    return { success: true };
+  }
+
+  user.passwordResetCode.failedAttempts = (user.passwordResetCode.failedAttempts || 0) + 1;
+
+  if (user.passwordResetCode.failedAttempts >= PASSWORD_RESET_CODE_MAX_ATTEMPTS) {
+    clearPasswordResetCode(user);
+    return {
+      success: false,
+      status: 429,
+      message: 'Too many incorrect reset codes. Please request a new code.'
+    };
+  }
+
+  return { success: false, status: 400, message: 'Invalid or expired reset code' };
 };
 
 const createAuthToken = (user) => jwt.sign(
@@ -1027,7 +1086,7 @@ const forgotPasswordLimiter = rateLimit({
 const resetPasswordLimiter = rateLimit({
   windowMs: RESET_PASSWORD_RATE_LIMIT_WINDOW_MS,
   max: RESET_PASSWORD_RATE_LIMIT_MAX,
-  message: 'Too many password reset attempts. Please request a new reset link or try again later.',
+  message: 'Too many password reset attempts. Please request a new reset code or try again later.',
   skipSuccessfulRequests: true,
 });
 
@@ -1151,26 +1210,66 @@ app.post('/api/auth/forgot-password', forgotPasswordLimiter, async (req, res) =>
     
     const user = await User.findOne({ email: email.toLowerCase().trim() });
     if (!user) {
-      return res.json({ message: 'If an account exists, a password reset link has been sent to your email.' });
+      return res.json({ message: 'If an account exists, a password reset code has been sent to your email.' });
     }
-    
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    user.resetPasswordToken = hashResetToken(resetToken);
-    user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000);
+
+    const resetChallenge = await createPasswordResetCodeState();
+    user.passwordResetCode = resetChallenge.state;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
     await user.save();
 
     if (process.env.NODE_ENV === 'test') {
-      await deliverPasswordResetEmail(email, resetToken);
+      await deliverPasswordResetCode(user.email, user.name, resetChallenge.code);
     } else {
       setImmediate(() => {
-        void deliverPasswordResetEmail(email, resetToken);
+        void deliverPasswordResetCode(user.email, user.name, resetChallenge.code);
       });
     }
 
-    res.json({ message: 'If an account exists, a password reset link has been sent to your email.' });
+    res.json({ message: 'If an account exists, a password reset code has been sent to your email.' });
   } catch (err) {
     logger.error('Forgot password error:', err);
     res.status(500).json({ message: 'Failed to process request' });
+  }
+});
+
+app.post('/api/auth/reset-password/code', resetPasswordLimiter, async (req, res) => {
+  try {
+    const { email, code, password } = req.body;
+
+    if (!email || !code || !password) {
+      return res.status(400).json({ message: 'Email, reset code, and new password are required' });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters' });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired reset code' });
+    }
+
+    const verificationResult = await verifyPasswordResetCode(user, code);
+    if (!verificationResult.success) {
+      await user.save();
+      return res.status(verificationResult.status || 400).json({ message: verificationResult.message });
+    }
+
+    user.password = await bcrypt.hash(password, 12);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    user.passwordResetRequired = false;
+    user.temporaryPassword = undefined;
+    clearPrivilegedMfaChallenge(user);
+    await user.save();
+
+    logger.info(`Password reset successful for user: ${user.email}`);
+    res.json({ message: 'Password reset successful. You can now login with your new password.' });
+  } catch (err) {
+    logger.error('Reset password with code error:', err);
+    res.status(500).json({ message: 'Failed to reset password' });
   }
 });
 
@@ -1202,6 +1301,7 @@ app.post('/api/auth/reset-password/:token', resetPasswordLimiter, async (req, re
     user.password = await bcrypt.hash(password, 12);
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
+    clearPasswordResetCode(user);
     user.passwordResetRequired = false;
     user.temporaryPassword = undefined;
     clearPrivilegedMfaChallenge(user);

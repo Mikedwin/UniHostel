@@ -33,26 +33,28 @@ const createTransporter = () => {
   });
 };
 
-const sendPasswordResetEmail = async (email, resetToken) => {
+const sendPasswordResetCodeEmail = async (email, name, resetCode, expiresInMinutes = 10) => {
   const transporter = createTransporter();
   if (!transporter) {
-    logger.warn('Email not configured. Reset link:', `${process.env.FRONTEND_URL}/reset-password/${resetToken}`);
+    logger.warn('Email not configured. Reset code delivery skipped', { email });
     return;
   }
 
-  const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
   await transporter.sendMail({
     from: `"UniHostel" <${process.env.EMAIL_USER}>`,
     to: email,
-    subject: 'Password Reset Request - UniHostel',
+    subject: 'Your UniHostel Password Reset Code',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #23817A;">Reset Your Password</h2>
+        <p>Hi ${name || 'there'},</p>
         <p>You requested to reset your password for your UniHostel account.</p>
-        <p>Click the button below to reset your password:</p>
-        <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #23817A; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0;">Reset Password</a>
-        <p>Or copy this link: <a href="${resetUrl}">${resetUrl}</a></p>
-        <p style="color: #666; font-size: 14px;">This link will expire in 1 hour.</p>
+        <p>Enter this code in the reset password screen:</p>
+        <div style="margin: 24px 0; padding: 18px; background: #f5f5f5; border-radius: 8px; text-align: center;">
+          <p style="margin: 0 0 8px; color: #666; font-size: 14px;">Password Reset Code</p>
+          <div style="font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #23817A;">${resetCode}</div>
+        </div>
+        <p style="color: #666; font-size: 14px;">This code expires in ${expiresInMinutes} minutes.</p>
         <p style="color: #666; font-size: 14px;">If you didn't request this, please ignore this email.</p>
       </div>
     `
@@ -271,7 +273,7 @@ const sendNewApplicationNotificationToManager = async (managerEmail, managerName
 module.exports = { 
   sendPrivilegedMfaCodeEmail,
   sendVerificationEmail,
-  sendPasswordResetEmail,
+  sendPasswordResetCodeEmail,
   sendApplicationSubmittedEmail,
   sendApplicationApprovedForPaymentEmail,
   sendPaymentSuccessEmail,
