@@ -6,17 +6,46 @@ const parseTimeout = (value, fallback) => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 };
 
+const normalizeEmailUser = (value = process.env.EMAIL_USER) => String(value || '').trim();
+const normalizeEmailPassword = (value = process.env.EMAIL_PASSWORD) => String(value || '').replace(/\s+/g, '');
+
 const getEmailFromName = () => String(process.env.EMAIL_FROM_NAME || 'UniHostel').trim() || 'UniHostel';
 const getEmailReplyTo = () => {
   const replyTo = String(process.env.EMAIL_REPLY_TO || '').trim();
-  return replyTo || process.env.EMAIL_USER;
+  return replyTo || normalizeEmailUser();
+};
+
+const getEmailDeliveryStatus = async () => {
+  const emailUser = normalizeEmailUser();
+  const emailPassword = normalizeEmailPassword();
+  const configured = Boolean(
+    emailUser
+    && emailPassword
+    && emailPassword !== 'your-gmail-app-password-here'
+  );
+  const passwordLooksLikeAppPassword = /^[A-Za-z0-9]{16}$/.test(emailPassword);
+  const fromAddress = configured ? `"${getEmailFromName()}" <${emailUser}>` : '';
+
+  let verified = false;
+  if (configured) {
+    verified = await verifyEmailTransport();
+  }
+
+  return {
+    configured,
+    verified,
+    emailUser,
+    fromAddress,
+    replyTo: getEmailReplyTo(),
+    passwordLooksLikeAppPassword
+  };
 };
 
 // WARNING: Email credentials must be configured via environment variables
 // Never hardcode credentials in this file - use .env file instead
 const createTransporter = () => {
-  const emailUser = process.env.EMAIL_USER;
-  const emailPassword = process.env.EMAIL_PASSWORD;
+  const emailUser = normalizeEmailUser();
+  const emailPassword = normalizeEmailPassword();
   const connectionTimeout = parseTimeout(process.env.EMAIL_CONNECTION_TIMEOUT_MS, 10000);
   const greetingTimeout = parseTimeout(process.env.EMAIL_GREETING_TIMEOUT_MS, 10000);
   const socketTimeout = parseTimeout(process.env.EMAIL_SOCKET_TIMEOUT_MS, 15000);
@@ -48,12 +77,12 @@ const verifyEmailTransport = async () => {
   try {
     await transporter.verify();
     logger.info('Email transporter verified successfully', {
-      emailUser: process.env.EMAIL_USER
+      emailUser: normalizeEmailUser()
     });
     return true;
   } catch (error) {
     logger.error('Email transporter verification failed', {
-      emailUser: process.env.EMAIL_USER,
+      emailUser: normalizeEmailUser(),
       error: error.message
     });
     return false;
@@ -175,6 +204,38 @@ const sendPrivilegedMfaCodeEmail = async (email, name, code, expiresInMinutes = 
       </div>
     `
   }, 'Privileged MFA');
+};
+
+const sendEmailDiagnosticMessage = async (email, name) => {
+  const transporter = createTransporter();
+
+  if (!transporter) {
+    throw new Error('Email service is not configured for diagnostics');
+  }
+
+  await sendMailWithLogging(transporter, {
+    from: `"${getEmailFromName()}" <${normalizeEmailUser()}>`,
+    replyTo: getEmailReplyTo(),
+    to: email,
+    subject: 'UniHostel Email Delivery Test',
+    text: [
+      `Hi ${name || 'there'},`,
+      '',
+      'This is a test email from your UniHostel admin dashboard.',
+      'If you received this message, your email delivery is working and you can safely turn privileged MFA back on.',
+      '',
+      'You can ignore this message after confirming receipt.'
+    ].join('\n'),
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #23817A;">Email Delivery Test</h2>
+        <p>Hi ${name || 'there'},</p>
+        <p>This is a test email from your UniHostel admin dashboard.</p>
+        <p>If you received this message, your email delivery is working and you can safely turn privileged MFA back on.</p>
+        <p style="color: #666; font-size: 14px;">You can ignore this message after confirming receipt.</p>
+      </div>
+    `
+  }, 'Diagnostic');
 };
 
 const sendApplicationSubmittedEmail = async (studentEmail, studentName, hostelName, roomType, semester) => {
@@ -332,6 +393,10 @@ const sendNewApplicationNotificationToManager = async (managerEmail, managerName
 };
 
 module.exports = { 
+  getEmailDeliveryStatus,
+  normalizeEmailPassword,
+  normalizeEmailUser,
+  sendEmailDiagnosticMessage,
   sendPrivilegedMfaCodeEmail,
   verifyEmailTransport,
   sendVerificationEmail,

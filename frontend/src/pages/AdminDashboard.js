@@ -1,7 +1,7 @@
 import React, { lazy, useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { KeyRound } from 'lucide-react';
+import { KeyRound, Mail, RefreshCw } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import API_URL from '../config';
 import UserActionModal from '../components/admin/UserActionModal';
@@ -42,11 +42,15 @@ const AdminDashboard = () => {
   const [selectedLogs, setSelectedLogs] = useState([]);
   const [selectedHistoryLogs, setSelectedHistoryLogs] = useState([]);
   const [historyLogs, setHistoryLogs] = useState([]);
+  const [emailStatus, setEmailStatus] = useState(null);
+  const [emailStatusLoading, setEmailStatusLoading] = useState(false);
+  const [emailTestLoading, setEmailTestLoading] = useState(false);
   const { token } = useAuth();
 
   useEffect(() => {
     if (token) {
       fetchDashboardData();
+      fetchEmailStatus();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
@@ -80,6 +84,40 @@ const AdminDashboard = () => {
     } catch (err) {
       console.error('Failed to fetch history logs:', err);
       showError('Failed to fetch history logs');
+    }
+  };
+
+  const fetchEmailStatus = async () => {
+    try {
+      setEmailStatusLoading(true);
+      const res = await axios.get(`${API_URL}/api/admin/email/status`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setEmailStatus(res.data);
+    } catch (err) {
+      console.error('Failed to fetch email status:', err);
+      showError('Unable to check email delivery status right now');
+    } finally {
+      setEmailStatusLoading(false);
+    }
+  };
+
+  const sendTestEmail = async () => {
+    try {
+      setEmailTestLoading(true);
+      const res = await axios.post(`${API_URL}/api/admin/email/test`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setEmailStatus(res.data.status || null);
+      showSuccess(res.data.message || 'Test email sent');
+    } catch (err) {
+      const nextStatus = err.response?.data?.status;
+      if (nextStatus) {
+        setEmailStatus(nextStatus);
+      }
+      showError(err.response?.data?.error || 'Unable to send a test email right now');
+    } finally {
+      setEmailTestLoading(false);
     }
   };
 
@@ -397,6 +435,62 @@ const AdminDashboard = () => {
 
       <div className="max-w-7xl mx-auto px-4 py-6">
         <AdminStatsSection stats={stats} />
+
+        <div className="mb-6 rounded-lg border border-emerald-100 bg-white p-4 shadow-sm">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-emerald-700">
+                <Mail className="h-5 w-5" />
+                <h2 className="text-lg font-semibold text-gray-900">Email Security Check</h2>
+              </div>
+              <p className="text-sm text-gray-600">
+                Confirm email delivery here before turning privileged MFA back on.
+              </p>
+              <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-700">
+                <span>
+                  Sender: {emailStatus?.emailUser || 'Not configured'}
+                </span>
+                <span>
+                  Status: {emailStatusLoading
+                    ? 'Checking...'
+                    : emailStatus?.verified
+                      ? 'Ready'
+                      : emailStatus?.configured
+                        ? 'Needs attention'
+                        : 'Not configured'}
+                </span>
+                <span>
+                  App password format: {emailStatus?.passwordLooksLikeAppPassword ? 'Looks valid' : 'Check it'}
+                </span>
+              </div>
+              {!emailStatus?.verified && (
+                <p className="text-sm text-amber-700">
+                  If the test fails, re-copy the Gmail App Password into Render. Google often shows it in groups, but the app now ignores spaces automatically.
+                </p>
+              )}
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <button
+                type="button"
+                onClick={fetchEmailStatus}
+                disabled={emailStatusLoading}
+                className="inline-flex items-center justify-center gap-2 rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <RefreshCw className={`h-4 w-4 ${emailStatusLoading ? 'animate-spin' : ''}`} />
+                Refresh Status
+              </button>
+              <button
+                type="button"
+                onClick={sendTestEmail}
+                disabled={emailTestLoading || emailStatusLoading}
+                className="inline-flex items-center justify-center gap-2 rounded bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Mail className="h-4 w-4" />
+                {emailTestLoading ? 'Sending...' : 'Send Test Email'}
+              </button>
+            </div>
+          </div>
+        </div>
 
         <div className="bg-white rounded-lg shadow mb-6">
           <AdminTabNavigation activeTab={activeTab} onTabChange={handleTabChange} />

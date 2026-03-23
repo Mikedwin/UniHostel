@@ -12,6 +12,7 @@ const Visitor = require('../models/Visitor');
 const { auth, checkRole } = require('../middleware/auth');
 const { sanitizeAdminUser, sanitizeAdminUsers } = require('../utils/userSanitizer');
 const { sendServerError } = require('../utils/serverError');
+const { getEmailDeliveryStatus, sendEmailDiagnosticMessage } = require('../utils/emailService');
 
 const checkAdmin = checkRole('admin');
 const getBulkActionErrorMessage = () => (
@@ -61,6 +62,51 @@ router.get('/dashboard/stats', auth, checkAdmin, async (req, res) => {
     res.json({ overview: { totalHostels, activeHostels, totalManagers, totalStudents, totalApplications, pendingApplications, approvedApplications }, roomStats });
   } catch (err) {
     return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
+  }
+});
+
+router.get('/email/status', auth, checkAdmin, async (req, res) => {
+  try {
+    const status = await getEmailDeliveryStatus();
+    res.json(status);
+  } catch (err) {
+    return sendServerError(res, err, { clientMessage: 'Unable to check email delivery right now' });
+  }
+});
+
+router.post('/email/test', auth, checkAdmin, async (req, res) => {
+  try {
+    const adminUser = await User.findById(req.user.id).select('name email role').lean();
+
+    if (!adminUser || adminUser.role !== 'admin') {
+      return res.status(404).json({ error: 'Admin user not found' });
+    }
+
+    const status = await getEmailDeliveryStatus();
+
+    if (!status.configured) {
+      return res.status(503).json({
+        error: 'Email service is not configured correctly yet',
+        status
+      });
+    }
+
+    if (!status.verified) {
+      return res.status(503).json({
+        error: 'Email service could not be verified. Check the sender address and Gmail app password, then redeploy.',
+        status
+      });
+    }
+
+    await sendEmailDiagnosticMessage(adminUser.email, adminUser.name);
+    await logAdminAction(req.user.id, 'EMAIL_DIAGNOSTIC_TEST', 'system', null, `Sent email diagnostic to ${adminUser.email}`);
+
+    res.json({
+      message: `Test email sent to ${adminUser.email}. Check your inbox and spam folder.`,
+      status
+    });
+  } catch (err) {
+    return sendServerError(res, err, { clientMessage: 'Unable to send a test email right now' });
   }
 });
 
