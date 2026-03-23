@@ -52,6 +52,7 @@ const { setAuthCookie } = require('./utils/authCookies');
 const {
   sendPrivilegedMfaCodeEmail,
   sendPasswordResetCodeEmail,
+  verifyEmailTransport,
   sendApplicationSubmittedEmail,
   sendApplicationApprovedForPaymentEmail,
   sendPaymentSuccessEmail,
@@ -425,6 +426,13 @@ const initializeRuntime = () => {
 
   connectDB();
   scheduleDataRetentionCleanup();
+
+  if (process.env.NODE_ENV !== 'test') {
+    setImmediate(() => {
+      void verifyEmailTransport();
+    });
+  }
+
   runtimeInitialized = true;
 };
 
@@ -1208,8 +1216,12 @@ app.post('/api/auth/forgot-password', forgotPasswordLimiter, async (req, res) =>
       return;
     }
     
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
+      logger.info('Password reset requested for unknown email', {
+        email: maskEmailAddress(normalizedEmail)
+      });
       return res.json({ message: 'If an account exists, a password reset code has been sent to your email.' });
     }
 

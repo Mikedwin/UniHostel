@@ -6,6 +6,12 @@ const parseTimeout = (value, fallback) => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 };
 
+const getEmailFromName = () => String(process.env.EMAIL_FROM_NAME || 'UniHostel').trim() || 'UniHostel';
+const getEmailReplyTo = () => {
+  const replyTo = String(process.env.EMAIL_REPLY_TO || '').trim();
+  return replyTo || process.env.EMAIL_USER;
+};
+
 // WARNING: Email credentials must be configured via environment variables
 // Never hardcode credentials in this file - use .env file instead
 const createTransporter = () => {
@@ -33,6 +39,40 @@ const createTransporter = () => {
   });
 };
 
+const verifyEmailTransport = async () => {
+  const transporter = createTransporter();
+  if (!transporter) {
+    return false;
+  }
+
+  try {
+    await transporter.verify();
+    logger.info('Email transporter verified successfully', {
+      emailUser: process.env.EMAIL_USER
+    });
+    return true;
+  } catch (error) {
+    logger.error('Email transporter verification failed', {
+      emailUser: process.env.EMAIL_USER,
+      error: error.message
+    });
+    return false;
+  }
+};
+
+const sendMailWithLogging = async (transporter, message, label) => {
+  const result = await transporter.sendMail(message);
+  logger.info(`${label} email processed`, {
+    to: message.to,
+    messageId: result?.messageId,
+    accepted: result?.accepted,
+    rejected: result?.rejected,
+    pending: result?.pending,
+    response: result?.response
+  });
+  return result;
+};
+
 const sendPasswordResetCodeEmail = async (email, name, resetCode, expiresInMinutes = 10) => {
   const transporter = createTransporter();
   if (!transporter) {
@@ -40,10 +80,20 @@ const sendPasswordResetCodeEmail = async (email, name, resetCode, expiresInMinut
     return;
   }
 
-  await transporter.sendMail({
-    from: `"UniHostel" <${process.env.EMAIL_USER}>`,
+  await sendMailWithLogging(transporter, {
+    from: `"${getEmailFromName()}" <${process.env.EMAIL_USER}>`,
+    replyTo: getEmailReplyTo(),
     to: email,
     subject: 'Your UniHostel Password Reset Code',
+    text: [
+      `Hi ${name || 'there'},`,
+      '',
+      'You requested to reset your password for your UniHostel account.',
+      `Your password reset code is: ${resetCode}`,
+      `This code expires in ${expiresInMinutes} minutes.`,
+      '',
+      "If you didn't request this, please ignore this email."
+    ].join('\n'),
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #23817A;">Reset Your Password</h2>
@@ -58,7 +108,7 @@ const sendPasswordResetCodeEmail = async (email, name, resetCode, expiresInMinut
         <p style="color: #666; font-size: 14px;">If you didn't request this, please ignore this email.</p>
       </div>
     `
-  });
+  }, 'Password reset code');
 };
 
 const sendVerificationEmail = async (email, name, verificationToken) => {
@@ -70,8 +120,9 @@ const sendVerificationEmail = async (email, name, verificationToken) => {
     return false;
   }
 
-  await transporter.sendMail({
-    from: `"UniHostel" <${process.env.EMAIL_USER}>`,
+  await sendMailWithLogging(transporter, {
+    from: `"${getEmailFromName()}" <${process.env.EMAIL_USER}>`,
+    replyTo: getEmailReplyTo(),
     to: email,
     subject: 'Verify Your Email - UniHostel',
     html: `
@@ -84,7 +135,7 @@ const sendVerificationEmail = async (email, name, verificationToken) => {
         <p style="color: #666; font-size: 14px;">This link will expire in 24 hours.</p>
       </div>
     `
-  });
+  }, 'Verification');
 
   return true;
 };
@@ -96,10 +147,20 @@ const sendPrivilegedMfaCodeEmail = async (email, name, code, expiresInMinutes = 
     throw new Error('Email service is not configured for privileged MFA delivery');
   }
 
-  await transporter.sendMail({
-    from: `"UniHostel" <${process.env.EMAIL_USER}>`,
+  await sendMailWithLogging(transporter, {
+    from: `"${getEmailFromName()}" <${process.env.EMAIL_USER}>`,
+    replyTo: getEmailReplyTo(),
     to: email,
     subject: 'Your UniHostel Security Code',
+    text: [
+      `Hi ${name},`,
+      '',
+      'Use the security code below to complete your UniHostel sign-in.',
+      `Security code: ${code}`,
+      `This code expires in ${expiresInMinutes} minutes.`,
+      '',
+      'If you did not try to sign in, change your password immediately.'
+    ].join('\n'),
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #23817A;">Security Verification Required</h2>
@@ -113,7 +174,7 @@ const sendPrivilegedMfaCodeEmail = async (email, name, code, expiresInMinutes = 
         <p style="color: #666; font-size: 14px;">If you did not try to sign in, change your password immediately.</p>
       </div>
     `
-  });
+  }, 'Privileged MFA');
 };
 
 const sendApplicationSubmittedEmail = async (studentEmail, studentName, hostelName, roomType, semester) => {
@@ -272,6 +333,7 @@ const sendNewApplicationNotificationToManager = async (managerEmail, managerName
 
 module.exports = { 
   sendPrivilegedMfaCodeEmail,
+  verifyEmailTransport,
   sendVerificationEmail,
   sendPasswordResetCodeEmail,
   sendApplicationSubmittedEmail,

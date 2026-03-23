@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Lock, ArrowLeft } from 'lucide-react';
-import API_URL from '../config';
+import { API_ENDPOINTS } from '../config/api';
 
 const ChangePassword = () => {
     const [formData, setFormData] = useState({
@@ -14,8 +14,14 @@ const ChangePassword = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
-    const { token } = useAuth();
+    const { user } = useAuth();
     const navigate = useNavigate();
+
+    const dashboardPath = user?.role === 'admin'
+        ? '/admin-dashboard'
+        : user?.role === 'manager'
+            ? '/manager-dashboard'
+            : '/student-dashboard';
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -34,16 +40,14 @@ const ChangePassword = () => {
 
         setLoading(true);
         try {
-            await axios.post(`${API_URL}/api/auth/change-password`, {
+            await axios.post(API_ENDPOINTS.CHANGE_PASSWORD, {
                 currentPassword: formData.currentPassword,
                 newPassword: formData.newPassword
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
             });
 
             setSuccess('Password changed successfully!');
             setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-            setTimeout(() => navigate(-1), 2000);
+            setTimeout(() => navigate(dashboardPath), 2000);
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to change password');
         } finally {
@@ -55,12 +59,12 @@ const ChangePassword = () => {
         <div className="min-h-screen bg-gray-50 py-12 px-4">
             <div className="max-w-md mx-auto">
                 <button
-                    onClick={() => navigate(-1)}
+                    onClick={() => navigate(dashboardPath)}
                     className="flex items-center text-sm mb-6 hover:underline"
                     style={{ color: '#23817A' }}
                 >
                     <ArrowLeft className="w-4 h-4 mr-1" />
-                    Back
+                    Back to Dashboard
                 </button>
 
                 <div className="bg-white rounded-lg shadow-sm p-8">
@@ -69,7 +73,7 @@ const ChangePassword = () => {
                             <Lock className="w-8 h-8" style={{ color: '#23817A' }} />
                         </div>
                         <h2 className="text-2xl font-bold text-gray-900">Change Password</h2>
-                        <p className="mt-2 text-sm text-gray-600">Update your account password</p>
+                        <p className="mt-2 text-sm text-gray-600">Use your current password to set a new one while signed in.</p>
                     </div>
 
                     {error && (

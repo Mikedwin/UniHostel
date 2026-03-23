@@ -8,6 +8,7 @@ export const API_ENDPOINTS = {
   LOGIN: `${API_BASE_URL}/auth/login`,
   SESSION: `${API_BASE_URL}/auth/session`,
   LOGOUT: `${API_BASE_URL}/auth/logout`,
+  CHANGE_PASSWORD: `${API_BASE_URL}/auth/change-password`,
   FORGOT_PASSWORD: `${API_BASE_URL}/auth/forgot-password`,
   RESET_PASSWORD_CODE: `${API_BASE_URL}/auth/reset-password/code`,
   VERIFY_MFA: `${API_BASE_URL}/auth/verify-mfa`,

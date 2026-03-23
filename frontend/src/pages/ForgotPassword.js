@@ -42,7 +42,7 @@ const ForgotPassword = () => {
             }
 
             const res = await axios.post(API_ENDPOINTS.FORGOT_PASSWORD, {
-                email: formData.email,
+                email: formData.email.trim().toLowerCase(),
                 turnstileToken
             });
 
@@ -82,7 +82,7 @@ const ForgotPassword = () => {
 
         try {
             const res = await axios.post(API_ENDPOINTS.RESET_PASSWORD_CODE, {
-                email: formData.email,
+                email: formData.email.trim().toLowerCase(),
                 code: formData.code,
                 password: formData.password
             });
@@ -157,6 +157,7 @@ const ForgotPassword = () => {
                                 onFocus={(e) => e.target.style.borderColor = '#23817A'}
                                 onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                             />
+                            <p className="mt-1 text-xs text-gray-500">Use the same email address you registered with.</p>
                         </div>
 
                         {turnstileEnabled && (
