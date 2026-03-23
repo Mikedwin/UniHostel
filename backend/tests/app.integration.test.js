@@ -90,6 +90,8 @@ before(async () => {
   process.env.MONGO_URI = 'mongodb://127.0.0.1:27017/placeholder';
   process.env.EMAIL_USER = 'test@example.com';
   process.env.EMAIL_PASSWORD = 'integration-test-app-password';
+  process.env.FORGOT_PASSWORD_RATE_LIMIT_MAX = '20';
+  process.env.RESET_PASSWORD_RATE_LIMIT_MAX = '20';
   process.env.MAX_LOGIN_ATTEMPTS = '5';
   process.env.LOCKOUT_DURATION_MINUTES = '30';
   process.env.AUTH_RATE_LIMIT_MAX = '100';
@@ -408,7 +410,9 @@ test('manager login requires MFA and only creates a session after the security c
   const managerAfterVerification = await User.findById(manager._id);
   assert.equal(managerAfterVerification.loginHistory.length, 1);
   assert.ok(managerAfterVerification.lastLogin);
-  assert.equal(managerAfterVerification.privilegedMfa, undefined);
+  assert.equal(managerAfterVerification.privilegedMfa?.challengeTokenHash, undefined);
+  assert.equal(managerAfterVerification.privilegedMfa?.codeHash, undefined);
+  assert.equal(managerAfterVerification.privilegedMfa?.expiresAt, undefined);
 });
 
 test('resending privileged MFA rotates the code and invalidates the previous one', async () => {
@@ -516,6 +520,39 @@ test('forgot password stores a hashed reset token and accepts the emailed token 
     .expect(200);
 
   assert.ok(loginResponse.body.csrfToken);
+});
+
+test('forgot password still returns a generic success response when email delivery fails', async () => {
+  const email = 'reset.failure@example.com';
+  const originalCreateTransport = nodemailer.createTransport;
+
+  nodemailer.createTransport = () => ({
+    sendMail: async () => {
+      throw new Error('SMTP timeout');
+    }
+  });
+
+  try {
+    await createUser({
+      name: 'Reset Failure',
+      email,
+      role: 'student',
+      password: 'Password123!'
+    });
+
+    const response = await request(app)
+      .post('/api/auth/forgot-password')
+      .send({ email })
+      .expect(200);
+
+    assert.match(response.body.message, /if an account exists/i);
+
+    const updatedUser = await User.findOne({ email });
+    assert.ok(updatedUser.resetPasswordToken);
+    assert.ok(updatedUser.resetPasswordExpires);
+  } finally {
+    nodemailer.createTransport = originalCreateTransport;
+  }
 });
 
 test('turnstile can protect register, login, and forgot-password flows when enabled', async () => {

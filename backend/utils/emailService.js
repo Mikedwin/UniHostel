@@ -1,11 +1,19 @@
 const nodemailer = require('nodemailer');
 const logger = require('../config/logger');
 
+const parseTimeout = (value, fallback) => {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
 // WARNING: Email credentials must be configured via environment variables
 // Never hardcode credentials in this file - use .env file instead
 const createTransporter = () => {
   const emailUser = process.env.EMAIL_USER;
   const emailPassword = process.env.EMAIL_PASSWORD;
+  const connectionTimeout = parseTimeout(process.env.EMAIL_CONNECTION_TIMEOUT_MS, 10000);
+  const greetingTimeout = parseTimeout(process.env.EMAIL_GREETING_TIMEOUT_MS, 10000);
+  const socketTimeout = parseTimeout(process.env.EMAIL_SOCKET_TIMEOUT_MS, 15000);
   
   // Validate email configuration
   if (!emailUser || !emailPassword || emailPassword === 'your-gmail-app-password-here') {
@@ -15,6 +23,9 @@ const createTransporter = () => {
   
   return nodemailer.createTransport({
     service: 'gmail',
+    connectionTimeout,
+    greetingTimeout,
+    socketTimeout,
     auth: {
       user: emailUser,
       pass: emailPassword

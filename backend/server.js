@@ -485,6 +485,18 @@ const verifyTurnstileForRequest = async (req, res, expectedAction) => {
   return false;
 };
 
+const deliverPasswordResetEmail = async (email, resetToken) => {
+  try {
+    await sendPasswordResetEmail(email, resetToken);
+    logger.info(`Password reset requested for: ${email}`);
+  } catch (error) {
+    logger.error('Password reset email delivery failed', {
+      email,
+      error: error.message
+    });
+  }
+};
+
 const createAuthToken = (user) => jwt.sign(
   {
     id: user._id ? user._id.toString() : user.id,
@@ -1146,10 +1158,15 @@ app.post('/api/auth/forgot-password', forgotPasswordLimiter, async (req, res) =>
     user.resetPasswordToken = hashResetToken(resetToken);
     user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000);
     await user.save();
-    
-    await sendPasswordResetEmail(email, resetToken);
-    logger.info(`Password reset requested for: ${email}`);
-    
+
+    if (process.env.NODE_ENV === 'test') {
+      await deliverPasswordResetEmail(email, resetToken);
+    } else {
+      setImmediate(() => {
+        void deliverPasswordResetEmail(email, resetToken);
+      });
+    }
+
     res.json({ message: 'If an account exists, a password reset link has been sent to your email.' });
   } catch (err) {
     logger.error('Forgot password error:', err);
