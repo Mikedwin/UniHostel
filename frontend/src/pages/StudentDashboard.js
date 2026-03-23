@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { CreditCard, Archive } from 'lucide-react';
+import { CreditCard, Archive, KeyRound } from 'lucide-react';
 import { API_ENDPOINTS, PAYSTACK_PUBLIC_KEY } from '../config/api';
 import Swal from 'sweetalert2';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -239,17 +240,26 @@ const StudentDashboard = () => {
                 </div>
             )}
             
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between">
                 <h1 className="text-2xl font-bold">My Applications</h1>
-                <div className="flex gap-2">
-                    <button onClick={() => { setViewMode('active'); setSelectedApps([]); }} 
-                        className={`px-3 py-1 rounded ${viewMode === 'active' ? 'bg-primary-600 text-white' : 'bg-gray-100'}`}>
-                        Active
-                    </button>
-                    <button onClick={() => { setViewMode('history'); setSelectedApps([]); }} 
-                        className={`px-3 py-1 rounded ${viewMode === 'history' ? 'bg-primary-600 text-white' : 'bg-gray-100'}`}>
-                        History
-                    </button>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <Link
+                        to="/change-password"
+                        className="inline-flex items-center justify-center gap-2 rounded bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+                    >
+                        <KeyRound className="w-4 h-4" />
+                        Change Password
+                    </Link>
+                    <div className="flex gap-2">
+                        <button onClick={() => { setViewMode('active'); setSelectedApps([]); }} 
+                            className={`px-3 py-1 rounded ${viewMode === 'active' ? 'bg-primary-600 text-white' : 'bg-gray-100'}`}>
+                            Active
+                        </button>
+                        <button onClick={() => { setViewMode('history'); setSelectedApps([]); }} 
+                            className={`px-3 py-1 rounded ${viewMode === 'history' ? 'bg-primary-600 text-white' : 'bg-gray-100'}`}>
+                            History
+                        </button>
+                    </div>
                 </div>
             </div>
 

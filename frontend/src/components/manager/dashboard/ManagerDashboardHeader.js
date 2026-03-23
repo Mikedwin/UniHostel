@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart3, DollarSign, Plus } from 'lucide-react';
+import { BarChart3, DollarSign, KeyRound, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const tabs = [
@@ -32,13 +32,22 @@ const ManagerDashboardHeader = ({ activeTab, onTabChange }) => (
         })}
       </div>
     </div>
-    <Link
-      to="/add-hostel"
-      className="w-full sm:w-auto bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 flex items-center justify-center"
-    >
-      <Plus className="w-4 h-4 mr-2" />
-      List New Hostel
-    </Link>
+    <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+      <Link
+        to="/change-password"
+        className="w-full sm:w-auto bg-gray-900 text-white px-4 py-2 rounded-md hover:bg-gray-800 flex items-center justify-center"
+      >
+        <KeyRound className="w-4 h-4 mr-2" />
+        Change Password
+      </Link>
+      <Link
+        to="/add-hostel"
+        className="w-full sm:w-auto bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 flex items-center justify-center"
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        List New Hostel
+      </Link>
+    </div>
   </div>
 );
 

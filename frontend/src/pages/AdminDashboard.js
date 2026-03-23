@@ -1,5 +1,7 @@
 import React, { lazy, useEffect, useState } from 'react';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
+import { KeyRound } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import API_URL from '../config';
 import UserActionModal from '../components/admin/UserActionModal';
@@ -378,9 +380,18 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-sm text-gray-600">System Overseer & Control Center - Analytics Enabled</p>
+        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+            <p className="text-sm text-gray-600">System Overseer & Control Center - Analytics Enabled</p>
+          </div>
+          <Link
+            to="/change-password"
+            className="inline-flex items-center justify-center gap-2 rounded bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+          >
+            <KeyRound className="w-4 h-4" />
+            Change Password
+          </Link>
         </div>
       </div>
 
