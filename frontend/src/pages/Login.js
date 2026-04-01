@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogIn, Mail, Lock } from 'lucide-react';
 import { API_ENDPOINTS } from '../config/api';
@@ -19,6 +19,7 @@ const Login = () => {
     const [mfaResendLoading, setMfaResendLoading] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const {
         turnstileEnabled,
         turnstileResetKey,
@@ -36,17 +37,24 @@ const Login = () => {
     };
 
     const navigateByRole = (role) => {
+        const requestedPath = location.state?.from?.pathname;
+
+        if (requestedPath) {
+            navigate(requestedPath, { replace: true });
+            return;
+        }
+
         if (role === 'admin') {
-            navigate('/admin-dashboard');
+            navigate('/admin-dashboard', { replace: true });
             return;
         }
 
         if (role === 'manager') {
-            navigate('/manager-dashboard');
+            navigate('/manager-dashboard', { replace: true });
             return;
         }
 
-        navigate('/hostels');
+        navigate('/hostels', { replace: true });
     };
 
     const handleSubmit = async (e) => {
@@ -76,7 +84,7 @@ const Login = () => {
                 return;
             }
 
-            login(res.data.user, res.data.csrfToken);
+            login(res.data.user, res.data.csrfToken, res.data.token);
             navigateByRole(res.data.user.role);
         } catch (err) {
             setError(err.response?.data?.message || 'Unable to sign in right now. Please try again later.');
@@ -104,7 +112,7 @@ const Login = () => {
                 code: mfaCode
             });
 
-            login(res.data.user, res.data.csrfToken);
+            login(res.data.user, res.data.csrfToken, res.data.token);
             resetMfaState();
             setInfoMessage('');
             navigateByRole(res.data.user?.role || mfaChallenge.pendingRole);

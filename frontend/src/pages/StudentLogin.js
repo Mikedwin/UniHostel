@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { GraduationCap, Eye, EyeOff } from 'lucide-react';
 import { API_ENDPOINTS } from '../config/api';
@@ -15,6 +15,7 @@ const StudentLogin = () => {
     const [showPassword, setShowPassword] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const {
         turnstileEnabled,
         turnstileResetKey,
@@ -50,8 +51,8 @@ const StudentLogin = () => {
                 return;
             }
             
-            login(res.data.user, res.data.csrfToken);
-            navigate('/hostels');
+            login(res.data.user, res.data.csrfToken, res.data.token);
+            navigate(redirectTo, { replace: true });
         } catch (err) {
             setError(err.response?.data?.message || 'Unable to sign in right now. Please try again later.');
         } finally {
@@ -186,3 +187,4 @@ const StudentLogin = () => {
 };
 
 export default StudentLogin;
+    const redirectTo = location.state?.from?.pathname || '/hostels';

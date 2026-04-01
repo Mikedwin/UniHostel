@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Building2, Eye, EyeOff } from 'lucide-react';
 import { API_ENDPOINTS } from '../config/api';
@@ -20,6 +20,7 @@ const ManagerLogin = () => {
     const [mfaResendLoading, setMfaResendLoading] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const {
         turnstileEnabled,
         turnstileResetKey,
@@ -37,12 +38,19 @@ const ManagerLogin = () => {
     };
 
     const navigateByRole = (role) => {
-        if (role === 'admin') {
-            navigate('/admin-dashboard');
+        const requestedPath = location.state?.from?.pathname;
+
+        if (requestedPath) {
+            navigate(requestedPath, { replace: true });
             return;
         }
 
-        navigate('/manager-dashboard');
+        if (role === 'admin') {
+            navigate('/admin-dashboard', { replace: true });
+            return;
+        }
+
+        navigate('/manager-dashboard', { replace: true });
     };
 
     const clearUnexpectedSession = async (csrfToken) => {
@@ -100,7 +108,7 @@ const ManagerLogin = () => {
                 return;
             }
             
-            login(res.data.user, res.data.csrfToken);
+            login(res.data.user, res.data.csrfToken, res.data.token);
             navigateByRole(role);
         } catch (err) {
             setError(err.response?.data?.message || 'Unable to sign in right now. Please try again later.');
@@ -128,7 +136,7 @@ const ManagerLogin = () => {
                 code: mfaCode
             });
 
-            login(res.data.user, res.data.csrfToken);
+            login(res.data.user, res.data.csrfToken, res.data.token);
             resetMfaState();
             setInfoMessage('');
             navigateByRole(res.data.user?.role || mfaChallenge.pendingRole);
