@@ -293,14 +293,24 @@ const Landing = () => {
       <section className="py-14 sm:py-16 lg:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-[0.95fr_1.05fr] gap-8 lg:gap-12 items-center">
-            <div className="rounded-[2rem] bg-primary-600 p-8 sm:p-10 text-white shadow-2xl shadow-primary-700/20">
-              <p className="text-sm font-bold uppercase tracking-[0.24em] text-emerald-300">Built for students</p>
-              <h2 className="mt-4 text-3xl sm:text-4xl font-black tracking-tight">
-                Better accommodation decisions start with better clarity.
-              </h2>
-              <p className="mt-5 text-base sm:text-lg leading-8 text-teal-50/90">
-                UniHostel is structured to remove the usual confusion around student accommodation by giving students a verified path from browsing to approval, payment, and access.
-              </p>
+            <div className="relative overflow-hidden rounded-[2rem] p-8 sm:p-10 text-white shadow-2xl shadow-primary-700/20">
+              <div
+                className="absolute inset-0 bg-cover bg-center"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(135deg, rgba(35,129,122,0.92), rgba(26,97,89,0.90)), url('https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1400&q=80')"
+                }}
+              />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.14),transparent_30%)]" />
+              <div className="relative">
+                <p className="text-sm font-bold uppercase tracking-[0.24em] text-emerald-200">Built for students</p>
+                <h2 className="mt-4 text-3xl sm:text-4xl font-black tracking-tight">
+                  Better accommodation decisions start with better clarity.
+                </h2>
+                <p className="mt-5 text-base sm:text-lg leading-8 text-teal-50/95">
+                  UniHostel is structured to remove the usual confusion around student accommodation by giving students a verified path from browsing to approval, payment, and access.
+                </p>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -366,14 +376,22 @@ const Landing = () => {
 
       <section className="py-14 sm:py-16 lg:py-20 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="overflow-hidden rounded-[2rem] bg-primary-600 px-6 py-10 sm:px-10 sm:py-12 lg:px-14 lg:py-14 text-white shadow-2xl shadow-primary-700/20">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+          <div className="relative overflow-hidden rounded-[2rem] px-6 py-10 sm:px-10 sm:py-12 lg:px-14 lg:py-14 text-white shadow-2xl shadow-primary-700/20">
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{
+                backgroundImage:
+                  "linear-gradient(135deg, rgba(35,129,122,0.92), rgba(26,97,89,0.90)), url('https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1400&q=80')"
+              }}
+            />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.12),transparent_28%)]" />
+            <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
               <div className="max-w-2xl">
-                <p className="text-sm font-bold uppercase tracking-[0.24em] text-emerald-300">Ready to start?</p>
+                <p className="text-sm font-bold uppercase tracking-[0.24em] text-emerald-200">Ready to start?</p>
                 <h2 className="mt-3 text-3xl sm:text-4xl font-black tracking-tight">
                   Start with verified hostel options, then move through the process with confidence.
                 </h2>
-                <p className="mt-5 text-base sm:text-lg leading-8 text-teal-50/90">
+                <p className="mt-5 text-base sm:text-lg leading-8 text-teal-50/95">
                   Browse hostels, register as a student, or contact support if you manage hostel accommodation and want to list on the platform.
                 </p>
               </div>
