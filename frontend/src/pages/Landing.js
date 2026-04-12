@@ -366,14 +366,14 @@ const Landing = () => {
 
       <section className="py-14 sm:py-16 lg:py-20 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,#0f172a_0%,#123c3a_45%,#23817A_100%)] px-6 py-10 sm:px-10 sm:py-12 lg:px-14 lg:py-14 text-white shadow-2xl shadow-primary-700/10">
+          <div className="overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-950 px-6 py-10 sm:px-10 sm:py-12 lg:px-14 lg:py-14 text-white shadow-2xl shadow-slate-900/10">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
               <div className="max-w-2xl">
-                <p className="text-sm font-bold uppercase tracking-[0.24em] text-emerald-200">Ready to start?</p>
+                <p className="text-sm font-bold uppercase tracking-[0.24em] text-emerald-300">Ready to start?</p>
                 <h2 className="mt-3 text-3xl sm:text-4xl font-black tracking-tight">
                   Start with verified hostel options, then move through the process with confidence.
                 </h2>
-                <p className="mt-4 text-base sm:text-lg leading-8 text-slate-100/90">
+                <p className="mt-4 text-base sm:text-lg leading-8 text-slate-300">
                   Browse hostels, register as a student, or contact support if you manage hostel accommodation and want to list on the platform.
                 </p>
               </div>
