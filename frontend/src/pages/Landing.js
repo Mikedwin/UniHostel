@@ -12,7 +12,6 @@ import {
   MapPin,
   Search,
   ShieldCheck,
-  Sparkles,
   UserCheck
 } from 'lucide-react';
 import Footer from '../components/Footer';
@@ -129,12 +128,7 @@ const Landing = () => {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 lg:py-20">
           <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-10 lg:gap-14 items-center">
             <div className="text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-white/90 px-4 py-2 text-xs sm:text-sm font-semibold text-primary-700 shadow-sm">
-                <Sparkles className="h-4 w-4" />
-                Built for trusted student accommodation decisions
-              </div>
-
-              <h1 className="mt-6 text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.02] text-slate-950">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.02] text-slate-950">
                 Find verified student hostels with a process you can actually trust.
               </h1>
 
