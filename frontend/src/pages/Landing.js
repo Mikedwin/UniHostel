@@ -9,17 +9,14 @@ import {
   ChevronUp,
   Clock3,
   CreditCard,
-  MapPin,
-  Search,
-  ShieldCheck,
   UserCheck
 } from 'lucide-react';
 import Footer from '../components/Footer';
 
 const trustHighlights = [
   { icon: BadgeCheck, label: 'Verified hostels' },
-  { icon: ShieldCheck, label: 'Secure payments' },
-  { icon: Clock3, label: 'Live application tracking' }
+  { icon: Clock3, label: 'Live application tracking' },
+  { icon: Building2, label: 'Structured approval flow' }
 ];
 
 const whyUniHostel = [
@@ -176,44 +173,6 @@ const Landing = () => {
                   className="h-[420px] sm:h-[500px] w-full rounded-[1.5rem] object-cover"
                   loading="lazy"
                 />
-
-                <div className="absolute left-6 right-6 top-6 flex justify-between gap-4">
-                  <div className="max-w-[13rem] rounded-2xl bg-white/92 p-4 shadow-lg backdrop-blur">
-                    <div className="flex items-center gap-2 text-primary-700">
-                      <ShieldCheck className="h-4 w-4" />
-                      <span className="text-xs font-bold uppercase tracking-[0.2em]">Trust first</span>
-                    </div>
-                    <p className="mt-2 text-sm font-semibold text-slate-900">
-                      Apply before paying and keep every step visible in your dashboard.
-                    </p>
-                  </div>
-
-                  <div className="hidden sm:block rounded-2xl bg-slate-950/90 px-4 py-3 text-white shadow-lg backdrop-blur">
-                    <p className="text-[11px] uppercase tracking-[0.2em] text-emerald-200">Student flow</p>
-                    <p className="mt-1 text-sm font-semibold">Apply → Approval → Payment → Access</p>
-                  </div>
-                </div>
-
-                <div className="absolute bottom-6 left-6 right-6 grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl bg-white/92 p-4 shadow-lg backdrop-blur">
-                    <div className="flex items-center gap-2 text-primary-700">
-                      <MapPin className="h-4 w-4" />
-                      <span className="text-xs font-bold uppercase tracking-[0.16em]">Verified listings</span>
-                    </div>
-                    <p className="mt-2 text-sm text-slate-700">
-                      Browse accommodation options prepared for university students.
-                    </p>
-                  </div>
-                  <div className="rounded-2xl bg-white/92 p-4 shadow-lg backdrop-blur">
-                    <div className="flex items-center gap-2 text-primary-700">
-                      <CheckCircle2 className="h-4 w-4" />
-                      <span className="text-xs font-bold uppercase tracking-[0.16em]">Final access</span>
-                    </div>
-                    <p className="mt-2 text-sm text-slate-700">
-                      Students receive their final approval details and access code after completion.
-                    </p>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
