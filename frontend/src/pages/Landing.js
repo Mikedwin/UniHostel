@@ -19,6 +19,24 @@ const trustHighlights = [
   { icon: Building2, label: 'Structured approval flow' }
 ];
 
+const heroGlassCards = [
+  {
+    icon: BadgeCheck,
+    title: 'Verified room match',
+    description: 'Reviewed hostel listing ready for student applications.'
+  },
+  {
+    icon: UserCheck,
+    title: 'Approval-first booking',
+    description: 'Apply now, pay only after the manager approves your spot.'
+  },
+  {
+    icon: CreditCard,
+    title: 'Dashboard visibility',
+    description: 'Track payment, approval, and final access in one place.'
+  }
+];
+
 const whyUniHostel = [
   {
     icon: Building2,
@@ -116,34 +134,50 @@ const Landing = () => {
 
   return (
     <div className="bg-white text-slate-900">
-      <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(35,129,122,0.20),_transparent_35%),linear-gradient(180deg,#f7fbfb_0%,#ffffff_45%,#f7fbfb_100%)]">
+      <section className="relative overflow-hidden bg-[#f3fbf9]">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-24 right-[-6rem] h-72 w-72 rounded-full bg-primary-200/40 blur-3xl" />
-          <div className="absolute bottom-[-6rem] left-[-4rem] h-72 w-72 rounded-full bg-emerald-100 blur-3xl" />
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-95"
+            style={{
+              backgroundImage:
+                "linear-gradient(108deg, rgba(9,37,34,0.88) 0%, rgba(16,79,72,0.78) 38%, rgba(35,129,122,0.72) 58%, rgba(35,129,122,0.34) 100%), url('https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1800&q=80')"
+            }}
+          />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(188,255,239,0.22),transparent_22%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.14),transparent_28%)]" />
+          <div className="absolute -top-16 left-[10%] h-48 w-48 rounded-full bg-emerald-200/20 blur-3xl" />
+          <div className="absolute top-32 right-[8%] h-64 w-64 rounded-full bg-cyan-100/15 blur-3xl" />
+          <div className="absolute bottom-[-5rem] left-[35%] h-56 w-56 rounded-full bg-white/10 blur-3xl" />
+          <div className="absolute inset-y-0 left-0 w-full bg-[linear-gradient(90deg,rgba(6,20,19,0.55)_0%,rgba(6,20,19,0.18)_42%,rgba(6,20,19,0.08)_100%)] lg:w-[58%]" />
+          <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,0.7)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.7)_1px,transparent_1px)] [background-size:80px_80px]" />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 lg:py-20">
-          <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-10 lg:gap-14 items-center">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-24">
+          <div className="grid grid-cols-1 lg:grid-cols-[0.95fr_1.05fr] gap-10 lg:gap-14 items-center">
             <div className="text-center lg:text-left">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.02] text-slate-950">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-teal-50 backdrop-blur-md shadow-lg shadow-black/10">
+                <BadgeCheck className="h-3.5 w-3.5 text-emerald-200" />
+                Verified student housing flow
+              </div>
+
+              <h1 className="mt-5 text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.02] text-white">
                 Find verified student hostels with a process you can actually trust.
               </h1>
 
-              <p className="mt-5 max-w-2xl mx-auto lg:mx-0 text-base sm:text-lg lg:text-xl leading-8 text-slate-600">
+              <p className="mt-5 max-w-2xl mx-auto lg:mx-0 text-base sm:text-lg lg:text-xl leading-8 text-teal-50/92">
                 UniHostel helps students browse real options, apply with confidence, pay only after approval, and track everything through to final access.
               </p>
 
               <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start">
                 <Link
                   to="/hostels"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-7 py-3.5 text-sm sm:text-base font-semibold text-white shadow-lg shadow-primary-600/20 transition-all hover:bg-primary-700 hover:-translate-y-0.5"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-7 py-3.5 text-sm sm:text-base font-semibold text-slate-950 shadow-xl shadow-black/20 transition-all hover:-translate-y-0.5 hover:bg-slate-100"
                 >
                   Browse Hostels
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
                   to="/student-register"
-                  className="inline-flex items-center justify-center rounded-xl border border-primary-200 bg-white px-7 py-3.5 text-sm sm:text-base font-semibold text-primary-700 shadow-sm transition-all hover:border-primary-300 hover:bg-primary-50"
+                  className="inline-flex items-center justify-center rounded-2xl border border-white/25 bg-white/10 px-7 py-3.5 text-sm sm:text-base font-semibold text-white shadow-sm backdrop-blur-md transition-all hover:border-white/35 hover:bg-white/15"
                 >
                   Register as Student
                 </Link>
@@ -153,26 +187,72 @@ const Landing = () => {
                 {trustHighlights.map(({ icon: Icon, label }) => (
                   <div
                     key={label}
-                    className="flex items-center justify-center lg:justify-start gap-3 rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm"
+                    className="flex items-center justify-center lg:justify-start gap-3 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-white shadow-lg shadow-black/10 backdrop-blur-md"
                   >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-50 text-primary-700">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-emerald-100">
                       <Icon className="h-4 w-4" />
                     </div>
-                    <span className="text-sm font-semibold text-slate-700">{label}</span>
+                    <span className="text-sm font-semibold text-white">{label}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="relative">
-              <div className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-white p-3 shadow-2xl shadow-slate-200/70">
-                <div className="absolute inset-0 bg-gradient-to-tr from-primary-900/10 via-transparent to-emerald-100/50 pointer-events-none" />
+            <div className="relative min-h-[430px] sm:min-h-[560px]">
+              <div className="absolute left-4 top-10 hidden w-52 rounded-[1.75rem] border border-white/25 bg-white/14 p-4 text-white shadow-2xl shadow-black/15 backdrop-blur-xl lg:block">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-300/20 text-emerald-100">
+                    <CheckCircle2 className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">Application status</p>
+                    <p className="text-xs text-teal-50/80">Visible at every stage</p>
+                  </div>
+                </div>
+                <div className="mt-4 h-2 rounded-full bg-white/10">
+                  <div className="h-2 w-[72%] rounded-full bg-gradient-to-r from-emerald-200 via-white to-emerald-100" />
+                </div>
+                <p className="mt-3 text-xs leading-6 text-teal-50/85">
+                  Approval, payment, and final access all stay organized inside one dashboard.
+                </p>
+              </div>
+
+              <div className="absolute right-0 top-0 w-full max-w-[34rem] overflow-hidden rounded-[2rem] border border-white/20 bg-white/10 p-3 shadow-2xl shadow-black/20 backdrop-blur-md lg:right-2">
+                <div className="absolute inset-0 bg-gradient-to-tr from-[#061413]/30 via-transparent to-white/10 pointer-events-none" />
                 <img
-                  src="https://images.unsplash.com/photo-1555854877-bab0e564b8d5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1400&q=80"
-                  alt="Student hostel room"
-                  className="h-[420px] sm:h-[500px] w-full rounded-[1.5rem] object-cover"
+                  src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1500&q=80"
+                  alt="Modern student accommodation interior"
+                  className="h-[420px] sm:h-[520px] w-full rounded-[1.5rem] object-cover"
                   loading="lazy"
                 />
+                <div className="absolute inset-0 rounded-[1.5rem] bg-[linear-gradient(180deg,rgba(6,20,19,0.05)_0%,rgba(6,20,19,0.38)_100%)]" />
+                <div className="absolute left-6 top-6 rounded-full border border-white/20 bg-[#082523]/55 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white backdrop-blur-md">
+                  Student living, verified
+                </div>
+                <div className="absolute right-6 top-6 rounded-full border border-white/20 bg-white/15 px-4 py-2 text-xs font-medium text-white backdrop-blur-md">
+                  Pay after approval
+                </div>
+              </div>
+
+              <div className="absolute bottom-0 left-0 right-0 grid gap-4 sm:grid-cols-2 lg:left-10 lg:right-10">
+                {heroGlassCards.map(({ icon: Icon, title, description }, index) => (
+                  <div
+                    key={title}
+                    className={`rounded-[1.75rem] border border-white/20 bg-white/12 p-4 text-white shadow-xl shadow-black/15 backdrop-blur-xl ${
+                      index === 2 ? 'sm:col-span-2 lg:ml-20 lg:max-w-[18rem]' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/14 text-emerald-100">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold">{title}</p>
+                        <p className="mt-1 text-xs leading-5 text-teal-50/82">{description}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
