@@ -143,27 +143,27 @@ const Landing = () => {
                 "linear-gradient(108deg, rgba(9,37,34,0.88) 0%, rgba(16,79,72,0.78) 38%, rgba(35,129,122,0.72) 58%, rgba(35,129,122,0.34) 100%), url('https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1800&q=80')"
             }}
           />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(188,255,239,0.22),transparent_22%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.14),transparent_28%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(188,255,239,0.18),transparent_22%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.12),transparent_28%)]" />
           <div className="absolute -top-16 left-[10%] h-48 w-48 rounded-full bg-emerald-200/20 blur-3xl" />
           <div className="absolute top-32 right-[8%] h-64 w-64 rounded-full bg-cyan-100/15 blur-3xl" />
           <div className="absolute bottom-[-5rem] left-[35%] h-56 w-56 rounded-full bg-white/10 blur-3xl" />
-          <div className="absolute inset-y-0 left-0 w-full bg-[linear-gradient(90deg,rgba(6,20,19,0.55)_0%,rgba(6,20,19,0.18)_42%,rgba(6,20,19,0.08)_100%)] lg:w-[58%]" />
-          <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,0.7)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.7)_1px,transparent_1px)] [background-size:80px_80px]" />
+          <div className="absolute inset-y-0 left-0 w-full bg-[linear-gradient(90deg,rgba(6,20,19,0.68)_0%,rgba(6,20,19,0.28)_42%,rgba(6,20,19,0.10)_100%)] lg:w-[56%]" />
+          <div className="absolute inset-0 opacity-[0.06] [background-image:linear-gradient(rgba(255,255,255,0.7)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.7)_1px,transparent_1px)] [background-size:80px_80px]" />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-24">
-          <div className="grid grid-cols-1 lg:grid-cols-[0.95fr_1.05fr] gap-10 lg:gap-14 items-center">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-12 sm:pt-24 sm:pb-16 lg:pt-28 lg:pb-24">
+          <div className="grid grid-cols-1 lg:grid-cols-[0.92fr_1.08fr] gap-12 lg:gap-16 items-center">
             <div className="text-center lg:text-left">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-teal-50 backdrop-blur-md shadow-lg shadow-black/10">
                 <BadgeCheck className="h-3.5 w-3.5 text-emerald-200" />
                 Verified student housing flow
               </div>
 
-              <h1 className="mt-5 text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.02] text-white">
+              <h1 className="mt-5 max-w-[10ch] text-4xl sm:text-5xl lg:text-[4.65rem] font-black tracking-tight leading-[0.98] text-white">
                 Find verified student hostels with a process you can actually trust.
               </h1>
 
-              <p className="mt-5 max-w-2xl mx-auto lg:mx-0 text-base sm:text-lg lg:text-xl leading-8 text-teal-50/92">
+              <p className="mt-6 max-w-xl mx-auto lg:mx-0 text-base sm:text-lg lg:text-[1.15rem] leading-8 text-teal-50/92">
                 UniHostel helps students browse real options, apply with confidence, pay only after approval, and track everything through to final access.
               </p>
 
@@ -183,7 +183,7 @@ const Landing = () => {
                 </Link>
               </div>
 
-              <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="mt-9 grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {trustHighlights.map(({ icon: Icon, label }) => (
                   <div
                     key={label}
@@ -198,8 +198,8 @@ const Landing = () => {
               </div>
             </div>
 
-            <div className="relative min-h-[430px] sm:min-h-[560px]">
-              <div className="absolute left-4 top-10 hidden w-52 rounded-[1.75rem] border border-white/25 bg-white/14 p-4 text-white shadow-2xl shadow-black/15 backdrop-blur-xl lg:block">
+            <div className="relative min-h-[460px] sm:min-h-[620px]">
+              <div className="absolute left-0 top-12 hidden w-52 rounded-[1.75rem] border border-white/25 bg-white/14 p-4 text-white shadow-2xl shadow-black/15 backdrop-blur-xl xl:block">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-300/20 text-emerald-100">
                     <CheckCircle2 className="h-5 w-5" />
@@ -217,12 +217,12 @@ const Landing = () => {
                 </p>
               </div>
 
-              <div className="absolute right-0 top-0 w-full max-w-[34rem] overflow-hidden rounded-[2rem] border border-white/20 bg-white/10 p-3 shadow-2xl shadow-black/20 backdrop-blur-md lg:right-2">
+              <div className="absolute right-0 top-0 w-full max-w-[33rem] overflow-hidden rounded-[2rem] border border-white/20 bg-white/10 p-3 shadow-2xl shadow-black/20 backdrop-blur-md lg:right-4 xl:right-2">
                 <div className="absolute inset-0 bg-gradient-to-tr from-[#061413]/30 via-transparent to-white/10 pointer-events-none" />
                 <img
                   src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1500&q=80"
                   alt="Modern student accommodation interior"
-                  className="h-[420px] sm:h-[520px] w-full rounded-[1.5rem] object-cover"
+                  className="h-[400px] sm:h-[500px] w-full rounded-[1.5rem] object-cover"
                   loading="lazy"
                 />
                 <div className="absolute inset-0 rounded-[1.5rem] bg-[linear-gradient(180deg,rgba(6,20,19,0.05)_0%,rgba(6,20,19,0.38)_100%)]" />
@@ -234,12 +234,12 @@ const Landing = () => {
                 </div>
               </div>
 
-              <div className="absolute bottom-0 left-0 right-0 grid gap-4 sm:grid-cols-2 lg:left-10 lg:right-10">
+              <div className="absolute bottom-2 left-0 right-0 grid gap-4 sm:grid-cols-2 lg:left-14 lg:right-6 xl:left-12 xl:right-2">
                 {heroGlassCards.map(({ icon: Icon, title, description }, index) => (
                   <div
                     key={title}
                     className={`rounded-[1.75rem] border border-white/20 bg-white/12 p-4 text-white shadow-xl shadow-black/15 backdrop-blur-xl ${
-                      index === 2 ? 'sm:col-span-2 lg:ml-20 lg:max-w-[18rem]' : ''
+                      index === 2 ? 'sm:col-span-2 lg:ml-10 lg:max-w-[19rem]' : ''
                     }`}
                   >
                     <div className="flex items-center gap-3">

@@ -31,7 +31,7 @@ const Navbar = () => {
     <nav
       className={`sticky top-0 z-50 transition-all duration-300 ${
         isLandingPage
-          ? 'bg-[#061413]/58 backdrop-blur-2xl border-b border-white/10 shadow-[0_16px_50px_rgba(3,12,12,0.24)]'
+          ? 'bg-[#071917]/82 backdrop-blur-2xl border-b border-white/10 shadow-[0_18px_50px_rgba(3,12,12,0.34)]'
           : 'bg-white/92 backdrop-blur-xl border-b border-slate-200/80 shadow-[0_10px_30px_rgba(15,23,42,0.06)]'
       }`}
     >
@@ -69,7 +69,7 @@ const Navbar = () => {
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-2 lg:gap-3">
             {isLandingPage && !user && (
-              <div className="hidden lg:flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-50/85 backdrop-blur-md">
+              <div className="hidden lg:flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-50/90 backdrop-blur-md">
                 <span className="h-2 w-2 rounded-full bg-emerald-300" />
                 Approval-first payments
               </div>
