@@ -31,12 +31,18 @@ const Navbar = () => {
     <nav
       className={`sticky top-0 z-50 transition-all duration-300 ${
         isLandingPage
-          ? 'bg-[#071917]/82 backdrop-blur-2xl border-b border-white/10 shadow-[0_18px_50px_rgba(3,12,12,0.34)]'
+          ? 'bg-transparent border-b-0 shadow-none'
           : 'bg-white/92 backdrop-blur-xl border-b border-slate-200/80 shadow-[0_10px_30px_rgba(15,23,42,0.06)]'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-18 min-h-[72px]">
+      <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${isLandingPage ? 'pt-4' : ''}`}>
+        <div
+          className={`flex justify-between items-center h-18 min-h-[72px] ${
+            isLandingPage
+              ? 'rounded-[28px] border border-white/12 bg-[#071917]/78 px-4 sm:px-5 shadow-[0_18px_50px_rgba(3,12,12,0.34)] backdrop-blur-2xl'
+              : ''
+          }`}
+        >
           <div className="flex items-center">
             <Link
               to="/"
@@ -68,12 +74,6 @@ const Navbar = () => {
           
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-2 lg:gap-3">
-            {isLandingPage && !user && (
-              <div className="hidden lg:flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-50/90 backdrop-blur-md">
-                <span className="h-2 w-2 rounded-full bg-emerald-300" />
-                Approval-first payments
-              </div>
-            )}
             <Link
               to="/hostels"
               className={`relative rounded-full px-4 py-2.5 text-sm lg:text-[15px] font-semibold transition-all ${
@@ -194,16 +194,11 @@ const Navbar = () => {
         <div
           className={`md:hidden border-t ${
             isLandingPage
-              ? 'bg-[#082523]/95 border-white/10 backdrop-blur-xl'
+              ? 'mx-4 mt-2 rounded-[24px] border border-white/10 bg-[#082523]/95 backdrop-blur-xl'
               : 'bg-white/95 border-slate-200 backdrop-blur-xl'
           }`}
         >
           <div className="px-4 py-4 space-y-2">
-            {isLandingPage && !user && (
-              <div className="rounded-2xl border border-white/10 bg-white/8 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-teal-50/85 backdrop-blur-md">
-                Approval-first payments
-              </div>
-            )}
             <Link 
               to="/hostels" 
               onClick={() => setMobileMenuOpen(false)}
