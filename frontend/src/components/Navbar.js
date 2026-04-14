@@ -1,14 +1,25 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { User, LogOut, LayoutDashboard, ChevronDown, Menu, X } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { User, LogOut, LayoutDashboard, ChevronDown, Menu, X, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Logo from './Logo';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
   const [showLoginMenu, setShowLoginMenu] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const isLandingPage = location.pathname === '/';
+  const dashboardPath =
+    user?.role === 'admin'
+      ? '/admin-dashboard'
+      : user?.role === 'manager'
+        ? '/manager-dashboard'
+        : '/student-dashboard';
+  const isBrowseActive = location.pathname === '/hostels';
+  const isDashboardActive = Boolean(user && location.pathname === dashboardPath);
 
   const handleLogout = async () => {
     await logout();
@@ -17,40 +28,92 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white shadow-md sticky top-0 z-50">
+    <nav
+      className={`sticky top-0 z-50 transition-all duration-300 ${
+        isLandingPage
+          ? 'bg-[#061413]/58 backdrop-blur-2xl border-b border-white/10 shadow-[0_16px_50px_rgba(3,12,12,0.24)]'
+          : 'bg-white/92 backdrop-blur-xl border-b border-slate-200/80 shadow-[0_10px_30px_rgba(15,23,42,0.06)]'
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+        <div className="flex justify-between items-center h-18 min-h-[72px]">
           <div className="flex items-center">
-            <Link to="/" className="flex items-center text-primary-600 font-bold text-lg sm:text-xl hover:text-primary-700 transition-colors">
-              <Logo className="mr-2 w-5 h-5 sm:w-6 sm:h-6" />
-              uniHostel
+            <Link
+              to="/"
+              className={`group flex items-center gap-3 rounded-full px-1 py-1 transition-colors ${
+                isLandingPage ? 'text-white hover:text-emerald-100' : 'text-slate-900 hover:text-primary-700'
+              }`}
+            >
+              <span
+                className={`flex h-10 w-10 items-center justify-center rounded-full border transition-all ${
+                  isLandingPage
+                    ? 'border-white/20 bg-white/12 text-white shadow-lg shadow-black/15 backdrop-blur-md'
+                    : 'border-primary-100 bg-primary-50 text-primary-700'
+                }`}
+              >
+                <Logo className="w-5 h-5" />
+              </span>
+              <span className="flex flex-col leading-none">
+                <span className="text-lg sm:text-xl font-black tracking-tight">uniHostel</span>
+                <span
+                  className={`mt-1 text-[11px] font-medium tracking-[0.18em] uppercase ${
+                    isLandingPage ? 'text-teal-100/75' : 'text-slate-500'
+                  }`}
+                >
+                  Student housing
+                </span>
+              </span>
             </Link>
           </div>
           
           {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-4 lg:space-x-8">
-            <Link to="/hostels" className="relative text-primary-600 text-base lg:text-lg font-medium hover:text-primary-700 transition-colors group">
+          <div className="hidden md:flex items-center gap-2 lg:gap-3">
+            {isLandingPage && !user && (
+              <div className="hidden lg:flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-50/85 backdrop-blur-md">
+                <span className="h-2 w-2 rounded-full bg-emerald-300" />
+                Approval-first payments
+              </div>
+            )}
+            <Link
+              to="/hostels"
+              className={`relative rounded-full px-4 py-2.5 text-sm lg:text-[15px] font-semibold transition-all ${
+                isLandingPage
+                  ? isBrowseActive
+                    ? 'bg-white/16 text-white shadow-lg shadow-black/10'
+                    : 'text-teal-50/90 hover:bg-white/10 hover:text-white'
+                  : isBrowseActive
+                    ? 'bg-primary-50 text-primary-700'
+                    : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+              }`}
+            >
               Browse
-              <span className="absolute bottom-0 left-1/2 w-0 h-0.5 bg-primary-600 transition-all duration-300 group-hover:w-full group-hover:left-0"></span>
             </Link>
             {user ? (
               <>
                 <Link 
-                  to={
-                    user.role === 'admin' ? '/admin-dashboard' :
-                    user.role === 'manager' ? '/manager-dashboard' : 
-                    '/student-dashboard'
-                  } 
-                  className="flex items-center text-gray-700 hover:text-primary-600 text-base"
+                  to={dashboardPath}
+                  className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-sm lg:text-[15px] font-semibold transition-all ${
+                    isLandingPage
+                      ? isDashboardActive
+                        ? 'bg-white/16 text-white shadow-lg shadow-black/10'
+                        : 'text-teal-50/90 hover:bg-white/10 hover:text-white'
+                      : isDashboardActive
+                        ? 'bg-primary-50 text-primary-700'
+                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+                  }`}
                 >
-                  <LayoutDashboard className="w-4 h-4 mr-1" />
+                  <LayoutDashboard className="w-4 h-4" />
                   Dashboard
                 </Link>
                 <button 
                   onClick={handleLogout}
-                  className="flex items-center text-red-600 hover:text-red-700 text-base"
+                  className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-sm lg:text-[15px] font-semibold transition-all ${
+                    isLandingPage
+                      ? 'text-rose-100 hover:bg-rose-400/10 hover:text-white'
+                      : 'text-red-600 hover:bg-red-50 hover:text-red-700'
+                  }`}
                 >
-                  <LogOut className="w-4 h-4 mr-1" />
+                  <LogOut className="w-4 h-4" />
                   Logout
                 </button>
               </>
@@ -60,26 +123,50 @@ const Navbar = () => {
                 onMouseEnter={() => setShowLoginMenu(true)}
                 onMouseLeave={() => setShowLoginMenu(false)}
               >
-                <button className="flex items-center text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md transition-colors text-base font-medium">
+                <button
+                  className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-sm lg:text-[15px] font-semibold transition-all ${
+                    isLandingPage
+                      ? 'border border-white/20 bg-white text-slate-950 shadow-xl shadow-black/20 hover:-translate-y-0.5 hover:bg-slate-100'
+                      : 'border border-slate-200 bg-white text-slate-800 shadow-sm hover:border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
                   Login
-                  <ChevronDown className="w-4 h-4 ml-1" />
+                  <ChevronDown className={`w-4 h-4 transition-transform ${showLoginMenu ? 'rotate-180' : ''}`} />
                 </button>
-                <div className={`absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg transition-all duration-200 z-50 ${
+                <div className={`absolute right-0 mt-3 w-56 rounded-3xl border p-2 shadow-2xl transition-all duration-200 z-50 ${
+                  isLandingPage
+                    ? 'border-white/15 bg-[#0c2c28]/92 backdrop-blur-xl shadow-black/25'
+                    : 'border-slate-200 bg-white shadow-slate-200/80'
+                } ${
                   showLoginMenu ? 'opacity-100 visible' : 'opacity-0 invisible'
                 }`}>
                   <Link 
                     to="/student-login" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 flex items-center rounded-t-md"
+                  className={`flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium transition-colors ${
+                      isLandingPage
+                        ? 'text-white hover:bg-white/10'
+                        : 'text-slate-700 hover:bg-primary-50 hover:text-primary-700'
+                    }`}
                   >
-                    <User className="w-4 h-4 mr-2" />
-                    Student Login
+                    <span className="flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      Student Login
+                    </span>
+                    <ArrowRight className="w-4 h-4 opacity-70" />
                   </Link>
                   <Link 
                     to="/manager-login" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center rounded-b-md"
+                    className={`flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium transition-colors ${
+                      isLandingPage
+                        ? 'text-white hover:bg-white/10'
+                        : 'text-slate-700 hover:bg-primary-50 hover:text-primary-700'
+                    }`}
                   >
-                    <User className="w-4 h-4 mr-2" />
-                    Manager Login
+                    <span className="flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      Manager Login
+                    </span>
+                    <ArrowRight className="w-4 h-4 opacity-70" />
                   </Link>
                 </div>
               </div>
@@ -90,7 +177,11 @@ const Navbar = () => {
           <div className="md:hidden flex items-center">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="text-gray-700 hover:text-primary-600 p-2"
+              className={`rounded-full p-2.5 transition-colors ${
+                isLandingPage
+                  ? 'bg-white/10 text-white backdrop-blur-md hover:bg-white/15'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -100,34 +191,53 @@ const Navbar = () => {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-200">
-          <div className="px-4 py-3 space-y-3">
+        <div
+          className={`md:hidden border-t ${
+            isLandingPage
+              ? 'bg-[#082523]/95 border-white/10 backdrop-blur-xl'
+              : 'bg-white/95 border-slate-200 backdrop-blur-xl'
+          }`}
+        >
+          <div className="px-4 py-4 space-y-2">
+            {isLandingPage && !user && (
+              <div className="rounded-2xl border border-white/10 bg-white/8 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-teal-50/85 backdrop-blur-md">
+                Approval-first payments
+              </div>
+            )}
             <Link 
               to="/hostels" 
               onClick={() => setMobileMenuOpen(false)}
-              className="block text-primary-600 font-medium py-2 hover:bg-gray-50 px-3 rounded"
+              className={`block rounded-2xl px-4 py-3 text-sm font-semibold transition-colors ${
+                isLandingPage
+                  ? 'text-white hover:bg-white/10'
+                  : 'text-primary-700 hover:bg-primary-50'
+              }`}
             >
               Browse Hostels
             </Link>
             {user ? (
               <>
                 <Link 
-                  to={
-                    user.role === 'admin' ? '/admin-dashboard' :
-                    user.role === 'manager' ? '/manager-dashboard' : 
-                    '/student-dashboard'
-                  }
+                  to={dashboardPath}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center text-gray-700 py-2 hover:bg-gray-50 px-3 rounded"
+                  className={`flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors ${
+                    isLandingPage
+                      ? 'text-white hover:bg-white/10'
+                      : 'text-slate-700 hover:bg-slate-100'
+                  }`}
                 >
-                  <LayoutDashboard className="w-4 h-4 mr-2" />
+                  <LayoutDashboard className="w-4 h-4" />
                   Dashboard
                 </Link>
                 <button 
                   onClick={handleLogout}
-                  className="flex items-center text-red-600 py-2 hover:bg-red-50 px-3 rounded w-full text-left"
+                  className={`flex w-full items-center gap-2 rounded-2xl px-4 py-3 text-left text-sm font-semibold transition-colors ${
+                    isLandingPage
+                      ? 'text-rose-100 hover:bg-rose-400/10'
+                      : 'text-red-600 hover:bg-red-50'
+                  }`}
                 >
-                  <LogOut className="w-4 h-4 mr-2" />
+                  <LogOut className="w-4 h-4" />
                   Logout
                 </button>
               </>
@@ -136,17 +246,25 @@ const Navbar = () => {
                 <Link 
                   to="/student-login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center text-gray-700 py-2 hover:bg-blue-50 px-3 rounded"
+                  className={`flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors ${
+                    isLandingPage
+                      ? 'text-white hover:bg-white/10'
+                      : 'text-slate-700 hover:bg-primary-50'
+                  }`}
                 >
-                  <User className="w-4 h-4 mr-2" />
+                  <User className="w-4 h-4" />
                   Student Login
                 </Link>
                 <Link 
                   to="/manager-login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center text-gray-700 py-2 hover:bg-indigo-50 px-3 rounded"
+                  className={`flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors ${
+                    isLandingPage
+                      ? 'text-white hover:bg-white/10'
+                      : 'text-slate-700 hover:bg-primary-50'
+                  }`}
                 >
-                  <User className="w-4 h-4 mr-2" />
+                  <User className="w-4 h-4" />
                   Manager Login
                 </Link>
               </>
