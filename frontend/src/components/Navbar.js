@@ -52,22 +52,22 @@ const Navbar = () => {
     : '';
 
   const linkToneClass = useScrolledLandingStyle
-    ? 'text-slate-900 hover:text-primary-700'
+    ? 'text-primary-700 hover:text-primary-800'
     : isLandingPage
       ? 'text-white hover:text-emerald-100'
-      : 'text-slate-900 hover:text-primary-700';
+      : 'text-primary-700 hover:text-primary-800';
 
   const logoBadgeClass = useScrolledLandingStyle
-    ? 'border-primary-100 bg-primary-50 text-primary-700 shadow-sm'
+    ? 'border-primary-200 bg-primary-50 text-primary-700 shadow-sm'
     : isLandingPage
       ? 'border-white/20 bg-white/12 text-white shadow-lg shadow-black/15 backdrop-blur-md'
-      : 'border-primary-100 bg-primary-50 text-primary-700';
+      : 'border-primary-200 bg-primary-50 text-primary-700';
 
   const subLabelClass = useScrolledLandingStyle
-    ? 'text-slate-500'
+    ? 'text-primary-600/75'
     : isLandingPage
       ? 'text-teal-100/75'
-      : 'text-slate-500';
+      : 'text-primary-600/75';
 
   return (
     <nav
@@ -108,7 +108,7 @@ const Navbar = () => {
                 useScrolledLandingStyle
                   ? isBrowseActive
                     ? 'bg-primary-50 text-primary-700'
-                    : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+                    : 'text-primary-700 hover:bg-primary-50 hover:text-primary-800'
                   : isLandingPage
                     ? isBrowseActive
                       ? 'bg-white/16 text-white shadow-lg shadow-black/10'
@@ -128,7 +128,7 @@ const Navbar = () => {
                     useScrolledLandingStyle
                       ? isDashboardActive
                         ? 'bg-primary-50 text-primary-700'
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+                        : 'text-primary-700 hover:bg-primary-50 hover:text-primary-800'
                       : isLandingPage
                         ? isDashboardActive
                           ? 'bg-white/16 text-white shadow-lg shadow-black/10'
@@ -160,7 +160,7 @@ const Navbar = () => {
                 <button
                   className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-sm lg:text-[15px] font-semibold transition-all ${
                     useScrolledLandingStyle
-                      ? 'border border-slate-200 bg-white text-slate-800 shadow-sm hover:border-slate-300 hover:bg-slate-50'
+                      ? 'border border-primary-100 bg-white text-primary-700 shadow-sm hover:border-primary-200 hover:bg-primary-50/60'
                       : isLandingPage
                         ? 'border border-white/20 bg-white text-slate-950 shadow-xl shadow-black/20 hover:-translate-y-0.5 hover:bg-slate-100'
                         : 'border border-slate-200 bg-white text-slate-800 shadow-sm hover:border-slate-300 hover:bg-slate-50'
@@ -172,7 +172,7 @@ const Navbar = () => {
                 <div
                   className={`absolute right-0 mt-3 w-56 rounded-3xl border p-2 shadow-2xl transition-all duration-200 z-50 ${
                     useScrolledLandingStyle
-                      ? 'border-slate-200 bg-white shadow-slate-200/80'
+                      ? 'border-primary-100 bg-white shadow-primary-100/60'
                       : isLandingPage
                         ? 'border-white/15 bg-[#0c2c28]/92 backdrop-blur-xl shadow-black/25'
                         : 'border-slate-200 bg-white shadow-slate-200/80'
@@ -182,7 +182,7 @@ const Navbar = () => {
                     to="/student-login"
                     className={`flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium transition-colors ${
                       useScrolledLandingStyle
-                        ? 'text-slate-700 hover:bg-primary-50 hover:text-primary-700'
+                        ? 'text-primary-700 hover:bg-primary-50 hover:text-primary-800'
                         : isLandingPage
                           ? 'text-white hover:bg-white/10'
                           : 'text-slate-700 hover:bg-primary-50 hover:text-primary-700'
@@ -198,7 +198,7 @@ const Navbar = () => {
                     to="/manager-login"
                     className={`flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium transition-colors ${
                       useScrolledLandingStyle
-                        ? 'text-slate-700 hover:bg-primary-50 hover:text-primary-700'
+                        ? 'text-primary-700 hover:bg-primary-50 hover:text-primary-800'
                         : isLandingPage
                           ? 'text-white hover:bg-white/10'
                           : 'text-slate-700 hover:bg-primary-50 hover:text-primary-700'
@@ -220,7 +220,7 @@ const Navbar = () => {
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className={`rounded-full p-2.5 transition-colors ${
                 useScrolledLandingStyle
-                  ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  ? 'bg-primary-50 text-primary-700 hover:bg-primary-100'
                   : isLandingPage
                     ? 'bg-white/10 text-white backdrop-blur-md hover:bg-white/15'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -236,7 +236,7 @@ const Navbar = () => {
         <div
           className={`md:hidden border-t ${
             useScrolledLandingStyle
-              ? 'bg-white/95 border-slate-200 backdrop-blur-xl'
+              ? 'bg-white/95 border-primary-100 backdrop-blur-xl'
               : isLandingPage
                 ? 'mx-4 mt-2 rounded-[24px] border border-white/10 bg-[#082523]/95 shadow-[0_16px_40px_rgba(3,12,12,0.32)] backdrop-blur-xl'
                 : 'bg-white/95 border-slate-200 backdrop-blur-xl'
@@ -263,7 +263,7 @@ const Navbar = () => {
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors ${
                     useScrolledLandingStyle
-                      ? 'text-slate-700 hover:bg-slate-100'
+                      ? 'text-primary-700 hover:bg-primary-50'
                       : isLandingPage
                         ? 'text-white hover:bg-white/10'
                         : 'text-slate-700 hover:bg-slate-100'
@@ -293,7 +293,7 @@ const Navbar = () => {
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors ${
                     useScrolledLandingStyle
-                      ? 'text-slate-700 hover:bg-primary-50'
+                      ? 'text-primary-700 hover:bg-primary-50'
                       : isLandingPage
                         ? 'text-white hover:bg-white/10'
                         : 'text-slate-700 hover:bg-primary-50'
@@ -307,7 +307,7 @@ const Navbar = () => {
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors ${
                     useScrolledLandingStyle
-                      ? 'text-slate-700 hover:bg-primary-50'
+                      ? 'text-primary-700 hover:bg-primary-50'
                       : isLandingPage
                         ? 'text-white hover:bg-white/10'
                         : 'text-slate-700 hover:bg-primary-50'
