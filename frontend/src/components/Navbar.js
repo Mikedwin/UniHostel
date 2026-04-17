@@ -48,7 +48,7 @@ const Navbar = () => {
   const navShellClass = isLandingPage
     ? useScrolledLandingStyle
       ? 'px-0 sm:px-0'
-      : 'rounded-[24px] sm:rounded-[28px] border border-primary-100/80 bg-white/92 px-3 sm:px-5 shadow-[0_18px_50px_rgba(15,23,42,0.10)] backdrop-blur-2xl'
+      : 'rounded-[24px] sm:rounded-[28px] bg-white/92 px-3 sm:px-5 shadow-[0_18px_50px_rgba(15,23,42,0.10)] backdrop-blur-2xl'
     : '';
 
   const lightToneClass = 'text-primary-700 hover:text-primary-800';
