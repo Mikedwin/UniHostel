@@ -35,34 +35,34 @@ const Navbar = () => {
           : 'bg-white/92 backdrop-blur-xl border-b border-slate-200/80 shadow-[0_10px_30px_rgba(15,23,42,0.06)]'
       }`}
     >
-      <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${isLandingPage ? 'pt-4' : ''}`}>
+      <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${isLandingPage ? 'pt-3 sm:pt-4' : ''}`}>
         <div
           className={`flex justify-between items-center h-18 min-h-[72px] ${
             isLandingPage
-              ? 'rounded-[28px] border border-white/12 bg-[#071917]/78 px-4 sm:px-5 shadow-[0_18px_50px_rgba(3,12,12,0.34)] backdrop-blur-2xl'
+              ? 'rounded-[24px] sm:rounded-[28px] border border-white/12 bg-[#071917]/82 px-3 sm:px-5 shadow-[0_18px_50px_rgba(3,12,12,0.34)] backdrop-blur-2xl'
               : ''
           }`}
         >
           <div className="flex items-center">
             <Link
               to="/"
-              className={`group flex items-center gap-3 rounded-full px-1 py-1 transition-colors ${
+              className={`group flex items-center gap-2 sm:gap-3 rounded-full px-1 py-1 transition-colors ${
                 isLandingPage ? 'text-white hover:text-emerald-100' : 'text-slate-900 hover:text-primary-700'
               }`}
             >
               <span
-                className={`flex h-10 w-10 items-center justify-center rounded-full border transition-all ${
+                className={`flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full border transition-all ${
                   isLandingPage
                     ? 'border-white/20 bg-white/12 text-white shadow-lg shadow-black/15 backdrop-blur-md'
                     : 'border-primary-100 bg-primary-50 text-primary-700'
                 }`}
               >
-                <Logo className="w-5 h-5" />
+                <Logo className="w-4 h-4 sm:w-5 sm:h-5" />
               </span>
-              <span className="flex flex-col leading-none">
-                <span className="text-lg sm:text-xl font-black tracking-tight">uniHostel</span>
+              <span className="flex flex-col leading-none min-w-0">
+                <span className="text-base sm:text-xl font-black tracking-tight">uniHostel</span>
                 <span
-                  className={`mt-1 text-[11px] font-medium tracking-[0.18em] uppercase ${
+                  className={`mt-1 text-[10px] sm:text-[11px] font-medium tracking-[0.16em] sm:tracking-[0.18em] uppercase ${
                     isLandingPage ? 'text-teal-100/75' : 'text-slate-500'
                   }`}
                 >
@@ -194,7 +194,7 @@ const Navbar = () => {
         <div
           className={`md:hidden border-t ${
             isLandingPage
-              ? 'mx-4 mt-2 rounded-[24px] border border-white/10 bg-[#082523]/95 backdrop-blur-xl'
+              ? 'mx-4 mt-2 rounded-[24px] border border-white/10 bg-[#082523]/95 shadow-[0_16px_40px_rgba(3,12,12,0.32)] backdrop-blur-xl'
               : 'bg-white/95 border-slate-200 backdrop-blur-xl'
           }`}
         >
