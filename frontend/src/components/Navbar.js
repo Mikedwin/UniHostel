@@ -48,26 +48,20 @@ const Navbar = () => {
   const navShellClass = isLandingPage
     ? useScrolledLandingStyle
       ? 'px-0 sm:px-0'
-      : 'rounded-[24px] sm:rounded-[28px] border border-white/12 bg-[#071917]/82 px-3 sm:px-5 shadow-[0_18px_50px_rgba(3,12,12,0.34)] backdrop-blur-2xl'
+      : 'rounded-[24px] sm:rounded-[28px] border border-primary-100/80 bg-white/92 px-3 sm:px-5 shadow-[0_18px_50px_rgba(15,23,42,0.10)] backdrop-blur-2xl'
     : '';
 
-  const linkToneClass = useScrolledLandingStyle
-    ? 'text-primary-700 hover:text-primary-800'
-    : isLandingPage
-      ? 'text-white hover:text-emerald-100'
-      : 'text-primary-700 hover:text-primary-800';
+  const lightToneClass = 'text-primary-700 hover:text-primary-800';
 
-  const logoBadgeClass = useScrolledLandingStyle
+  const linkToneClass = isLandingPage
+    ? lightToneClass
+    : lightToneClass;
+
+  const logoBadgeClass = isLandingPage
     ? 'border-primary-200 bg-primary-50 text-primary-700 shadow-sm'
-    : isLandingPage
-      ? 'border-white/20 bg-white/12 text-white shadow-lg shadow-black/15 backdrop-blur-md'
-      : 'border-primary-200 bg-primary-50 text-primary-700';
+    : 'border-primary-200 bg-primary-50 text-primary-700';
 
-  const subLabelClass = useScrolledLandingStyle
-    ? 'text-primary-600/75'
-    : isLandingPage
-      ? 'text-teal-100/75'
-      : 'text-primary-600/75';
+  const subLabelClass = 'text-primary-600/75';
 
   return (
     <nav
@@ -111,8 +105,8 @@ const Navbar = () => {
                     : 'text-primary-700 hover:bg-primary-50 hover:text-primary-800'
                   : isLandingPage
                     ? isBrowseActive
-                      ? 'bg-white/16 text-white shadow-lg shadow-black/10'
-                      : 'text-teal-50/90 hover:bg-white/10 hover:text-white'
+                      ? 'bg-primary-50 text-primary-700'
+                      : 'text-primary-700 hover:bg-primary-50 hover:text-primary-800'
                     : isBrowseActive
                       ? 'bg-primary-50 text-primary-700'
                       : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
@@ -131,8 +125,8 @@ const Navbar = () => {
                         : 'text-primary-700 hover:bg-primary-50 hover:text-primary-800'
                       : isLandingPage
                         ? isDashboardActive
-                          ? 'bg-white/16 text-white shadow-lg shadow-black/10'
-                          : 'text-teal-50/90 hover:bg-white/10 hover:text-white'
+                          ? 'bg-primary-50 text-primary-700'
+                          : 'text-primary-700 hover:bg-primary-50 hover:text-primary-800'
                         : isDashboardActive
                           ? 'bg-primary-50 text-primary-700'
                           : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
@@ -147,7 +141,7 @@ const Navbar = () => {
                     useScrolledLandingStyle
                       ? 'text-red-600 hover:bg-red-50 hover:text-red-700'
                       : isLandingPage
-                        ? 'text-rose-100 hover:bg-rose-400/10 hover:text-white'
+                        ? 'text-red-600 hover:bg-red-50 hover:text-red-700'
                         : 'text-red-600 hover:bg-red-50 hover:text-red-700'
                   }`}
                 >
@@ -162,7 +156,7 @@ const Navbar = () => {
                     useScrolledLandingStyle
                       ? 'border border-primary-100 bg-white text-primary-700 shadow-sm hover:border-primary-200 hover:bg-primary-50/60'
                       : isLandingPage
-                        ? 'border border-white/20 bg-white text-slate-950 shadow-xl shadow-black/20 hover:-translate-y-0.5 hover:bg-slate-100'
+                        ? 'border border-primary-100 bg-white text-primary-700 shadow-sm hover:border-primary-200 hover:bg-primary-50/60'
                         : 'border border-slate-200 bg-white text-slate-800 shadow-sm hover:border-slate-300 hover:bg-slate-50'
                   }`}
                 >
@@ -174,7 +168,7 @@ const Navbar = () => {
                     useScrolledLandingStyle
                       ? 'border-primary-100 bg-white shadow-primary-100/60'
                       : isLandingPage
-                        ? 'border-white/15 bg-[#0c2c28]/92 backdrop-blur-xl shadow-black/25'
+                        ? 'border-primary-100 bg-white shadow-primary-100/60'
                         : 'border-slate-200 bg-white shadow-slate-200/80'
                   } ${showLoginMenu ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
                 >
@@ -183,8 +177,8 @@ const Navbar = () => {
                     className={`flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium transition-colors ${
                       useScrolledLandingStyle
                         ? 'text-primary-700 hover:bg-primary-50 hover:text-primary-800'
-                        : isLandingPage
-                          ? 'text-white hover:bg-white/10'
+                      : isLandingPage
+                          ? 'text-primary-700 hover:bg-primary-50 hover:text-primary-800'
                           : 'text-slate-700 hover:bg-primary-50 hover:text-primary-700'
                     }`}
                   >
@@ -199,8 +193,8 @@ const Navbar = () => {
                     className={`flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium transition-colors ${
                       useScrolledLandingStyle
                         ? 'text-primary-700 hover:bg-primary-50 hover:text-primary-800'
-                        : isLandingPage
-                          ? 'text-white hover:bg-white/10'
+                      : isLandingPage
+                          ? 'text-primary-700 hover:bg-primary-50 hover:text-primary-800'
                           : 'text-slate-700 hover:bg-primary-50 hover:text-primary-700'
                     }`}
                   >
@@ -221,8 +215,8 @@ const Navbar = () => {
               className={`rounded-full p-2.5 transition-colors ${
                 useScrolledLandingStyle
                   ? 'bg-primary-50 text-primary-700 hover:bg-primary-100'
-                  : isLandingPage
-                    ? 'bg-white/10 text-white backdrop-blur-md hover:bg-white/15'
+                : isLandingPage
+                    ? 'bg-primary-50 text-primary-700 hover:bg-primary-100'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
@@ -238,7 +232,7 @@ const Navbar = () => {
             useScrolledLandingStyle
               ? 'bg-white/95 border-primary-100 backdrop-blur-xl'
               : isLandingPage
-                ? 'mx-4 mt-2 rounded-[24px] border border-white/10 bg-[#082523]/95 shadow-[0_16px_40px_rgba(3,12,12,0.32)] backdrop-blur-xl'
+                ? 'mx-4 mt-2 rounded-[24px] border border-primary-100 bg-white/95 shadow-[0_16px_40px_rgba(15,23,42,0.10)] backdrop-blur-xl'
                 : 'bg-white/95 border-slate-200 backdrop-blur-xl'
           }`}
         >
@@ -249,8 +243,8 @@ const Navbar = () => {
               className={`block rounded-2xl px-4 py-3 text-sm font-semibold transition-colors ${
                 useScrolledLandingStyle
                   ? 'text-primary-700 hover:bg-primary-50'
-                  : isLandingPage
-                    ? 'text-white hover:bg-white/10'
+                : isLandingPage
+                    ? 'text-primary-700 hover:bg-primary-50'
                     : 'text-primary-700 hover:bg-primary-50'
               }`}
             >
@@ -264,8 +258,8 @@ const Navbar = () => {
                   className={`flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors ${
                     useScrolledLandingStyle
                       ? 'text-primary-700 hover:bg-primary-50'
-                      : isLandingPage
-                        ? 'text-white hover:bg-white/10'
+                    : isLandingPage
+                        ? 'text-primary-700 hover:bg-primary-50'
                         : 'text-slate-700 hover:bg-slate-100'
                   }`}
                 >
@@ -277,8 +271,8 @@ const Navbar = () => {
                   className={`flex w-full items-center gap-2 rounded-2xl px-4 py-3 text-left text-sm font-semibold transition-colors ${
                     useScrolledLandingStyle
                       ? 'text-red-600 hover:bg-red-50'
-                      : isLandingPage
-                        ? 'text-rose-100 hover:bg-rose-400/10'
+                    : isLandingPage
+                        ? 'text-red-600 hover:bg-red-50'
                         : 'text-red-600 hover:bg-red-50'
                   }`}
                 >
@@ -294,8 +288,8 @@ const Navbar = () => {
                   className={`flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors ${
                     useScrolledLandingStyle
                       ? 'text-primary-700 hover:bg-primary-50'
-                      : isLandingPage
-                        ? 'text-white hover:bg-white/10'
+                    : isLandingPage
+                        ? 'text-primary-700 hover:bg-primary-50'
                         : 'text-slate-700 hover:bg-primary-50'
                   }`}
                 >
@@ -308,8 +302,8 @@ const Navbar = () => {
                   className={`flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors ${
                     useScrolledLandingStyle
                       ? 'text-primary-700 hover:bg-primary-50'
-                      : isLandingPage
-                        ? 'text-white hover:bg-white/10'
+                    : isLandingPage
+                        ? 'text-primary-700 hover:bg-primary-50'
                         : 'text-slate-700 hover:bg-primary-50'
                   }`}
                 >
