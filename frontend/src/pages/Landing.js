@@ -194,7 +194,7 @@ const Landing = () => {
             </div>
 
             <div className="relative min-h-0 lg:min-h-[480px] xl:min-h-[640px]">
-              <div className="relative mx-auto mt-2 w-full max-w-[32rem] overflow-hidden rounded-[2rem] border border-white/20 bg-white/10 p-3 shadow-2xl shadow-black/20 backdrop-blur-md lg:absolute lg:right-4 lg:top-8 lg:mx-0 xl:right-2">
+              <div className="relative mx-auto mt-2 w-full max-w-[32rem] overflow-hidden rounded-[2rem] border border-white/20 bg-white/10 p-3 shadow-2xl shadow-black/20 backdrop-blur-md lg:absolute lg:right-4 lg:top-0 lg:mx-0 xl:right-2">
                 <div className="absolute inset-0 bg-gradient-to-tr from-[#061413]/30 via-transparent to-white/10 pointer-events-none" />
                 <img
                   src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1500&q=80"
