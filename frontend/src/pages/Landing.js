@@ -147,42 +147,42 @@ const Landing = () => {
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12 sm:pt-28 sm:pb-16 lg:pt-32 lg:pb-24">
-          <div className="grid grid-cols-1 lg:grid-cols-[0.92fr_1.08fr] gap-12 lg:gap-16 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-[0.92fr_1.08fr] gap-10 sm:gap-12 lg:gap-16 items-center">
             <div className="text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-teal-50 backdrop-blur-md shadow-lg shadow-black/10">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-50 backdrop-blur-md shadow-lg shadow-black/10 sm:px-4 sm:text-xs sm:tracking-[0.2em]">
                 <BadgeCheck className="h-3.5 w-3.5 text-emerald-200" />
                 Verified student housing flow
               </div>
 
-              <h1 className="mt-5 mx-auto max-w-none text-4xl sm:max-w-[10.5ch] sm:text-5xl lg:mx-0 lg:text-[4.2rem] xl:text-[4.55rem] font-black tracking-tight leading-[0.98] text-white">
+              <h1 className="mt-5 mx-auto max-w-[11ch] text-[3rem] font-black tracking-tight leading-[0.98] text-white sm:max-w-[10.5ch] sm:text-5xl lg:mx-0 lg:max-w-none lg:text-[4.2rem] xl:text-[4.55rem]">
                 Find verified student hostels with a process you can actually trust.
               </h1>
 
-              <p className="mt-6 max-w-xl mx-auto lg:mx-0 text-base sm:text-lg lg:text-[1.15rem] leading-8 text-white">
+              <p className="mt-5 max-w-xl mx-auto text-[15px] leading-7 text-white sm:mt-6 sm:text-lg sm:leading-8 lg:mx-0 lg:text-[1.15rem]">
                 UniHostel helps students browse real options, apply with confidence, pay only after approval, and track everything through to final access.
               </p>
 
-              <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start">
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:gap-4 justify-center lg:justify-start">
                 <Link
                   to="/hostels"
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-7 py-3.5 text-sm sm:text-base font-semibold text-slate-950 shadow-xl shadow-black/20 transition-all hover:-translate-y-0.5 hover:bg-slate-100"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-7 py-3.5 text-sm font-semibold text-slate-950 shadow-xl shadow-black/20 transition-all hover:-translate-y-0.5 hover:bg-slate-100 sm:w-auto sm:text-base"
                 >
                   Browse Hostels
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
                   to="/student-register"
-                  className="inline-flex items-center justify-center rounded-2xl border border-white/25 bg-white/10 px-7 py-3.5 text-sm sm:text-base font-semibold text-white shadow-sm backdrop-blur-md transition-all hover:border-white/35 hover:bg-white/15"
+                  className="inline-flex w-full items-center justify-center rounded-2xl border border-white/25 bg-white/10 px-7 py-3.5 text-sm font-semibold text-white shadow-sm backdrop-blur-md transition-all hover:border-white/35 hover:bg-white/15 sm:w-auto sm:text-base"
                 >
                   Register as Student
                 </Link>
               </div>
 
-              <div className="mt-9 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="mt-8 grid grid-cols-1 gap-3 sm:mt-9 sm:grid-cols-3">
                 {trustHighlights.map(({ icon: Icon, label }) => (
                   <div
                     key={label}
-                    className="flex items-center justify-center lg:justify-start gap-3 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-white shadow-lg shadow-black/10 backdrop-blur-md"
+                    className="flex items-center justify-center gap-3 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-white shadow-lg shadow-black/10 backdrop-blur-md lg:justify-start"
                   >
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-emerald-100">
                       <Icon className="h-4 w-4" />
@@ -194,28 +194,28 @@ const Landing = () => {
             </div>
 
             <div className="relative min-h-0 lg:min-h-[480px] xl:min-h-[640px]">
-              <div className="relative mx-auto mt-2 w-full max-w-[32rem] overflow-hidden rounded-[2rem] border border-white/20 bg-white/10 p-3 shadow-2xl shadow-black/20 backdrop-blur-md lg:absolute lg:right-4 lg:top-0 lg:mx-0 xl:right-2">
+              <div className="relative mx-auto mt-1 w-full max-w-[32rem] overflow-hidden rounded-[1.75rem] border border-white/20 bg-white/10 p-2.5 shadow-2xl shadow-black/20 backdrop-blur-md sm:mt-2 sm:rounded-[2rem] sm:p-3 lg:absolute lg:right-4 lg:-top-16 lg:mx-0 xl:right-2 xl:-top-20">
                 <div className="absolute inset-0 bg-gradient-to-tr from-[#061413]/30 via-transparent to-white/10 pointer-events-none" />
                 <img
                   src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1500&q=80"
                   alt="Modern student accommodation interior"
-                  className="h-[300px] sm:h-[420px] lg:h-[390px] xl:h-[480px] w-full rounded-[1.5rem] object-cover"
+                  className="h-[260px] w-full rounded-[1.35rem] object-cover sm:h-[420px] sm:rounded-[1.5rem] lg:h-[390px] xl:h-[480px]"
                   loading="lazy"
                 />
-                <div className="absolute inset-0 rounded-[1.5rem] bg-[linear-gradient(180deg,rgba(6,20,19,0.05)_0%,rgba(6,20,19,0.38)_100%)]" />
-                <div className="absolute left-4 top-4 rounded-full border border-white/20 bg-[#082523]/55 px-3 py-2 text-[10px] sm:left-6 sm:top-6 sm:px-4 sm:text-xs font-semibold uppercase tracking-[0.18em] text-white backdrop-blur-md">
+                <div className="absolute inset-0 rounded-[1.35rem] bg-[linear-gradient(180deg,rgba(6,20,19,0.05)_0%,rgba(6,20,19,0.38)_100%)] sm:rounded-[1.5rem]" />
+                <div className="absolute left-3 top-3 rounded-full border border-white/20 bg-[#082523]/55 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur-md sm:left-6 sm:top-6 sm:px-4 sm:text-xs sm:tracking-[0.18em]">
                   Student living, verified
                 </div>
-                <div className="absolute right-4 top-4 rounded-full border border-white/20 bg-white/15 px-3 py-2 text-[10px] sm:right-6 sm:top-6 sm:px-4 sm:text-xs font-medium text-white backdrop-blur-md">
+                <div className="absolute right-3 top-3 rounded-full border border-white/20 bg-white/15 px-3 py-2 text-[10px] font-medium text-white backdrop-blur-md sm:right-6 sm:top-6 sm:px-4 sm:text-xs">
                   Pay after approval
                 </div>
               </div>
 
-              <div className="relative mt-4 grid gap-4 sm:grid-cols-2 lg:absolute lg:bottom-0 lg:left-16 lg:right-6 lg:mt-0 xl:left-14 xl:right-2">
+              <div className="relative mt-4 grid grid-cols-1 gap-3 sm:mt-5 sm:gap-4 md:grid-cols-2 lg:absolute lg:bottom-0 lg:left-16 lg:right-6 lg:mt-0 xl:left-14 xl:right-2">
                 {heroGlassCards.map(({ icon: Icon, title, description }, index) => (
                   <div
                     key={title}
-                    className={`rounded-[1.75rem] border border-white/20 bg-white/12 p-4 text-white shadow-xl shadow-black/15 backdrop-blur-xl ${
+                    className={`rounded-[1.5rem] border border-white/20 bg-white/12 p-4 text-white shadow-xl shadow-black/15 backdrop-blur-xl sm:rounded-[1.75rem] ${
                       index === 2 ? 'sm:col-span-2 lg:ml-8 lg:max-w-[18.5rem]' : ''
                     }`}
                   >
