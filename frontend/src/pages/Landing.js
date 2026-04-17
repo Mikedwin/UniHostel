@@ -29,11 +29,6 @@ const heroGlassCards = [
     icon: UserCheck,
     title: 'Approval-first booking',
     description: 'Apply now, pay only after the manager approves your spot.'
-  },
-  {
-    icon: CreditCard,
-    title: 'Dashboard visibility',
-    description: 'Track payment, approval, and final access in one place.'
   }
 ];
 
@@ -199,24 +194,6 @@ const Landing = () => {
             </div>
 
             <div className="relative min-h-0 lg:min-h-[480px] xl:min-h-[640px]">
-              <div className="absolute left-0 top-20 hidden w-52 rounded-[1.75rem] border border-white/25 bg-white/14 p-4 text-white shadow-2xl shadow-black/15 backdrop-blur-xl xl:block">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-300/20 text-emerald-100">
-                    <CheckCircle2 className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold">Application status</p>
-                    <p className="text-xs text-teal-50/80">Visible at every stage</p>
-                  </div>
-                </div>
-                <div className="mt-4 h-2 rounded-full bg-white/10">
-                  <div className="h-2 w-[72%] rounded-full bg-gradient-to-r from-emerald-200 via-white to-emerald-100" />
-                </div>
-                <p className="mt-3 text-xs leading-6 text-teal-50/85">
-                  Approval, payment, and final access all stay organized inside one dashboard.
-                </p>
-              </div>
-
               <div className="relative mx-auto mt-2 w-full max-w-[32rem] overflow-hidden rounded-[2rem] border border-white/20 bg-white/10 p-3 shadow-2xl shadow-black/20 backdrop-blur-md lg:absolute lg:right-4 lg:top-8 lg:mx-0 xl:right-2">
                 <div className="absolute inset-0 bg-gradient-to-tr from-[#061413]/30 via-transparent to-white/10 pointer-events-none" />
                 <img
