@@ -163,7 +163,7 @@ const Landing = () => {
                 Find verified student hostels with a process you can actually trust.
               </h1>
 
-              <p className="mt-6 max-w-xl mx-auto lg:mx-0 text-base sm:text-lg lg:text-[1.15rem] leading-8 text-teal-50/92">
+              <p className="mt-6 max-w-xl mx-auto lg:mx-0 text-base sm:text-lg lg:text-[1.15rem] leading-8 text-white">
                 UniHostel helps students browse real options, apply with confidence, pay only after approval, and track everything through to final access.
               </p>
 
