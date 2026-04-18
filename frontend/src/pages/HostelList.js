@@ -143,8 +143,7 @@ const HostelList = () => {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(188,255,239,0.14),transparent_20%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.08),transparent_28%)]" />
         <div className="relative max-w-7xl mx-auto px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-teal-50">
-              <span className="h-2 w-2 rounded-full bg-emerald-300" />
+            <div className="inline-flex items-center rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-teal-50">
               Browse verified hostels
             </div>
             <h1 className="mt-5 text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
