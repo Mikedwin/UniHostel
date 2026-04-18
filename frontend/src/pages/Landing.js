@@ -149,8 +149,7 @@ const Landing = () => {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12 sm:pt-28 sm:pb-16 lg:pt-32 lg:pb-24">
           <div className="grid grid-cols-1 lg:grid-cols-[0.92fr_1.08fr] gap-10 sm:gap-12 lg:gap-16 items-center">
             <div className="text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-[#0b2e2a]/70 px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-50 sm:px-4 sm:text-xs sm:tracking-[0.2em]">
-                <span className="h-2 w-2 rounded-full bg-emerald-300" />
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-50 backdrop-blur-md shadow-lg shadow-black/10 sm:px-4 sm:text-xs sm:tracking-[0.2em]">
                 <BadgeCheck className="h-3.5 w-3.5 text-emerald-200" />
                 Verified student housing flow
               </div>
