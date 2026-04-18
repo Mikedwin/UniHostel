@@ -4,7 +4,7 @@ import { Activity, Building2, FileText, Users } from 'lucide-react';
 const AdminStatsSection = ({ stats }) => (
   <>
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-      <div className="bg-white p-3 sm:p-4 rounded-lg shadow">
+      <div className="bg-white p-3 sm:p-4 rounded-[1.5rem] border border-white/70 shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs sm:text-sm text-gray-600">Total Hostels</p>
@@ -14,7 +14,7 @@ const AdminStatsSection = ({ stats }) => (
           <Building2 className="w-8 h-8 sm:w-10 sm:h-10 text-blue-500" />
         </div>
       </div>
-      <div className="bg-white p-3 sm:p-4 rounded-lg shadow">
+      <div className="bg-white p-3 sm:p-4 rounded-[1.5rem] border border-white/70 shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs sm:text-sm text-gray-600">Managers</p>
@@ -23,7 +23,7 @@ const AdminStatsSection = ({ stats }) => (
           <Users className="w-8 h-8 sm:w-10 sm:h-10 text-purple-500" />
         </div>
       </div>
-      <div className="bg-white p-3 sm:p-4 rounded-lg shadow">
+      <div className="bg-white p-3 sm:p-4 rounded-[1.5rem] border border-white/70 shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs sm:text-sm text-gray-600">Applications</p>
@@ -33,7 +33,7 @@ const AdminStatsSection = ({ stats }) => (
           <FileText className="w-8 h-8 sm:w-10 sm:h-10 text-orange-500" />
         </div>
       </div>
-      <div className="bg-white p-3 sm:p-4 rounded-lg shadow">
+      <div className="bg-white p-3 sm:p-4 rounded-[1.5rem] border border-white/70 shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs sm:text-sm text-gray-600">Students</p>
@@ -44,11 +44,11 @@ const AdminStatsSection = ({ stats }) => (
       </div>
     </div>
 
-    <div className="bg-white p-3 sm:p-4 rounded-lg shadow mb-6">
+    <div className="bg-white p-3 sm:p-4 rounded-[1.75rem] border border-white/70 shadow-[0_18px_40px_rgba(15,23,42,0.06)] mb-6">
       <h2 className="text-base sm:text-lg font-bold mb-3 sm:mb-4">Room Statistics</h2>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {stats?.roomStats && Object.entries(stats.roomStats).map(([type, data]) => (
-          <div key={type} className="border rounded p-2 sm:p-3">
+          <div key={type} className="border border-slate-200 bg-slate-50/70 rounded-2xl p-2 sm:p-3">
             <p className="font-semibold text-xs sm:text-sm">{type}</p>
             <p className="text-xs text-gray-600">Total: {data.total}</p>
             <p className="text-xs text-gray-600">Occupied: {data.occupied}</p>

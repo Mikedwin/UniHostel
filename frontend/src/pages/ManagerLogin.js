@@ -186,27 +186,57 @@ const ManagerLogin = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-md w-full space-y-8">
-                <div className="text-center">
-                    <div className="mx-auto h-16 w-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: '#23817A' }}>
-                        <Building2 className="h-8 w-8 text-white" />
+        <div className="min-h-screen bg-[#f3fbf9]">
+            <div className="relative overflow-hidden">
+                <div
+                    className="absolute inset-0 bg-cover bg-center"
+                    style={{
+                        backgroundImage:
+                            "linear-gradient(112deg, rgba(7,34,31,0.92) 0%, rgba(15,83,76,0.82) 46%, rgba(35,129,122,0.66) 100%), url('https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1600&q=80')"
+                    }}
+                />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(188,255,239,0.18),transparent_20%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.10),transparent_28%)]" />
+                <div className="relative max-w-6xl mx-auto px-4 py-12 sm:px-6 sm:py-16 lg:grid lg:grid-cols-[0.95fr_1.05fr] lg:gap-12 lg:px-8 lg:py-20">
+                    <div className="hidden lg:flex flex-col justify-center text-white pr-4">
+                        <div className="inline-flex w-fit items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-teal-50">
+                            <span className="h-2 w-2 rounded-full bg-emerald-300" />
+                            Manager access
+                        </div>
+                        <h1 className="mt-6 max-w-[11ch] text-5xl font-black leading-[0.96] tracking-tight">
+                            Run your hostel listings from one cleaner control point.
+                        </h1>
+                        <p className="mt-6 max-w-xl text-lg leading-8 text-teal-50/92">
+                            Review applications, approve payments at the right stage, and keep your hostel operations in sync with the same trust-first product experience.
+                        </p>
+                        <div className="mt-8 grid max-w-xl grid-cols-1 gap-3 sm:grid-cols-3">
+                            {['Verified listing control', 'Approval-first workflow', 'Manager analytics'].map((item) => (
+                                <div key={item} className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-medium text-white">
+                                    {item}
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                    <h2 className="text-3xl font-extrabold text-gray-900">Manager Login</h2>
-                    <p className="mt-2 text-sm text-gray-600">
-                        Manage your hostel listings
-                    </p>
-                </div>
-                
-                <div className="bg-white p-8 rounded-xl shadow-lg">
+
+                    <div className="mx-auto w-full max-w-md lg:max-w-none lg:pl-6">
+                        <div className="rounded-[2rem] border border-white/25 bg-white/92 p-6 shadow-[0_24px_70px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:p-8">
+                            <div className="text-center">
+                                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-600 shadow-lg shadow-primary-700/25">
+                                    <Building2 className="h-8 w-8 text-white" />
+                                </div>
+                                <h2 className="text-3xl font-black tracking-tight text-slate-950">Manager Login</h2>
+                                <p className="mt-2 text-sm text-slate-600">
+                                    Access your listings, approvals, and operations in one place.
+                                </p>
+                            </div>
+
                     {error && (
-                        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+                        <div className="mb-4 mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                             {error}
                         </div>
                     )}
 
                     {infoMessage && (
-                        <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm">
+                        <div className="mb-4 mt-6 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
                             {infoMessage}
                         </div>
                     )}
@@ -229,39 +259,35 @@ const ManagerLogin = () => {
                         <>
                             <form className="space-y-6" onSubmit={handleSubmit}>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="mb-2 block text-sm font-medium text-slate-700">
                                         Email Address
                                     </label>
                                     <input 
                                         type="email" 
                                         required 
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none transition-colors" 
+                                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 shadow-sm outline-none transition focus:border-primary-500 focus:ring-4 focus:ring-primary-100" 
                                         placeholder="Enter your email"
                                         value={formData.email}
                                         onChange={e => setFormData({...formData, email: e.target.value})}
-                                        onFocus={(e) => e.target.style.borderColor = '#23817A'}
-                                        onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                                     />
                                 </div>
                                 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="mb-2 block text-sm font-medium text-slate-700">
                                         Password
                                     </label>
                                     <div className="relative">
                                         <input 
                                             type={showPassword ? 'text' : 'password'}
                                             required 
-                                            className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none transition-colors" 
+                                            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-11 text-slate-900 shadow-sm outline-none transition focus:border-primary-500 focus:ring-4 focus:ring-primary-100" 
                                             placeholder="Enter your password"
                                             value={formData.password}
                                             onChange={e => setFormData({...formData, password: e.target.value})}
-                                            onFocus={(e) => e.target.style.borderColor = '#23817A'}
-                                            onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                                         />
                                         <button
                                             type="button"
-                                            className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                            className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400"
                                             onClick={() => setShowPassword(!showPassword)}
                                         >
                                             {showPassword ? (
@@ -272,7 +298,7 @@ const ManagerLogin = () => {
                                         </button>
                                     </div>
                                     <div className="text-right mt-1">
-                                <Link to="/forgot-password?returnTo=/manager-login" className="text-xs" style={{ color: '#23817A' }}>
+                                <Link to="/forgot-password?returnTo=/manager-login" className="text-xs font-medium text-primary-700 hover:text-primary-800">
                                     Forgot password?
                                 </Link>
                                     </div>
@@ -290,10 +316,7 @@ const ManagerLogin = () => {
                                 <button 
                                     type="submit" 
                                     disabled={loading}
-                                    className="w-full text-white py-2 px-4 rounded-md font-medium focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                                    style={{ backgroundColor: '#23817A' }}
-                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1a6159'}
-                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#23817A'}
+                                    className="flex w-full items-center justify-center rounded-2xl bg-primary-600 px-4 py-3.5 font-medium text-white shadow-lg shadow-primary-700/20 transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     {loading ? (
                                         <>
@@ -307,21 +330,23 @@ const ManagerLogin = () => {
                             </form>
                             
                             <div className="mt-6 text-center">
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-slate-600">
                                     Need a manager account?{' '}
-                                    <Link to="/contact" className="font-medium" style={{ color: '#23817A' }}>
+                                    <Link to="/contact" className="font-semibold text-primary-700 hover:text-primary-800">
                                         Contact support
                                     </Link>
                                 </p>
-                                <p className="mt-2 text-xs text-gray-500">
+                                <p className="mt-2 text-xs text-slate-500">
                                     Are you a student?{' '}
-                                    <Link to="/student-login" style={{ color: '#23817A' }}>
+                                    <Link to="/student-login" className="font-medium text-primary-700 hover:text-primary-800">
                                         Student Login
                                     </Link>
                                 </p>
                             </div>
                         </>
                     )}
+                </div>
+                    </div>
                 </div>
             </div>
         </div>

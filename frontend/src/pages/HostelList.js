@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { MapPin, Filter } from 'lucide-react';
+import { Filter, MapPin } from 'lucide-react';
 import { API_ENDPOINTS } from '../config/api';
 import { HostelCardSkeleton } from '../components/SkeletonLoaders';
 
@@ -15,10 +15,8 @@ const HostelList = () => {
   const [showRooms, setShowRooms] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  // Helper to generate unique image URL with random component
   const getImageUrl = (imageData, uniqueId) => {
     if (!imageData) return 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80';
-    // Use random number to force browser to never cache
     return `${imageData}#${uniqueId}-${Math.random().toString(36).substring(7)}`;
   };
 
@@ -27,27 +25,24 @@ const HostelList = () => {
       setLoading(true);
       setError('');
       const res = await axios.get(API_ENDPOINTS.HOSTELS);
-      
+
       let filteredData = res.data;
       let isRoomTypeSearch = false;
-      
-      // Check if search is for room type
+
       if (searchFilter && searchFilter.trim()) {
         const query = searchFilter.toLowerCase().trim();
         const roomTypes = ['1 in a room', '2 in a room', '3 in a room', '4 in a room'];
-        isRoomTypeSearch = roomTypes.some(type => type.includes(query) || query.includes(type.replace(' in a room', '')));
+        isRoomTypeSearch = roomTypes.some((type) => type.includes(query) || query.includes(type.replace(' in a room', '')));
       }
-      
-      // If searching for room type, show all matching rooms globally
+
       if (isRoomTypeSearch && searchFilter.trim()) {
         const query = searchFilter.toLowerCase().trim();
-        let allMatchingRooms = [];
-        
-        filteredData.forEach(hostel => {
+        const allMatchingRooms = [];
+
+        filteredData.forEach((hostel) => {
           if (hostel.roomTypes && hostel.roomTypes.length > 0) {
-            hostel.roomTypes.forEach(room => {
+            hostel.roomTypes.forEach((room) => {
               if (room.type.toLowerCase().includes(query)) {
-                // Apply price filter if set
                 if (!priceFilter || priceFilter <= 0 || room.price <= Number(priceFilter)) {
                   allMatchingRooms.push({
                     ...room,
@@ -61,32 +56,27 @@ const HostelList = () => {
             });
           }
         });
-        
+
         setRooms(allMatchingRooms);
         setHostels([]);
         setShowRooms(true);
         return;
       }
-      
-      // Apply hostel name search filter
+
       if (searchFilter && searchFilter.trim() && !isRoomTypeSearch) {
         const query = searchFilter.toLowerCase().trim();
-        filteredData = filteredData.filter(hostel => 
-          hostel.name.toLowerCase().includes(query)
-        );
+        filteredData = filteredData.filter((hostel) => hostel.name.toLowerCase().includes(query));
       }
-      
-      // If no price filter, show hostels
+
       if (!priceFilter || priceFilter <= 0) {
         setHostels(filteredData);
         setRooms([]);
         setShowRooms(false);
       } else {
-        // If price filter is active, show filtered rooms
-        let allRooms = [];
-        filteredData.forEach(hostel => {
+        const allRooms = [];
+        filteredData.forEach((hostel) => {
           if (hostel.roomTypes && hostel.roomTypes.length > 0) {
-            hostel.roomTypes.forEach(room => {
+            hostel.roomTypes.forEach((room) => {
               if (room.price <= Number(priceFilter)) {
                 allRooms.push({
                   ...room,
@@ -99,7 +89,7 @@ const HostelList = () => {
             });
           }
         });
-        
+
         setRooms(allRooms);
         setHostels([]);
         setShowRooms(true);
@@ -114,7 +104,7 @@ const HostelList = () => {
 
   useEffect(() => {
     fetchHostels('', '');
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSearch = (e) => {
@@ -129,12 +119,11 @@ const HostelList = () => {
     fetchHostels('', '');
   };
 
-  // Calculate hostel stats
   const getHostelStats = (hostel) => {
     const totalCapacity = hostel.roomTypes?.reduce((sum, r) => sum + r.totalCapacity, 0) || 0;
     const totalOccupied = hostel.roomTypes?.reduce((sum, r) => sum + (r.occupiedCapacity || 0), 0) || 0;
     const availableSlots = totalCapacity - totalOccupied;
-    const prices = hostel.roomTypes?.map(r => r.price) || [];
+    const prices = hostel.roomTypes?.map((r) => r.price) || [];
     const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
     const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
     const isAvailable = availableSlots > 0;
@@ -142,52 +131,67 @@ const HostelList = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Find Your Perfect Hostel</h1>
-          <p className="text-sm sm:text-base text-gray-600">Discover verified student accommodation within your budget</p>
-          
-          {/* Platform Fee Notice */}
-          <div className="mt-4 bg-primary-50 border border-primary-200 rounded-lg p-3">
-            <p className="text-sm text-primary-800 text-center">
-              💡 <span className="font-medium">Prices shown are room fees only.</span> Platform service fee applies at checkout.
+    <div className="min-h-screen bg-[linear-gradient(180deg,#f3fbf9_0%,#ffffff_30%,#f8fbfb_100%)]">
+      <div className="relative overflow-hidden border-b border-emerald-100/70">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage:
+              "linear-gradient(108deg, rgba(9,37,34,0.9) 0%, rgba(18,89,82,0.78) 45%, rgba(35,129,122,0.58) 100%), url('https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1800&q=80')"
+          }}
+        />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(188,255,239,0.14),transparent_20%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.08),transparent_28%)]" />
+        <div className="relative max-w-7xl mx-auto px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-teal-50">
+              <span className="h-2 w-2 rounded-full bg-emerald-300" />
+              Browse verified hostels
+            </div>
+            <h1 className="mt-5 text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
+              Discover student accommodation with a cleaner, approval-first flow.
+            </h1>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-teal-50/92 sm:text-base sm:leading-8">
+              Compare verified hostel options, search by room type, and move through the booking process with clearer expectations from application to payment.
             </p>
+            <div className="mt-5 inline-flex rounded-2xl border border-emerald-200/30 bg-white/10 px-4 py-3 text-sm text-white/95 backdrop-blur-md">
+              <span className="font-semibold">Prices shown are room fees only.</span>
+              <span className="ml-2 text-teal-50/85">Platform service fee applies at checkout.</span>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Mobile Filter Button */}
+      <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         <button
           onClick={() => setShowMobileFilters(true)}
-          className="md:hidden w-full mb-4 bg-primary-600 text-white px-4 py-4 rounded-lg hover:bg-primary-700 transition-colors duration-200 flex items-center justify-center font-medium shadow-md"
+          className="md:hidden mb-4 flex w-full items-center justify-center rounded-2xl bg-primary-600 px-4 py-4 font-medium text-white shadow-lg shadow-primary-700/20 transition-colors duration-200 hover:bg-primary-700"
         >
-          <Filter className="w-5 h-5 mr-2" />
+          <Filter className="mr-2 h-5 w-5" />
           Filters & Search
         </button>
 
-        {/* Desktop Filter Bar (Sticky) */}
-        <div className="hidden md:block sticky top-0 z-10 mb-8 bg-white p-6 rounded-lg shadow-sm">
+        <div className="sticky top-24 z-10 mb-8 hidden rounded-[2rem] border border-white/60 bg-white/90 p-6 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl md:block">
           <form onSubmit={handleSearch} className="space-y-4">
-            <div className="max-w-4xl mx-auto">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="mx-auto max-w-4xl">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Search by Hostel Name or Room Type</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">Search by Hostel Name or Room Type</label>
                   <input
                     type="text"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm focus:border-primary-500 focus:ring-4 focus:ring-primary-100"
                     placeholder="e.g., Sunrise Hostel or 2 in a Room..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
-                  <p className="text-xs text-gray-500 mt-1">Search by hostel name or room type (1, 2, 3, or 4 in a room)</p>
+                  <p className="mt-1 text-xs text-gray-500">Search by hostel name or room type (1, 2, 3, or 4 in a room)</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Maximum Price (per semester)</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">Maximum Price (per semester)</label>
                   <div className="relative">
-                    <span className="absolute left-3 top-3 text-gray-400 font-medium">GH₵</span>
+                    <span className="absolute left-3 top-3 font-medium text-gray-400">GH¢</span>
                     <input
                       type="number"
-                      className="w-full pl-12 pr-3 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-12 pr-3 shadow-sm focus:border-primary-500 focus:ring-4 focus:ring-primary-100"
                       placeholder="Enter budget..."
                       value={maxPrice}
                       onChange={(e) => setMaxPrice(e.target.value)}
@@ -196,18 +200,18 @@ const HostelList = () => {
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <button 
-                type="submit" 
-                className="bg-primary-600 text-white px-8 py-4 rounded-md hover:bg-primary-700 transition-colors duration-200 flex items-center justify-center font-medium"
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <button
+                type="submit"
+                className="flex items-center justify-center rounded-2xl bg-primary-600 px-8 py-4 font-medium text-white transition-colors duration-200 hover:bg-primary-700"
               >
-                <Filter className="w-4 h-4 mr-2" />
+                <Filter className="mr-2 h-4 w-4" />
                 Search Hostels
               </button>
-              <button 
+              <button
                 type="button"
                 onClick={clearFilter}
-                className="bg-gray-200 text-gray-700 px-8 py-4 rounded-md hover:bg-gray-300 transition-colors duration-200 font-medium"
+                className="rounded-2xl bg-slate-100 px-8 py-4 font-medium text-slate-700 transition-colors duration-200 hover:bg-slate-200"
               >
                 Clear Filter
               </button>
@@ -215,38 +219,37 @@ const HostelList = () => {
           </form>
         </div>
 
-        {/* Mobile Bottom Sheet Filter */}
         {showMobileFilters && (
-          <div className="md:hidden fixed inset-0 z-50 flex items-end">
-            <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowMobileFilters(false)}></div>
-            <div className="relative bg-white w-full rounded-t-2xl shadow-2xl animate-slide-up max-h-[85vh] overflow-y-auto">
-              <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
+          <div className="fixed inset-0 z-50 flex items-end md:hidden">
+            <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowMobileFilters(false)} />
+            <div className="relative max-h-[85vh] w-full overflow-y-auto rounded-t-[2rem] border border-white/70 bg-white/95 shadow-2xl backdrop-blur-xl animate-slide-up">
+              <div className="sticky top-0 flex items-center justify-between border-b bg-white px-6 py-4">
                 <h3 className="text-lg font-bold">Filters & Search</h3>
                 <button onClick={() => setShowMobileFilters(false)} className="text-gray-500 hover:text-gray-700">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
-              <form onSubmit={(e) => { handleSearch(e); setShowMobileFilters(false); }} className="p-6 space-y-4">
+              <form onSubmit={(e) => { handleSearch(e); setShowMobileFilters(false); }} className="space-y-4 p-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Search by Hostel Name or Room Type</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">Search by Hostel Name or Room Type</label>
                   <input
                     type="text"
-                    className="w-full px-4 py-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm focus:border-primary-500 focus:ring-4 focus:ring-primary-100"
                     placeholder="e.g., Sunrise Hostel or 2 in a Room..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
-                  <p className="text-xs text-gray-500 mt-1">Search by hostel name or room type (1, 2, 3, or 4 in a room)</p>
+                  <p className="mt-1 text-xs text-gray-500">Search by hostel name or room type (1, 2, 3, or 4 in a room)</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Maximum Price (per semester)</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">Maximum Price (per semester)</label>
                   <div className="relative">
-                    <span className="absolute left-3 top-4 text-gray-400 font-medium">GH₵</span>
+                    <span className="absolute left-3 top-4 font-medium text-gray-400">GH¢</span>
                     <input
                       type="number"
-                      className="w-full pl-12 pr-3 py-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      className="w-full rounded-2xl border border-slate-200 bg-white py-4 pl-12 pr-3 shadow-sm focus:border-primary-500 focus:ring-4 focus:ring-primary-100"
                       placeholder="Enter budget..."
                       value={maxPrice}
                       onChange={(e) => setMaxPrice(e.target.value)}
@@ -254,17 +257,17 @@ const HostelList = () => {
                   </div>
                 </div>
                 <div className="space-y-3 pt-2">
-                  <button 
-                    type="submit" 
-                    className="w-full bg-primary-600 text-white px-8 py-4 rounded-md hover:bg-primary-700 transition-colors duration-200 flex items-center justify-center font-medium"
+                  <button
+                    type="submit"
+                    className="flex w-full items-center justify-center rounded-2xl bg-primary-600 px-8 py-4 font-medium text-white transition-colors duration-200 hover:bg-primary-700"
                   >
-                    <Filter className="w-5 h-5 mr-2" />
+                    <Filter className="mr-2 h-5 w-5" />
                     Apply Filters
                   </button>
-                  <button 
+                  <button
                     type="button"
                     onClick={() => { clearFilter(); setShowMobileFilters(false); }}
-                    className="w-full bg-gray-200 text-gray-700 px-8 py-4 rounded-md hover:bg-gray-300 transition-colors duration-200 font-medium"
+                    className="w-full rounded-2xl bg-slate-100 px-8 py-4 font-medium text-slate-700 transition-colors duration-200 hover:bg-slate-200"
                   >
                     Clear All
                   </button>
@@ -275,21 +278,21 @@ const HostelList = () => {
         )}
 
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+          <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-700">
             {error}
           </div>
         )}
 
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
               <HostelCardSkeleton key={i} />
             ))}
           </div>
         ) : (
           <>
-            <div className="mb-4 flex justify-between items-center">
-              <p className="text-gray-600">
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-sm font-medium text-slate-600">
                 {showRooms ? (
                   searchQuery && searchQuery.trim() ? (
                     <>{rooms.length} {rooms.length === 1 ? 'room' : 'rooms'} found matching "{searchQuery}"</>
@@ -301,17 +304,17 @@ const HostelList = () => {
                 )}
               </p>
             </div>
-            
+
             {showRooms ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {rooms.map((room, index) => (
                   <div
-                    key={`${room.hostelId}-${index}`} 
-                    className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200"
+                    key={`${room.hostelId}-${index}`}
+                    className="overflow-hidden rounded-[1.75rem] border border-white/70 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_22px_50px_rgba(15,23,42,0.12)]"
                   >
-                    <img 
-                      src={getImageUrl(room.roomImage || room.hostelImage, `${room.hostelId}-${index}`)} 
-                      alt={room.type} 
+                    <img
+                      src={getImageUrl(room.roomImage || room.hostelImage, `${room.hostelId}-${index}`)}
+                      alt={room.type}
                       className="h-48 w-full object-cover"
                       loading="eager"
                       key={`${room.hostelId}-${index}`}
@@ -320,26 +323,26 @@ const HostelList = () => {
                       }}
                     />
                     <div className="p-4">
-                      <div className="flex justify-between items-start mb-2">
+                      <div className="mb-2 flex items-start justify-between">
                         <div>
-                          <h3 className="font-bold text-lg text-gray-900">{room.type}</h3>
+                          <h3 className="text-lg font-bold text-gray-900">{room.type}</h3>
                           {room.gender && room.gender !== 'Not Specified' && (
-                            <span className="inline-block mt-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+                            <span className="mt-1 inline-block rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">
                               {room.gender} Only
                             </span>
                           )}
                         </div>
-                        <span className="text-primary-600 font-bold text-xl">GH₵{room.price}</span>
+                        <span className="text-xl font-bold text-primary-600">GH¢{room.price}</span>
                       </div>
-                      <p className="text-sm font-medium text-gray-700 mb-1">{room.hostelName}</p>
-                      <div className="flex items-center text-gray-500 text-xs mb-3">
-                        <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
+                      <p className="mb-1 text-sm font-medium text-gray-700">{room.hostelName}</p>
+                      <div className="mb-3 flex items-center text-xs text-gray-500">
+                        <MapPin className="mr-1 h-3 w-3 flex-shrink-0" />
                         <span className="truncate">{room.hostelLocation}</span>
                       </div>
                       {room.facilities && room.facilities.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-3">
+                        <div className="mb-3 flex flex-wrap gap-1">
                           {room.facilities.slice(0, 3).map((f, i) => (
-                            <span key={i} className="text-xs bg-gray-100 px-2 py-0.5 rounded">{f}</span>
+                            <span key={i} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs">{f}</span>
                           ))}
                           {room.facilities.length > 3 && (
                             <span className="text-xs text-gray-500">+{room.facilities.length - 3}</span>
@@ -349,7 +352,7 @@ const HostelList = () => {
                       <Link
                         to={`/hostels/${room.hostelId}`}
                         state={{ selectedRoom: room }}
-                        className="block w-full bg-primary-600 text-white text-center py-2 rounded-md hover:bg-primary-700 transition-colors font-medium"
+                        className="block w-full rounded-2xl bg-primary-600 py-3 text-center font-medium text-white transition-colors hover:bg-primary-700"
                       >
                         Apply for this Room
                       </Link>
@@ -358,19 +361,19 @@ const HostelList = () => {
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {hostels.map(hostel => {
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {hostels.map((hostel) => {
                   const stats = getHostelStats(hostel);
                   return (
-                    <Link 
-                      to={`/hostels/${hostel._id}`} 
-                      key={hostel._id} 
-                      className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1"
+                    <Link
+                      to={`/hostels/${hostel._id}`}
+                      key={hostel._id}
+                      className="overflow-hidden rounded-[1.75rem] border border-white/70 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_22px_50px_rgba(15,23,42,0.12)]"
                     >
                       <div className="relative">
-                        <img 
-                          src={getImageUrl(hostel.hostelViewImage, hostel._id)} 
-                          alt={hostel.name} 
+                        <img
+                          src={getImageUrl(hostel.hostelViewImage, hostel._id)}
+                          alt={hostel.name}
                           className="h-48 w-full object-cover"
                           loading="eager"
                           key={`${hostel._id}-${Math.random()}`}
@@ -380,45 +383,40 @@ const HostelList = () => {
                             e.target.src = 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80';
                           }}
                         />
-                        {/* Availability Badge */}
-                        <div className="absolute top-3 right-3">
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold shadow-md ${
-                            stats.isAvailable 
-                              ? 'bg-green-500 text-white' 
-                              : 'bg-red-500 text-white'
+                        <div className="absolute right-3 top-3">
+                          <span className={`rounded-full px-3 py-1 text-xs font-bold text-white shadow-md ${
+                            stats.isAvailable ? 'bg-green-500' : 'bg-red-500'
                           }`}>
                             {stats.isAvailable ? 'Available' : 'Full'}
                           </span>
                         </div>
                       </div>
                       <div className="p-4">
-                        <h3 className="font-bold text-lg text-gray-900 mb-2">{hostel.name}</h3>
-                        <div className="flex items-center text-gray-600 text-sm mb-2">
-                          <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
+                        <h3 className="mb-2 text-lg font-bold text-gray-900">{hostel.name}</h3>
+                        <div className="mb-2 flex items-center text-sm text-gray-600">
+                          <MapPin className="mr-1 h-4 w-4 flex-shrink-0" />
                           <span className="truncate">{hostel.location}</span>
                         </div>
-                        
-                        {/* Price Range */}
+
                         {stats.minPrice > 0 && (
                           <div className="mb-2">
-                            <span className="text-primary-600 font-bold text-lg">
-                              GH₵{stats.minPrice}
-                              {stats.maxPrice !== stats.minPrice && ` – GH₵${stats.maxPrice}`}
+                            <span className="text-lg font-bold text-primary-600">
+                              GH¢{stats.minPrice}
+                              {stats.maxPrice !== stats.minPrice && ` – GH¢${stats.maxPrice}`}
                             </span>
-                            <span className="text-gray-500 text-xs ml-1">/semester</span>
+                            <span className="ml-1 text-xs text-gray-500">/semester</span>
                           </div>
                         )}
-                        
-                        {/* Room Capacity */}
+
                         {stats.isAvailable && (
                           <div className="mb-3">
-                            <span className="text-sm text-green-600 font-semibold">
+                            <span className="text-sm font-semibold text-green-600">
                               {stats.availableSlots} {stats.availableSlots === 1 ? 'slot' : 'slots'} available
                             </span>
                           </div>
                         )}
-                        
-                        <p className="text-sm text-gray-600 line-clamp-2">{hostel.description}</p>
+
+                        <p className="line-clamp-2 text-sm text-gray-600">{hostel.description}</p>
                       </div>
                     </Link>
                   );
@@ -427,14 +425,14 @@ const HostelList = () => {
             )}
           </>
         )}
-        
+
         {!loading && showRooms && rooms.length === 0 && !error && (
-          <div className="text-center py-20">
-            <div className="text-gray-500 text-lg mb-2">No rooms found within your budget.</div>
-            <p className="text-gray-400 mb-4">Try increasing your maximum price or browse all available hostels.</p>
-            <button 
+          <div className="py-20 text-center">
+            <div className="mb-2 text-lg text-gray-500">No rooms found within your budget.</div>
+            <p className="mb-4 text-gray-400">Try increasing your maximum price or browse all available hostels.</p>
+            <button
               onClick={clearFilter}
-              className="bg-primary-600 text-white px-6 py-2 rounded-md hover:bg-primary-700 transition-colors duration-200"
+              className="rounded-2xl bg-primary-600 px-6 py-3 text-white transition-colors duration-200 hover:bg-primary-700"
             >
               View All Hostels
             </button>

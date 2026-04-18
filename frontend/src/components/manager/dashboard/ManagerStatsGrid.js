@@ -3,14 +3,14 @@ import { Clock, Home, TrendingUp, Users } from 'lucide-react';
 
 const ManagerStatsGrid = ({ stats }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-    <div className="bg-gradient-to-br from-purple-50 to-white rounded-lg shadow-md p-5 border border-purple-100 hover:shadow-lg transition-shadow cursor-pointer">
+    <div className="rounded-[1.75rem] border border-white/70 bg-[linear-gradient(180deg,#ffffff_0%,#f8fbfb_100%)] p-5 shadow-[0_18px_40px_rgba(15,23,42,0.06)] transition-shadow hover:shadow-[0_22px_50px_rgba(15,23,42,0.10)]">
       <div className="flex items-center justify-between mb-3">
         <div>
           <p className="text-xs font-medium text-purple-600 uppercase tracking-wide">Total Hostels</p>
           <p className="text-3xl font-bold text-gray-900 mt-1">{stats.totalHostels}</p>
         </div>
-        <div className="bg-purple-100 p-3 rounded-full">
-          <Home className="w-6 h-6 text-purple-600" />
+        <div className="rounded-2xl bg-primary-50 p-3">
+          <Home className="w-6 h-6 text-primary-600" />
         </div>
       </div>
       <div className="flex items-center text-xs text-gray-600">
@@ -23,14 +23,14 @@ const ManagerStatsGrid = ({ stats }) => (
       </div>
     </div>
 
-    <div className="bg-gradient-to-br from-blue-50 to-white rounded-lg shadow-md p-5 border border-blue-100 hover:shadow-lg transition-shadow cursor-pointer">
+    <div className="rounded-[1.75rem] border border-white/70 bg-[linear-gradient(180deg,#ffffff_0%,#f8fbfb_100%)] p-5 shadow-[0_18px_40px_rgba(15,23,42,0.06)] transition-shadow hover:shadow-[0_22px_50px_rgba(15,23,42,0.10)]">
       <div className="flex items-center justify-between mb-3">
         <div>
           <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Total Applications</p>
           <p className="text-3xl font-bold text-gray-900 mt-1">{stats.totalApps}</p>
         </div>
-        <div className="bg-blue-100 p-3 rounded-full">
-          <Users className="w-6 h-6 text-blue-600" />
+        <div className="rounded-2xl bg-primary-50 p-3">
+          <Users className="w-6 h-6 text-primary-600" />
         </div>
       </div>
       <div className="flex items-center gap-2 text-xs">
@@ -40,14 +40,14 @@ const ManagerStatsGrid = ({ stats }) => (
       </div>
     </div>
 
-    <div className="bg-gradient-to-br from-green-50 to-white rounded-lg shadow-md p-5 border border-green-100 hover:shadow-lg transition-shadow cursor-pointer">
+    <div className="rounded-[1.75rem] border border-white/70 bg-[linear-gradient(180deg,#ffffff_0%,#f8fbfb_100%)] p-5 shadow-[0_18px_40px_rgba(15,23,42,0.06)] transition-shadow hover:shadow-[0_22px_50px_rgba(15,23,42,0.10)]">
       <div className="flex items-center justify-between mb-3">
         <div>
           <p className="text-xs font-medium text-green-600 uppercase tracking-wide">Occupancy Rate</p>
           <p className="text-3xl font-bold text-gray-900 mt-1">{stats.occupancyRate}%</p>
         </div>
-        <div className="bg-green-100 p-3 rounded-full">
-          <TrendingUp className="w-6 h-6 text-green-600" />
+        <div className="rounded-2xl bg-primary-50 p-3">
+          <TrendingUp className="w-6 h-6 text-primary-600" />
         </div>
       </div>
       <div className="space-y-1">
@@ -67,14 +67,14 @@ const ManagerStatsGrid = ({ stats }) => (
       </div>
     </div>
 
-    <div className="bg-gradient-to-br from-yellow-50 to-white rounded-lg shadow-md p-5 border border-yellow-100 hover:shadow-lg transition-shadow cursor-pointer">
+    <div className="rounded-[1.75rem] border border-white/70 bg-[linear-gradient(180deg,#ffffff_0%,#f8fbfb_100%)] p-5 shadow-[0_18px_40px_rgba(15,23,42,0.06)] transition-shadow hover:shadow-[0_22px_50px_rgba(15,23,42,0.10)]">
       <div className="flex items-center justify-between mb-3">
         <div>
           <p className="text-xs font-medium text-yellow-600 uppercase tracking-wide">Pending Actions</p>
           <p className="text-3xl font-bold text-gray-900 mt-1">{stats.pending}</p>
         </div>
-        <div className="bg-yellow-100 p-3 rounded-full">
-          <Clock className="w-6 h-6 text-yellow-600" />
+        <div className="rounded-2xl bg-primary-50 p-3">
+          <Clock className="w-6 h-6 text-primary-600" />
         </div>
       </div>
       <p className="text-xs text-gray-600">

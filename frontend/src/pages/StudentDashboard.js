@@ -231,6 +231,7 @@ const StudentDashboard = () => {
     };
 
     return (
+        <div className="min-h-screen bg-[linear-gradient(180deg,#f3fbf9_0%,#ffffff_24%,#f8fbfb_100%)]">
         <div className="max-w-7xl mx-auto px-4 py-8">
             {toast && (
                 <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
@@ -240,12 +241,17 @@ const StudentDashboard = () => {
                 </div>
             )}
             
-            <div className="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between">
-                <h1 className="text-2xl font-bold">My Applications</h1>
+            <div className="mb-8 rounded-[2rem] border border-emerald-100/70 bg-[linear-gradient(135deg,#ffffff_0%,#f3fbf9_100%)] p-6 shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <p className="text-sm font-bold uppercase tracking-[0.24em] text-primary-600">Student dashboard</p>
+                    <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-950">My Applications</h1>
+                    <p className="mt-2 text-sm text-slate-600">Track approvals, payment status, and final access details in one place.</p>
+                </div>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                     <Link
                         to="/change-password"
-                        className="inline-flex items-center justify-center gap-2 rounded bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+                        className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-medium text-white hover:bg-slate-800"
                     >
                         <KeyRound className="w-4 h-4" />
                         Change Password
@@ -262,9 +268,10 @@ const StudentDashboard = () => {
                     </div>
                 </div>
             </div>
+            </div>
 
             {selectedApps.length > 0 && (
-                <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-3 sm:p-4">
+                <div className="mb-4 rounded-[1.5rem] border border-slate-200 bg-white/90 p-3 shadow-sm sm:p-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                         <span className="text-sm font-medium text-gray-600">
                             {selectedApps.length} {selectedApps.length === 1 ? 'application selected' : 'applications selected'}
@@ -348,13 +355,13 @@ const StudentDashboard = () => {
             )}
 
             {loading ? <LoadingSpinner message="Loading your applications..." fullScreen /> : applications.length === 0 ? (
-                <div className="bg-white p-8 rounded-lg text-center">
+                <div className="rounded-[1.75rem] border border-white/70 bg-white p-8 text-center shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
                     <p className="text-gray-500">No applications yet.</p>
                 </div>
             ) : (
                 <div className="space-y-4">
                     {applications.length > 0 && (
-                        <div className="bg-white p-3 rounded-lg shadow-sm flex items-center gap-3">
+                        <div className="flex items-center gap-3 rounded-[1.5rem] border border-white/70 bg-white p-3 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
                             <input
                                 type="checkbox"
                                 checked={selectedApps.length === applications.length}
@@ -371,7 +378,7 @@ const StudentDashboard = () => {
                         </div>
                     )}
                     {applications.map(app => (
-                        <div key={app._id} className="bg-white p-4 rounded-lg shadow-sm">
+                        <div key={app._id} className="rounded-[1.75rem] border border-white/70 bg-white p-4 shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
                             <div className="flex items-start gap-3">
                                 <input
                                     type="checkbox"
@@ -453,6 +460,7 @@ const StudentDashboard = () => {
                     ))}
                 </div>
             )}
+        </div>
         </div>
     );
 };

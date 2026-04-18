@@ -442,6 +442,7 @@ const ManagerDashboard = () => {
   }
 
   return (
+    <div className="min-h-screen bg-[linear-gradient(180deg,#f3fbf9_0%,#ffffff_24%,#f8fbfb_100%)]">
     <div className="max-w-7xl mx-auto px-4 py-8">
       {toast && (
         <div
@@ -455,7 +456,7 @@ const ManagerDashboard = () => {
       )}
 
       {userInfo && !userInfo.isVerified && userInfo.accountStatus === 'pending_verification' && (
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+        <div className="mb-6 rounded-[1.5rem] border border-yellow-200 bg-yellow-50/90 p-4 shadow-sm">
           <div className="flex">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
@@ -481,7 +482,7 @@ const ManagerDashboard = () => {
       <ManagerDashboardHeader activeTab={activeTab} onTabChange={setActiveTab} />
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+        <div className="mb-6 rounded-[1.5rem] border border-red-200 bg-red-50 px-4 py-3 text-red-700 shadow-sm">
           <p className="font-semibold">Error loading dashboard</p>
           <p className="text-sm">{error}</p>
           <button onClick={fetchData} className="mt-2 text-sm underline hover:no-underline">
@@ -543,6 +544,7 @@ const ManagerDashboard = () => {
       )}
 
       <ManagerContextMenu contextMenu={contextMenu} onArchiveFromContext={handleArchiveFromContext} />
+    </div>
     </div>
   );
 };
