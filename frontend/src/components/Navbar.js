@@ -47,7 +47,7 @@ const Navbar = () => {
 
   const navShellClass = isLandingPage
     ? useScrolledLandingStyle
-      ? 'px-0 sm:px-0'
+      ? 'rounded-[24px] sm:rounded-[28px] bg-white/94 px-3 sm:px-5 shadow-[0_18px_50px_rgba(15,23,42,0.12)] backdrop-blur-2xl ring-1 ring-slate-200/80'
       : 'rounded-[24px] sm:rounded-[28px] bg-white/92 px-3 sm:px-5 shadow-[0_18px_50px_rgba(15,23,42,0.10)] backdrop-blur-2xl'
     : '';
 
@@ -68,14 +68,14 @@ const Navbar = () => {
       className={`sticky top-0 z-50 transition-all duration-300 ${
         isLandingPage
           ? useScrolledLandingStyle
-            ? 'bg-white/94 border-b border-slate-200/80 shadow-[0_12px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl'
+            ? 'bg-transparent border-b-0 shadow-none'
             : 'bg-transparent border-b-0 shadow-none'
           : 'bg-white/92 backdrop-blur-xl border-b border-slate-200/80 shadow-[0_10px_30px_rgba(15,23,42,0.06)]'
       }`}
     >
       <div
         className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${
-          isLandingPage && !useScrolledLandingStyle ? 'pt-3 sm:pt-4' : ''
+          isLandingPage ? 'pt-3 sm:pt-4' : ''
         }`}
       >
         <div className={`flex justify-between items-center h-18 min-h-[72px] transition-all duration-300 ${navShellClass}`}>
@@ -230,7 +230,7 @@ const Navbar = () => {
         <div
           className={`md:hidden border-t ${
             useScrolledLandingStyle
-              ? 'bg-white/95 border-primary-100 backdrop-blur-xl'
+              ? 'mx-4 mt-2 rounded-[24px] border border-primary-100 bg-white/95 shadow-[0_16px_40px_rgba(15,23,42,0.10)] backdrop-blur-xl'
               : isLandingPage
                 ? 'mx-4 mt-2 rounded-[24px] border border-primary-100 bg-white/95 shadow-[0_16px_40px_rgba(15,23,42,0.10)] backdrop-blur-xl'
                 : 'bg-white/95 border-slate-200 backdrop-blur-xl'
