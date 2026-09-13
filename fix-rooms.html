@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fix Room Availability</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .container {
+            border: 2px solid #3b82f6;
+            border-radius: 8px;
+            padding: 30px;
+            background: #f9fafb;
+        }
+        h1 {
+            color: #1e40af;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        .success {
+            background: #d1fae5;
+            border: 1px solid #10b981;
+            color: #065f46;
+        }
+        .error {
+            background: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #991b1b;
+        }
+        .fixes {
+            margin-top: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .fix-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: #f3f4f6;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Fix Room Availability</h1>
+        <p>This will recalculate the availability status for all rooms based on their occupancy.</p>
+        
+        <label for="apiUrl">Backend API URL:</label>
+        <input type="text" id="apiUrl" value="https://uni-hostel-two.onrender.com" placeholder="https://your-backend.onrender.com">
+        
+        <label for="token">Admin Token:</label>
+        <input type="password" id="token" placeholder="Paste your admin JWT token here">
+        
+        <button id="fixBtn" onclick="fixRoomAvailability()">Fix Room Availability</button>
+        
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        async function fixRoomAvailability() {
+            const apiUrl = document.getElementById('apiUrl').value.trim();
+            const token = document.getElementById('token').value.trim();
+            const resultDiv = document.getElementById('result');
+            const btn = document.getElementById('fixBtn');
+            
+            if (!apiUrl || !token) {
+                resultDiv.className = 'result error';
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = '❌ Please enter both API URL and Admin Token';
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.textContent = 'Fixing...';
+            resultDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch(`${apiUrl}/api/admin/fix-room-availability`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.style.display = 'block';
+                    
+                    let html = `<strong>✅ Success!</strong><br>Fixed ${data.updatedCount} hostel(s)`;
+                    
+                    if (data.fixes && data.fixes.length > 0) {
+                        html += '<div class="fixes"><strong>Changes made:</strong>';
+                        data.fixes.forEach(fix => {
+                            html += `<div class="fix-item">
+                                <strong>${fix.hostel}</strong> - ${fix.roomType}<br>
+                                Occupancy: ${fix.occupancy}<br>
+                                Changed: ${fix.wasAvailable ? 'Available' : 'Full'} → ${fix.nowAvailable ? 'Available' : 'Full'}
+                            </div>`;
+                        });
+                        html += '</div>';
+                    }
+                    
+                    resultDiv.innerHTML = html;
+                } else {
+                    throw new Error(data.error || 'Failed to fix room availability');
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `<strong>❌ Error:</strong><br>${error.message}`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Fix Room Availability';
+            }
+        }
+    </script>
+</body>
+</html>

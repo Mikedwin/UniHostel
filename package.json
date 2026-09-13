@@ -1,0 +1,25 @@
+{
+  "name": "unihostel",
+  "version": "1.0.0",
+  "description": "Monorepo for UniHostel backend and frontend",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "dependencies": {
+    "mongodb": "^7.1.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "test:e2e": "start-server-and-test start http://localhost:5173 cypress:run",
+    "start": "concurrently \"npm run dev --workspace=backend\" \"npm run dev --workspace=frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "cypress": "^13.6.0",
+    "start-server-and-test": "^2.0.0"
+  }
+}
