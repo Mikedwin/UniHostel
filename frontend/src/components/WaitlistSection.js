@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Sparkles, CheckCircle2, ArrowRight, Shield, Bell, Users, Lock } from 'lucide-react';
+import { CheckCircle2, ArrowRight, Shield, Bell, Sparkles, Lock, Building2, Clock } from 'lucide-react';
 import API_ENDPOINTS from '../config/api';
 
 const WaitlistSection = ({ standalone = false }) => {
@@ -32,7 +32,7 @@ const WaitlistSection = ({ standalone = false }) => {
       return;
     }
     if (!formData.phone.trim()) {
-      setErrorMsg('Please enter your phone/WhatsApp number.');
+      setErrorMsg('Please enter your phone or WhatsApp number.');
       return;
     }
 
@@ -56,194 +56,175 @@ const WaitlistSection = ({ standalone = false }) => {
   };
 
   return (
-    <section id="waitlist" className={`relative overflow-hidden ${standalone ? 'py-16 md:py-24' : 'py-20 md:py-28'} bg-[#0d221e]`}>
-      {/* ── Layered decorative background ── */}
+    <section
+      id="waitlist"
+      className={`bg-[#f8f6f0] ${standalone ? 'py-10 sm:py-16' : 'py-12 sm:py-20'}`}
+    >
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        {/* Main Hero Card */}
+        <div className="relative overflow-hidden rounded-[2.5rem] bg-[#173b35] p-8 sm:p-12 lg:p-16 text-white shadow-[0_20px_50px_rgba(23,59,53,0.16)]">
+          {/* Subtle decorative glow */}
+          <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-[#f6deb1]/10 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-[#c96e32]/15 blur-3xl pointer-events-none" />
 
-      {/* Base gradient mesh */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#0d221e] via-[#122e28] to-[#0a1c18]" />
+          <div className="relative z-10 grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+            {/* Left Column: Heading & Value Proposition */}
+            <div>
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-[#f6deb1] backdrop-blur-sm">
+                <Clock className="h-3.5 w-3.5 text-[#f6deb1]" />
+                Priority Access
+              </span>
 
-      {/* Large teal aurora – top center */}
-      <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[600px] w-[900px] rounded-full bg-[#23817A]/15 blur-[140px]" />
+              <h1 className="mt-5 text-3xl font-black leading-[1.05] tracking-[-0.04em] sm:text-5xl lg:text-6xl text-white">
+                Be first in line for <span className="text-[#f6deb1]">verified hostel</span> spaces.
+              </h1>
 
-      {/* Warm accent – bottom right */}
-      <div className="pointer-events-none absolute -bottom-32 right-10 h-80 w-80 rounded-full bg-[#C96E32]/12 blur-[120px]" />
-
-      {/* Secondary teal orb – left edge */}
-      <div className="pointer-events-none absolute top-1/3 -left-24 h-64 w-64 rounded-full bg-[#23817A]/10 blur-[100px]" />
-
-      {/* Gold accent – top right */}
-      <div className="pointer-events-none absolute -top-16 right-1/4 h-48 w-48 rounded-full bg-[#F6DEB1]/8 blur-[90px]" />
-
-      {/* Small floating accent – mid right */}
-      <div className="pointer-events-none absolute top-1/2 right-[15%] h-32 w-32 rounded-full bg-[#C96E32]/10 blur-[70px] animate-pulse" style={{ animationDuration: '6s' }} />
-
-      {/* Tiny teal spark – bottom left */}
-      <div className="pointer-events-none absolute bottom-1/4 left-[10%] h-24 w-24 rounded-full bg-[#23817A]/15 blur-[60px] animate-pulse" style={{ animationDuration: '8s' }} />
-
-      {/* Subtle dot grid pattern */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.04]"
-        style={{
-          backgroundImage: 'radial-gradient(circle, #F6DEB1 1px, transparent 1px)',
-          backgroundSize: '32px 32px',
-        }}
-      />
-
-      {/* Diagonal accent lines */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.015]"
-        style={{
-          backgroundImage: 'repeating-linear-gradient(135deg, transparent, transparent 60px, #23817A 60px, #23817A 61px)',
-        }}
-      />
-
-      {/* Faint repeating logo watermark across the entire screen */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.035]"
-        style={{
-          backgroundImage: 'url(/logo-symbol-reverse.png)',
-          backgroundSize: '140px 165px',
-          backgroundRepeat: 'repeat',
-        }}
-      />
-
-      {/* Radial vignette for depth */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,#0a1a16_100%)]" />
-
-      <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#23817A]/40 bg-[#173B35]/80 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-[#F6DEB1] shadow-inner">
-            <Sparkles className="h-3.5 w-3.5 text-[#C96E32]" />
-            Early Access Waitlist
-          </div>
-
-          <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
-            Be the First to Secure Your <span className="text-[#F6DEB1]">Dream Hostel</span>
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-base sm:text-lg text-white/70">
-            Join other verified students getting priority notifications, exclusive room reservations, and instant booking codes before public launch.
-          </p>
-        </div>
-
-        <div className="mt-12 mx-auto max-w-xl">
-          {successData ? (
-            <div className="rounded-3xl border border-[#23817A]/40 bg-gradient-to-b from-[#173B35]/90 to-[#0e2722]/90 p-8 sm:p-10 text-center shadow-2xl backdrop-blur-xl">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#23817A]/20 border border-[#23817A]/40 text-[#F6DEB1]">
-                <CheckCircle2 className="h-9 w-9 text-emerald-400" />
-              </div>
-
-              <h3 className="mt-5 text-2xl font-bold text-white">
-                {successData.alreadyJoined ? "You're Already on the List!" : "You're on the Waitlist! 🎉"}
-              </h3>
-
-              <p className="mt-3 text-sm sm:text-base text-white/80 leading-relaxed">
-                {successData.message}
+              <p className="mt-5 max-w-lg text-base leading-7 text-white/80 sm:text-lg sm:leading-8">
+                Skip the scramble. Join verified students who receive first notification, early booking windows, and instant access codes before public listing releases.
               </p>
 
-              {successData.position && (
-                <div className="mt-6 inline-flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 px-5 py-3">
-                  <Users className="h-5 w-5 text-[#C96E32]" />
-                  <span className="text-xs uppercase font-medium text-white/60">Queue Status</span>
-                  <span className="text-base font-bold text-[#F6DEB1]">Priority #{successData.position}</span>
+              {/* Benefit Points */}
+              <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6 border-t border-white/15">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 text-[#f6deb1]">
+                    <Shield className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-white">100% Verified Only</p>
+                    <p className="text-xs text-white/70 mt-0.5">Inspected hostel rooms in Accra</p>
+                  </div>
                 </div>
-              )}
 
-              <div className="mt-8 pt-6 border-t border-white/10 text-xs text-white/50 flex items-center justify-center gap-2">
-                <Lock className="h-3.5 w-3.5" />
-                We'll reach out to your WhatsApp & email with early access instructions.
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 text-[#f6deb1]">
+                    <Bell className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-white">Instant Alerts</p>
+                    <p className="text-xs text-white/70 mt-0.5">Direct SMS & WhatsApp notification</p>
+                  </div>
+                </div>
               </div>
             </div>
-          ) : (
-            <div className="rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.08] to-white/[0.02] p-6 sm:p-10 shadow-2xl backdrop-blur-xl">
-              {errorMsg && (
-                <div className="mb-6 rounded-2xl bg-red-500/10 border border-red-500/30 p-4 text-sm text-red-200 text-center">
-                  {errorMsg}
-                </div>
-              )}
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#F6DEB1] mb-1.5">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    placeholder="e.g. Michael Edwin"
-                    required
-                    className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3.5 text-white placeholder-white/40 focus:border-[#23817A] focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#23817A]/40 transition text-sm sm:text-base"
-                  />
-                </div>
+            {/* Right Column: Interactive Form Card */}
+            <div>
+              {successData ? (
+                <div className="rounded-[2rem] border border-[#deddd4]/80 bg-white p-8 sm:p-10 text-center text-[#173b35] shadow-xl">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#e6eadf] text-[#173b35]">
+                    <CheckCircle2 className="h-9 w-9 text-[#173b35]" />
+                  </div>
 
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#F6DEB1] mb-1.5">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="student@example.com"
-                    required
-                    className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3.5 text-white placeholder-white/40 focus:border-[#23817A] focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#23817A]/40 transition text-sm sm:text-base"
-                  />
-                </div>
+                  <h3 className="mt-5 text-2xl sm:text-3xl font-black tracking-tight text-[#173b35]">
+                    {successData.alreadyJoined ? "You're Already On The List!" : "You're In! 🎉"}
+                  </h3>
 
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#F6DEB1] mb-1.5">
-                    Phone / WhatsApp Number
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    placeholder="e.g. 024 123 4567"
-                    required
-                    className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3.5 text-white placeholder-white/40 focus:border-[#23817A] focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#23817A]/40 transition text-sm sm:text-base"
-                  />
-                </div>
+                  <p className="mt-3 text-sm sm:text-base text-[#526960] leading-relaxed">
+                    {successData.message || "We have recorded your spot. You'll receive priority booking instructions via WhatsApp and email."}
+                  </p>
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full mt-4 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#C96E32] to-[#df7f3e] hover:from-[#b86128] hover:to-[#cb7132] px-6 py-4 text-base font-bold text-white shadow-lg shadow-[#C96E32]/30 transition transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {loading ? (
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                      <span>Securing Your Spot...</span>
+                  {successData.position && (
+                    <div className="mt-6 inline-flex items-center gap-2.5 rounded-full bg-[#e6eadf] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-[#173b35]">
+                      <Sparkles className="h-4 w-4 text-[#c96e32]" />
+                      Priority Queue #{successData.position}
                     </div>
-                  ) : (
-                    <>
-                      <span>Join Early Access Waitlist</span>
-                      <ArrowRight className="h-5 w-5" />
-                    </>
                   )}
-                </button>
-              </form>
 
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-xs text-white/50 border-t border-white/10 pt-4">
-                <div className="flex items-center gap-1.5">
-                  <Shield className="h-3.5 w-3.5 text-[#23817A]" />
-                  <span>100% Spam Free</span>
+                  <div className="mt-8 pt-6 border-t border-[#deddd4] text-xs text-[#526960] flex items-center justify-center gap-2">
+                    <Lock className="h-3.5 w-3.5 text-[#173b35]" />
+                    Your contact information is strictly protected and never shared.
+                  </div>
                 </div>
-                <span>•</span>
-                <div className="flex items-center gap-1.5">
-                  <Bell className="h-3.5 w-3.5 text-[#23817A]" />
-                  <span>Instant SMS/Email Alert</span>
+              ) : (
+                <div className="rounded-[2rem] border border-[#deddd4]/80 bg-white p-6 sm:p-9 text-[#173b35] shadow-xl">
+                  <div className="mb-6">
+                    <h2 className="text-xl sm:text-2xl font-black tracking-[-0.02em] text-[#173b35]">
+                      Reserve Your Spot
+                    </h2>
+                    <p className="mt-1 text-xs sm:text-sm text-[#526960]">
+                      Fill out your details to get early booking privileges.
+                    </p>
+                  </div>
+
+                  {errorMsg && (
+                    <div className="mb-5 rounded-2xl bg-red-50 border border-red-200 p-3.5 text-xs font-medium text-red-700 text-center">
+                      {errorMsg}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-[0.14em] text-[#526960] mb-1.5">
+                        Full Name
+                      </label>
+                      <input
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        placeholder="e.g. Michael Edwin"
+                        required
+                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-[#173b35] placeholder:text-slate-400 focus:border-[#173b35] focus:outline-none focus:ring-2 focus:ring-[#173b35]/20 shadow-sm transition"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-[0.14em] text-[#526960] mb-1.5">
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        placeholder="student@example.com"
+                        required
+                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-[#173b35] placeholder:text-slate-400 focus:border-[#173b35] focus:outline-none focus:ring-2 focus:ring-[#173b35]/20 shadow-sm transition"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-[0.14em] text-[#526960] mb-1.5">
+                        Phone / WhatsApp Number
+                      </label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        placeholder="e.g. 024 123 4567"
+                        required
+                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-[#173b35] placeholder:text-slate-400 focus:border-[#173b35] focus:outline-none focus:ring-2 focus:ring-[#173b35]/20 shadow-sm transition"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-[#c96e32] px-6 py-4 text-sm font-bold text-white shadow-lg shadow-[#c96e32]/25 transition-all hover:bg-[#ad5926] hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {loading ? (
+                        <div className="flex items-center gap-2">
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                          <span>Securing Your Spot...</span>
+                        </div>
+                      ) : (
+                        <>
+                          <span>Join Priority Waitlist</span>
+                          <ArrowRight className="h-4 w-4" />
+                        </>
+                      )}
+                    </button>
+                  </form>
+
+                  <div className="mt-5 pt-4 border-t border-[#deddd4] flex items-center justify-center gap-1.5 text-xs text-[#526960]">
+                    <Lock className="h-3 w-3 text-[#173b35]" />
+                    <span>Zero spam. Direct hostel notification only.</span>
+                  </div>
                 </div>
-                <span>•</span>
-                <div className="flex items-center gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5 text-[#23817A]" />
-                  <span>Free Priority Booking</span>
-                </div>
-              </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
     </section>
