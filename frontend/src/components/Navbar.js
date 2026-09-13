@@ -66,7 +66,7 @@ const Navbar = () => {
             />
           </Link>
           <Link to="/waitlist" className={desktopLinkClass(location.pathname === "/waitlist")}>
-            Priority Waitlist
+            Early Access Waitlist
             <span
               className={`absolute bottom-0 left-0 h-px bg-[#c96e32] transition-[width] duration-200 ${location.pathname === "/waitlist" ? "w-full" : "w-0"}`}
               aria-hidden="true"
@@ -224,7 +224,7 @@ const Navbar = () => {
                     onClick={() => setMobileMenuOpen(false)}
                     className="flex items-center justify-between rounded-xl bg-[#173B35] px-4 py-3 text-sm font-bold text-[#F6DEB1] mb-2"
                   >
-                    <span>Join Priority Waitlist</span>
+                    <span>Join Early Access Waitlist</span>
                     <ArrowRight className="h-4 w-4" aria-hidden="true" />
                   </Link>
                   <Link
