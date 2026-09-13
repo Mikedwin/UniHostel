@@ -41,7 +41,7 @@ router.get('/dashboard/stats', auth, checkAdmin, async (req, res) => {
       Application.countDocuments({ status: 'approved' })
     ]);
 
-    const hostels = await Hostel.find().lean();
+    const hostels = await Hostel.find().select('roomTypes').limit(500).lean();
     let roomStats = {
       '1 in a Room': { total: 0, occupied: 0, available: 0 },
       '2 in a Room': { total: 0, occupied: 0, available: 0 },
@@ -120,7 +120,7 @@ router.get('/hostels', auth, checkAdmin, async (req, res) => {
     if (status === 'flagged') query.isFlagged = true;
     if (managerId) query.managerId = managerId;
 
-    const hostels = await Hostel.find(query).populate('managerId', 'name email').sort({ createdAt: -1 }).lean();
+    const hostels = await Hostel.find(query).populate('managerId', 'name email').sort({ createdAt: -1 }).limit(200).lean();
     res.json(hostels);
   } catch (err) {
     return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
@@ -274,9 +274,11 @@ router.get('/managers', auth, checkAdmin, async (req, res) => {
 
 router.get('/insights/room-demand', auth, checkAdmin, async (req, res) => {
   try {
-    const applications = await Application.find().lean();
+    const pipeline = await Application.aggregate([
+      { $group: { _id: '$roomType', count: { $sum: 1 } } }
+    ]);
     const roomDemand = {};
-    applications.forEach(app => { roomDemand[app.roomType] = (roomDemand[app.roomType] || 0) + 1; });
+    pipeline.forEach(item => { roomDemand[item._id] = item.count; });
     res.json(roomDemand);
   } catch (err) {
     return sendServerError(res, err, { clientMessage: 'Unable to complete admin request' });
@@ -285,7 +287,7 @@ router.get('/insights/room-demand', auth, checkAdmin, async (req, res) => {
 
 router.get('/insights/full-rooms', auth, checkAdmin, async (req, res) => {
   try {
-    const hostels = await Hostel.find().populate('managerId', 'name').lean();
+    const hostels = await Hostel.find().select('name roomTypes managerId').populate('managerId', 'name').limit(500).lean();
     const fullRooms = [];
     hostels.forEach(hostel => {
       hostel.roomTypes?.forEach(room => {

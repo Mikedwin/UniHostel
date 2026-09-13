@@ -24,6 +24,7 @@ router.get('/manager', auth, checkRole('manager'), async (req, res) => {
       .populate('hostelId', 'name location')
       .select('-adminCommission -managerId') // Hide admin commission from manager
       .sort({ paidAt: -1 })
+      .limit(500)
       .lean();
     
     // Calculate summary (only hostel fees, no admin commission)
@@ -69,6 +70,7 @@ router.get('/admin', auth, checkRole('admin'), async (req, res) => {
       .populate('hostelId', 'name location')
       .populate('managerId', 'name email')
       .sort({ paidAt: -1 })
+      .limit(1000)
       .lean();
     
     // Calculate comprehensive summary

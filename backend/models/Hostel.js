@@ -41,6 +41,10 @@ const hostelSchema = new mongoose.Schema({
 });
 
 hostelSchema.index({ managerId: 1, createdAt: -1 });
+hostelSchema.index({ isAvailable: 1, isDeleted: 1, createdAt: -1 }); // Main public listing filter
+hostelSchema.index({ isActive: 1 }); // Admin active/inactive filter
+hostelSchema.index({ isFlagged: 1 }); // Admin flagged filter
+hostelSchema.index({ name: 'text', location: 'text', description: 'text' }); // Text search
 
 // Middleware to auto-update availability based on capacity before saving
 hostelSchema.pre('save', function(next) {

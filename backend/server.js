@@ -339,9 +339,27 @@ const registerLimiter = rateLimit({
   skipSuccessfulRequests: true,
 });
 
+const waitlistLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,
+  message: 'Too many waitlist submissions from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const searchLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 60,
+  message: 'Too many search requests, please slow down.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.use('/api/', limiter);
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', registerLimiter);
+app.use('/api/waitlist', waitlistLimiter);
+app.use('/api/hostels', searchLimiter);
 
 // 3. Data Sanitization against NoSQL injection
 app.use(mongoSanitize());
