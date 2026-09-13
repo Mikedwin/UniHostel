@@ -56,7 +56,8 @@ const syncApplicationPaymentStatus = async (application) => {
       {
         headers: {
           Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
-        }
+        },
+        timeout: 15000
       }
     );
 
@@ -158,7 +159,8 @@ router.post('/initialize', auth, async (req, res) => {
           {
             headers: {
               Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
-            }
+            },
+            timeout: 15000
           }
         );
         
@@ -326,7 +328,8 @@ router.get('/verify/:reference', auth, async (req, res) => {
       {
         headers: {
           Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
-        }
+        },
+        timeout: 15000
       }
     );
 
@@ -565,7 +568,8 @@ router.post('/admin/verify-payment', auth, checkRole('admin'), async (req, res) 
       {
         headers: {
           Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
-        }
+        },
+        timeout: 15000
       }
     );
     

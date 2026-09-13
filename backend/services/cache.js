@@ -3,10 +3,12 @@ const logger = require('../config/logger');
 
 const TTL = parseInt(process.env.CACHE_TTL_SECONDS) || 300; // 5 minutes default
 const CHECK_PERIOD = parseInt(process.env.CACHE_CHECK_PERIOD) || 60; // 1 minute
+const MAX_KEYS = parseInt(process.env.CACHE_MAX_KEYS) || 5000; // Memory protection cap
 
 const cache = new NodeCache({
   stdTTL: TTL,
   checkperiod: CHECK_PERIOD,
+  maxKeys: MAX_KEYS,
   useClones: false
 });
 

@@ -1526,11 +1526,16 @@ app.get('/api/hostels', checkDBConnection, cacheMiddleware(300), async (req, res
       ];
     }
 
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 100);
+    const skip = (page - 1) * limit;
+
     const hostels = await Hostel.find(query)
       .select('name location hostelViewImage description roomTypes facilities isAvailable managerId createdAt')
       .populate('managerId', 'name')
       .sort({ createdAt: -1 })
-      .limit(50)
+      .skip(skip)
+      .limit(limit)
       .lean();
     
     // Remove large images from list view
