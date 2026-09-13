@@ -112,13 +112,8 @@ const WaitlistSection = ({ standalone = false }) => {
 
       <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#23817A]/40 bg-[#173B35]/80 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-[#F6DEB1] shadow-inner">
-            <Sparkles className="h-3.5 w-3.5 text-[#C96E32]" />
-            Early Access Waitlist
-          </div>
-
-          <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
-            Be the First to Secure Your <span className="text-[#F6DEB1]">Dream Hostel</span>
+          <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
+            Be the First to Secure Your <span className="text-[#F6DEB1]">Hostel</span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base sm:text-lg text-white/70">
             Join other verified students getting priority notifications, exclusive room reservations, and instant booking codes before public launch.
