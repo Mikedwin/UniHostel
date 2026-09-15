@@ -14,8 +14,8 @@ const contactRows = [
     icon: Mail,
     title: "Email support",
     copy: "Questions, account help, feedback, and partnerships.",
-    action: "support@example.com",
-    href: "mailto:support@example.com",
+    action: "8mikedwin@gmail.com",
+    href: "mailto:8mikedwin@gmail.com",
   },
   {
     icon: MessageCircle,
@@ -79,7 +79,7 @@ const Contact = () => (
           <Building2 />
           <h2>List your hostel</h2>
           <p>Owners, managers, schools, and housing partners can start here.</p>
-          <a href="mailto:support@example.com">
+          <a href="mailto:8mikedwin@gmail.com">
             Start a conversation <ArrowRight />
           </a>
         </article>
@@ -90,7 +90,7 @@ const Contact = () => (
             Report suspicious activity, fake listings, policy breaches, or
             harassment.
           </p>
-          <a href="mailto:support@example.com">
+          <a href="mailto:8mikedwin@gmail.com">
             Report concern <ArrowRight />
           </a>
         </article>

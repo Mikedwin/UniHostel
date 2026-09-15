@@ -150,7 +150,7 @@ const Privacy = () => {
               For any questions, concerns, or data rights requests under Act 843, please contact us:
             </p>
             <div className="mt-4 space-y-1 text-sm text-white/90">
-              <p>Email: <a className="text-[#f6deb1] underline underline-offset-4" href="mailto:support@unihostel.com">support@unihostel.com</a></p>
+              <p>Email: <a className="text-[#f6deb1] underline underline-offset-4" href="mailto:8mikedwin@gmail.com">8mikedwin@gmail.com</a></p>
               <p>WhatsApp / Phone: <a className="text-[#f6deb1] underline underline-offset-4" href="tel:+233503847786">+233 50 3847 786</a></p>
               <p>Location: Accra, Ghana · Data Protection Act, 2012 (Act 843)</p>
             </div>

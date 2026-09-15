@@ -123,10 +123,10 @@ const Footer = () => {
                   aria-hidden="true"
                 />
                 <a
-                  href="mailto:support@example.com"
+                  href="mailto:8mikedwin@gmail.com"
                   className="break-all transition-colors duration-200 hover:text-white focus:outline-none focus:text-[#f6deb1]"
                 >
-                  support@example.com
+                  8mikedwin@gmail.com
                 </a>
               </li>
               <li className="flex items-start gap-3">

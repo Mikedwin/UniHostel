@@ -118,11 +118,11 @@ const Support = () => (
       <div className="info-grid info-grid--two">
         <a
           className="info-panel no-underline hover:border-[#c96e32]/40 transition"
-          href="mailto:support@unihostel.com"
+          href="mailto:8mikedwin@gmail.com"
         >
           <Mail className="mb-5 h-7 w-7 text-[#c96e32]" />
           <h3>Email support</h3>
-          <p className="mt-3 text-[#c96e32] font-semibold">support@unihostel.com</p>
+          <p className="mt-3 text-[#c96e32] font-semibold">8mikedwin@gmail.com</p>
           <p className="mt-2 text-xs text-gray-500">
             For account inquiries, disputes, and official correspondence
           </p>
