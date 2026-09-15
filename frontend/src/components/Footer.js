@@ -1,9 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import {
-  Mail,
-  Phone,
-  MapPin,
+  ShieldCheck,
 } from "lucide-react";
 import Logo from "./Logo";
 
@@ -114,44 +112,18 @@ const Footer = () => {
             </ul>
           </nav>
 
-          <address className="not-italic">
-            <h2 className="text-sm font-bold text-[#f6deb1]">Talk to us</h2>
-            <ul className="mt-5 space-y-4 text-sm text-white/70">
-              <li className="flex items-start gap-3">
-                <Mail
-                  className="mt-0.5 h-4 w-4 shrink-0 text-[#f6deb1]"
-                  aria-hidden="true"
-                />
-                <a
-                  href="mailto:8mikedwin@gmail.com"
-                  className="break-all transition-colors duration-200 hover:text-white focus:outline-none focus:text-[#f6deb1]"
-                >
-                  8mikedwin@gmail.com
-                </a>
-              </li>
-              <li className="flex items-start gap-3">
-                <Phone
-                  className="mt-0.5 h-4 w-4 shrink-0 text-[#f6deb1]"
-                  aria-hidden="true"
-                />
-                <a
-                  href="https://wa.me/233503847786"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="transition-colors duration-200 hover:text-white focus:outline-none focus:text-[#f6deb1]"
-                >
-                  +233 50 3847 786
-                </a>
-              </li>
-              <li className="flex items-start gap-3">
-                <MapPin
-                  className="mt-0.5 h-4 w-4 shrink-0 text-[#f6deb1]"
-                  aria-hidden="true"
-                />
-                <span>Accra, Ghana</span>
-              </li>
-            </ul>
-          </address>
+          <div>
+            <h2 className="text-sm font-bold text-[#f6deb1]">Need help?</h2>
+            <div className="mt-5">
+              <Link
+                to="/support"
+                className="inline-flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-[#f6deb1]"
+              >
+                <ShieldCheck className="h-4 w-4 text-[#f6deb1]" aria-hidden="true" />
+                Customer Support &amp; Data Protection
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
 
