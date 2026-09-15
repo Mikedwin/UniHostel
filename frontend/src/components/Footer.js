@@ -4,10 +4,6 @@ import {
   Mail,
   Phone,
   MapPin,
-  Facebook,
-  Twitter,
-  Instagram,
-  Linkedin,
 } from "lucide-react";
 import Logo from "./Logo";
 
@@ -40,41 +36,6 @@ const Footer = () => {
               Verified student housing in Accra. Search, apply, and know what
               happens next.
             </p>
-            <div className="mt-7 flex items-center gap-2">
-              {[
-                {
-                  href: "https://facebook.com",
-                  label: "Facebook",
-                  icon: Facebook,
-                },
-                {
-                  href: "https://twitter.com",
-                  label: "Twitter",
-                  icon: Twitter,
-                },
-                {
-                  href: "https://instagram.com",
-                  label: "Instagram",
-                  icon: Instagram,
-                },
-                {
-                  href: "https://linkedin.com",
-                  label: "LinkedIn",
-                  icon: Linkedin,
-                },
-              ].map(({ href, label, icon: Icon }) => (
-                <a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={label}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-white/65 transition-colors duration-200 hover:bg-white/10 hover:text-[#f6deb1] focus:outline-none focus:ring-2 focus:ring-[#f6deb1] focus:ring-offset-2 focus:ring-offset-[#173b35]"
-                >
-                  <Icon className="h-4 w-4" aria-hidden="true" />
-                </a>
-              ))}
-            </div>
           </div>
 
           <nav aria-label="Platform links">
