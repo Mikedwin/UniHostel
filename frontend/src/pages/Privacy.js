@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import {
   CreditCard,
   Database,
@@ -6,6 +7,7 @@ import {
   Lock,
   Mail,
   Shield,
+  ShieldCheck,
   Users,
 } from "lucide-react";
 import InformationPage, {
@@ -144,15 +146,19 @@ const Privacy = () => {
 
         <InfoSection title="7. Contact & Privacy Inquiries." icon={CreditCard}>
           <div className="info-callout info-callout--dark mt-4">
-            <Mail className="h-7 w-7 text-[#f6deb1]" />
+            <ShieldCheck className="h-7 w-7 text-[#f6deb1]" />
             <h3 className="mt-5 text-lg font-bold text-[#f6deb1]">Data Protection & Privacy Desk</h3>
             <p className="mt-3 text-sm leading-relaxed text-white/80">
-              For any questions, concerns, or data rights requests under Act 843, please contact us:
+              For any questions, concerns, or data rights requests under Act 843, please reach out via our official Customer Support Desk:
             </p>
-            <div className="mt-4 space-y-1 text-sm text-white/90">
-              <p>Email: <a className="text-[#f6deb1] underline underline-offset-4" href="mailto:8mikedwin@gmail.com">8mikedwin@gmail.com</a></p>
-              <p>WhatsApp / Phone: <a className="text-[#f6deb1] underline underline-offset-4" href="tel:+233503847786">+233 50 3847 786</a></p>
-              <p>Location: Accra, Ghana · Data Protection Act, 2012 (Act 843)</p>
+            <div className="mt-5">
+              <Link
+                to="/support"
+                className="inline-flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition-colors duration-200 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-[#f6deb1]"
+              >
+                <ShieldCheck className="h-4 w-4 text-[#f6deb1]" aria-hidden="true" />
+                Go to Customer Support &amp; Data Protection Desk &rarr;
+              </Link>
             </div>
           </div>
         </InfoSection>
