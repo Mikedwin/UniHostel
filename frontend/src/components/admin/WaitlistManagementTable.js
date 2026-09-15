@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Users, Download, Search, Trash2, RefreshCw, MessageSquare, Mail, Calendar, Phone } from 'lucide-react';
 import API_ENDPOINTS from '../../config/api';
@@ -168,6 +168,8 @@ const WaitlistManagementTable = ({ token }) => {
                 <th className="py-3.5 px-4">Student Name</th>
                 <th className="py-3.5 px-4">Email</th>
                 <th className="py-3.5 px-4">Phone / WhatsApp</th>
+                <th className="py-3.5 px-4">Preferred Hostel</th>
+                <th className="py-3.5 px-4">Manager's Phone</th>
                 <th className="py-3.5 px-4">Date Joined</th>
                 <th className="py-3.5 px-4 text-right">Actions</th>
               </tr>
@@ -175,7 +177,7 @@ const WaitlistManagementTable = ({ token }) => {
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="py-12 text-center text-gray-400">
+                  <td colSpan="8" className="py-12 text-center text-gray-400">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#173B35] border-t-transparent" />
                       <span>Loading waitlist leads...</span>
@@ -184,7 +186,7 @@ const WaitlistManagementTable = ({ token }) => {
                 </tr>
               ) : entries.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="py-12 text-center text-gray-400">
+                  <td colSpan="8" className="py-12 text-center text-gray-400">
                     <Users className="mx-auto h-10 w-10 text-gray-300 mb-2" />
                     <p className="font-semibold text-gray-600">No waitlist signups found</p>
                     <p className="text-xs text-gray-400 mt-1">Students who join early access will appear here.</p>
@@ -193,6 +195,7 @@ const WaitlistManagementTable = ({ token }) => {
               ) : (
                 entries.map((entry, index) => {
                   const whatsappPhone = formatGhanaPhoneForWhatsApp(entry.phone);
+                  const managerWhatsapp = formatGhanaPhoneForWhatsApp(entry.managerPhone);
                   const queueNum = (page - 1) * 20 + index + 1;
                   return (
                     <tr key={entry._id} className="hover:bg-gray-50/80 transition">
@@ -219,13 +222,42 @@ const WaitlistManagementTable = ({ token }) => {
                               href={`https://wa.me/${whatsappPhone}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              title="Chat on WhatsApp"
+                              title="Chat with student on WhatsApp"
                               className="inline-flex items-center justify-center h-6 w-6 rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition"
                             >
                               <MessageSquare className="h-3.5 w-3.5" />
                             </a>
                           )}
                         </div>
+                      </td>
+                      <td className="py-3.5 px-4 font-medium text-gray-800">
+                        {entry.preferredHostel ? (
+                          <span className="inline-flex items-center rounded-md bg-[#23817A]/10 px-2 py-1 text-xs font-semibold text-[#173B35]">
+                            {entry.preferredHostel}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 italic text-xs">Not specified</span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        {entry.managerPhone ? (
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-gray-800 text-xs">{entry.managerPhone}</span>
+                            {managerWhatsapp && (
+                              <a
+                                href={`https://wa.me/${managerWhatsapp}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title="Chat with manager on WhatsApp"
+                                className="inline-flex items-center justify-center h-6 w-6 rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition"
+                              >
+                                <MessageSquare className="h-3.5 w-3.5" />
+                              </a>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-xs">—</span>
+                        )}
                       </td>
                       <td className="py-3.5 px-4 text-xs text-gray-500">
                         <div className="flex items-center gap-1.5">

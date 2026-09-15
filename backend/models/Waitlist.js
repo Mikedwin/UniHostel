@@ -1,4 +1,4 @@
-﻿const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
 const waitlistSchema = new mongoose.Schema({
   name: {
@@ -20,6 +20,18 @@ const waitlistSchema = new mongoose.Schema({
     required: [true, 'Phone number is required'],
     trim: true,
     maxlength: [25, 'Phone number cannot exceed 25 characters']
+  },
+  preferredHostel: {
+    type: String,
+    trim: true,
+    maxlength: [150, 'Preferred hostel cannot exceed 150 characters'],
+    default: ''
+  },
+  managerPhone: {
+    type: String,
+    trim: true,
+    maxlength: [25, 'Hostel manager phone cannot exceed 25 characters'],
+    default: ''
   },
   status: {
     type: String,

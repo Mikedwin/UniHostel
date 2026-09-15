@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const router = express.Router();
 const Waitlist = require('../models/Waitlist');
 const { auth, checkRole } = require('../middleware/auth');
@@ -7,7 +7,7 @@ const logger = require('../config/logger');
 // POST /api/waitlist/join - Public join endpoint
 router.post('/join', async (req, res) => {
   try {
-    const { name, email, phone, source } = req.body;
+    const { name, email, phone, preferredHostel, managerPhone, source } = req.body;
 
     if (!name || !name.trim()) {
       return res.status(400).json({ message: 'Full name is required' });
@@ -32,6 +32,10 @@ router.post('/join', async (req, res) => {
       return res.status(400).json({ message: 'Please provide a valid phone number' });
     }
 
+    if (!preferredHostel || !preferredHostel.trim()) {
+      return res.status(400).json({ message: 'Preferred hostel is required' });
+    }
+
     // Check if already on waitlist
     const existing = await Waitlist.findOne({ email: cleanEmail });
     if (existing) {
@@ -49,6 +53,8 @@ router.post('/join', async (req, res) => {
       name: name.trim(),
       email: cleanEmail,
       phone: cleanPhone,
+      preferredHostel: preferredHostel.trim(),
+      managerPhone: managerPhone ? managerPhone.trim() : '',
       source: source || 'website'
     });
 
@@ -88,7 +94,9 @@ router.get('/', auth, checkRole('admin'), async (req, res) => {
       filter.$or = [
         { name: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } },
-        { phone: { $regex: search, $options: 'i' } }
+        { phone: { $regex: search, $options: 'i' } },
+        { preferredHostel: { $regex: search, $options: 'i' } },
+        { managerPhone: { $regex: search, $options: 'i' } }
       ];
     }
 
@@ -124,12 +132,14 @@ router.get('/export', auth, checkRole('admin'), async (req, res) => {
       return `"${text}"`;
     };
 
-    const header = ['ID', 'Full Name', 'Email', 'Phone Number', 'Status', 'Source', 'Date Joined'];
+    const header = ['ID', 'Full Name', 'Email', 'Phone Number', 'Preferred Hostel', 'Hostel Manager Phone', 'Status', 'Source', 'Date Joined'];
     const rows = entries.map((e, index) => [
       index + 1,
       escapeCsv(e.name),
       escapeCsv(e.email),
       escapeCsv(e.phone),
+      escapeCsv(e.preferredHostel || ''),
+      escapeCsv(e.managerPhone || ''),
       escapeCsv(e.status),
       escapeCsv(e.source),
       escapeCsv(new Date(e.createdAt).toLocaleString())
