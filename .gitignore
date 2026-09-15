@@ -24,5 +24,7 @@ dist/
 Thumbs.db
 *.lnk
 
-# Cache
+# Cache & Deploy
 .cache/
+.vercel/
+*/.vercel/
