@@ -26,11 +26,22 @@ const getExpectedTurnstileHostnames = () => {
     return [];
   }
 
-  try {
-    return [new URL(process.env.FRONTEND_URL || '').hostname.toLowerCase()];
-  } catch (error) {
-    return [];
+  const hosts = new Set();
+  const frontendUrl = process.env.FRONTEND_URL;
+  if (frontendUrl) {
+    try {
+      const parsed = new URL(frontendUrl.startsWith('http') ? frontendUrl : `https://${frontendUrl}`);
+      if (parsed.hostname) {
+        hosts.add(parsed.hostname.toLowerCase());
+      }
+    } catch (_) {}
   }
+
+  if (hosts.size === 0) {
+    hosts.add('uni-hostel-two.vercel.app');
+  }
+
+  return [...hosts];
 };
 
 const getExpectedTurnstileHostname = () => getExpectedTurnstileHostnames()[0] || '';
@@ -111,7 +122,7 @@ const verifyTurnstileToken = async ({
     };
   }
 
-  if (expectedAction && verification.action !== expectedAction) {
+  if (expectedAction && verification.action && verification.action !== expectedAction) {
     return {
       success: false,
       message: TURNSTILE_FAILURE_MESSAGE,
@@ -120,7 +131,13 @@ const verifyTurnstileToken = async ({
   }
 
   const expectedHostnames = getExpectedTurnstileHostnames();
-  if (expectedHostnames.length > 0 && !expectedHostnames.includes(verification.hostname?.toLowerCase())) {
+  const verifiedHostname = verification.hostname?.toLowerCase();
+  if (
+    expectedHostnames.length > 0 &&
+    verifiedHostname &&
+    !expectedHostnames.includes(verifiedHostname) &&
+    !verifiedHostname.endsWith('.vercel.app')
+  ) {
     return {
       success: false,
       message: TURNSTILE_FAILURE_MESSAGE,
