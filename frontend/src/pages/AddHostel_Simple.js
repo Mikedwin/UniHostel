@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Plus, X } from 'lucide-react';
+import API_ENDPOINTS from '../config/api';
 
 const AddHostel = () => {
     const { token } = useAuth();
@@ -46,7 +47,7 @@ const AddHostel = () => {
                 images
             };
             
-            await axios.post('http://localhost:5000/api/hostels', formData, {
+            await axios.post(API_ENDPOINTS.HOSTELS, formData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             
