@@ -16,20 +16,16 @@ const About = () => (
   <InformationPage
     icon={Target}
     title="A clearer route to student housing."
-    description="UniHostel brings verified listings, applications, approval, and payment into one trust-first journey for student housing in Accra."
+    description="UniHostel is an independent digital accommodation marketplace bringing vetted listings, transparent applications, manager approvals, and secure payments into one seamless journey in Ghana."
   >
     <InfoSection title="Built to remove the unknowns." icon={Target}>
       <div className="info-callout">
         <p>
-          Finding safe, affordable, reliable accommodation should not be
-          stressful. UniHostel connects students with verified hostels through
-          one simple, transparent, secure process.
+          Finding reliable, comfortable student accommodation should not be stressful or uncertain. UniHostel connects tertiary students with independent, vetted hostel managers through a transparent, secure digital booking workflow.
         </p>
       </div>
       <p>
-        Platform bridges students searching for accommodation and hostel
-        managers who need to manage and fill rooms, with oversight that supports
-        trust, fairness, and accountability.
+        As a technology marketplace, our platform bridges students searching for housing and independent hostel managers who operate student facilities, providing structured digital oversight that champions trust, fairness, and accountability.
       </p>
     </InfoSection>
     <InfoSection title="What that means in practice." icon={Users}>

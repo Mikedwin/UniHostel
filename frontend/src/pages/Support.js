@@ -85,49 +85,58 @@ const Support = () => (
           </div>
         </div>
         <div className="info-panel info-panel--warm">
-          <h3>Safety comes first</h3>
-          <p className="mt-3">
-            Report suspicious listings, fraudulent activity, misleading
-            information, harassment, or abuse immediately. Safety and trust are
-            not optional.
+          <h3>Safety and Emergency Notice</h3>
+          <p className="mt-3 text-sm leading-relaxed">
+            Report suspicious listings, fraudulent activity, misleading information, or platform abuse immediately.
           </p>
+          <div className="mt-4 rounded-xl bg-red-500/10 border border-red-500/20 p-3 text-xs text-red-900 leading-relaxed">
+            <strong>⚠️ Immediate Emergency:</strong> UniHostel support resolves platform, booking, and payment matters. For physical danger, violence, fire, or crimes on hostel premises, contact Ghana Emergency Services (<strong>112</strong> / <strong>191</strong>) or local authorities immediately.
+          </div>
         </div>
       </div>
     </InfoSection>
-    <InfoSection title="Response expectations." icon={Clock}>
+    <InfoSection title="Target response timelines." icon={Clock}>
       <div className="info-grid info-grid--three">
         <div className="info-panel">
           <span className="info-role-label">Critical</span>
           <h3 className="mt-3">Payments and access</h3>
-          <p className="mt-3">Within 24 hours.</p>
+          <p className="mt-3 text-sm text-gray-600">Target response within 24 hours.</p>
         </div>
         <div className="info-panel">
           <span className="info-role-label">General</span>
           <h3 className="mt-3">Questions and guidance</h3>
-          <p className="mt-3">24–48 hours.</p>
+          <p className="mt-3 text-sm text-gray-600">Target response 24–48 hours.</p>
         </div>
         <div className="info-panel">
           <span className="info-role-label">Features</span>
           <h3 className="mt-3">Product requests</h3>
-          <p className="mt-3">Reviewed periodically.</p>
+          <p className="mt-3 text-sm text-gray-600">Reviewed periodically.</p>
         </div>
       </div>
     </InfoSection>
-    <InfoSection title="Talk to a person." icon={Mail}>
+    <InfoSection title="Talk to our support team." icon={Mail}>
       <div className="info-grid info-grid--two">
         <a
-          className="info-panel no-underline"
-          href="mailto:support@example.com"
+          className="info-panel no-underline hover:border-[#c96e32]/40 transition"
+          href="mailto:support@unihostel.com"
         >
           <Mail className="mb-5 h-7 w-7 text-[#c96e32]" />
           <h3>Email support</h3>
-          <p className="mt-3 text-[#c96e32]">support@example.com</p>
+          <p className="mt-3 text-[#c96e32] font-semibold">support@unihostel.com</p>
+          <p className="mt-2 text-xs text-gray-500">
+            For account inquiries, disputes, and official correspondence
+          </p>
         </a>
-        <a className="info-panel no-underline" href="tel:+233503847786">
+        <a
+          className="info-panel no-underline hover:border-[#c96e32]/40 transition"
+          href="https://wa.me/233503847786"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           <Phone className="mb-5 h-7 w-7 text-[#c96e32]" />
-          <h3>Phone support</h3>
-          <p className="mt-3 text-[#c96e32]">+233 50 3847 786</p>
-          <p className="mt-2 text-sm">
+          <h3>WhatsApp & Phone Support</h3>
+          <p className="mt-3 text-[#c96e32] font-semibold">+233 50 3847 786</p>
+          <p className="mt-2 text-xs text-gray-500">
             Monday – Friday, 9:00 AM – 5:00 PM (GMT)
           </p>
         </a>

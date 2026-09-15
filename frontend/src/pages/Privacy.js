@@ -22,131 +22,138 @@ const Privacy = () => {
   return (
     <InformationPage
       icon={Shield}
-      title="Your information deserves care."
-      description="This policy explains what UniHostel collects, why we use it, how we protect it, and rights available when you use platform."
+      title="Privacy and Data Protection."
+      description="UniHostel values your privacy. This policy explains what information we collect, how we process it, and your rights under the Data Protection Act, 2012 (Act 843) of Ghana."
       meta={`Effective date and last updated: ${currentDate}`}
     >
       <div className="info-article">
-        <InfoSection title="What we collect." icon={Database}>
+        <InfoSection title="1. Statutory Compliance (Ghana Act 843)." icon={Shield}>
+          <div className="info-callout">
+            <h3 className="text-base font-bold text-gray-900">Compliance with the Data Protection Act, 2012 (Act 843)</h3>
+            <p className="mt-3 text-sm leading-relaxed text-gray-700">
+              UniHostel processes all personal data strictly in compliance with the principles of data protection set out under the Data Protection Act, 2012 (Act 843) of the Republic of Ghana. We ensure that data is processed lawfully, transparently, securely, and solely for specified educational housing and verification purposes.
+            </p>
+          </div>
+        </InfoSection>
+
+        <InfoSection title="2. Information We Collect." icon={Database}>
           <div className="info-grid info-grid--two">
             <div className="info-panel">
-              <h3>Profile and account data</h3>
+              <h3>Profile and Account Data</h3>
               <div className="mt-4">
                 <InfoList
                   items={[
-                    "Name, email address, phone number, and profile details",
-                    "Manager verification documents where required",
-                    "Account type, application history, approval records, and dashboard activity",
-                    "Login timestamps, IP addresses, and device information",
+                    "Full name, email address, phone / WhatsApp number, and student details",
+                    "Manager verification documents, hostel proof of ownership, or business registration",
+                    "Account credentials, login timestamps, IP addresses, and device telemetry",
+                    "Early Access Waitlist data (name, email, phone, preferred hostel, manager contact)",
                   ]}
                 />
               </div>
             </div>
             <div className="info-panel">
-              <h3>Listing and payment data</h3>
+              <h3>Listing and Transaction Data</h3>
               <div className="mt-4">
                 <InfoList
                   items={[
-                    "Hostel details, room capacity, pricing, and uploaded images",
-                    "Transaction references, payment status, amount paid, and settlement status",
-                    "We do not store card or mobile money details; payment providers such as Paystack process payments",
+                    "Hostel listings, room capacity, photos, amenities, and pricing",
+                    "Transaction references, payment statuses, and settlement confirmations",
+                    "We do NOT store credit card numbers, CVVs, or MoMo PINs; payments are processed securely via Paystack",
+                    "Application records, student-manager correspondence, and generated access codes",
                   ]}
                 />
               </div>
             </div>
           </div>
         </InfoSection>
-        <InfoSection title="How information is used." icon={FileText}>
+
+        <InfoSection title="3. How We Use Your Information." icon={FileText}>
           <InfoList
             items={[
-              "Create and manage accounts",
-              "Process applications, approvals, payments, and settlements",
-              "Generate platform reports and analytics",
-              "Prevent fraud and misuse",
-              "Communicate important updates and provide support",
-              "Improve platform functionality",
+              "Facilitate hostel search, applications, approvals, payment processing, and access code issuance",
+              "Notify waitlist applicants of early access and priority room availability",
+              "Verify manager identities to protect students against fraud, fake listings, and impersonation",
+              "Maintain platform security, investigate disputes, and monitor system performance",
+              "Comply with legal, regulatory, tax, and accounting requirements under Ghanaian law",
             ]}
           />
         </InfoSection>
-        <InfoSection title="Access and sharing." icon={Users}>
+
+        <InfoSection title="4. Data Sharing & Third-Party Processors." icon={Users}>
           <div className="info-grid info-grid--two">
             <div>
-              <h3>When we share data</h3>
+              <h3>Authorized Processors</h3>
               <div className="mt-4">
                 <InfoList
                   items={[
-                    "Between students and managers for application-related activity",
-                    "With payment providers for transaction processing",
-                    "With service providers supporting platform operations",
-                    "With authorities where law requires it",
+                    "Hostel Managers: Receive applicant contact details solely to evaluate room bookings",
+                    "Payment Infrastructure (Paystack): For secure Mobile Money and card processing",
+                    "Media Storage (Cloudinary): For securely serving uploaded hostel photos",
+                    "Security & Bot Prevention (Cloudflare Turnstile): Analyzes browser signals to prevent automated spam without tracking users",
+                    "Law Enforcement: Only when strictly required by a court order or applicable Ghanaian law",
                   ]}
                 />
               </div>
             </div>
             <div className="info-callout">
-              <h3>Clear boundary</h3>
-              <p className="mt-3">
-                UniHostel does not sell or rent personal data to third parties.
-                Access is role-based: students see their own activity, managers
-                see data related to their hostels, and admins use wider access
-                for moderation and oversight.
+              <h3>Zero Data Selling</h3>
+              <p className="mt-3 text-sm leading-relaxed text-gray-700">
+                UniHostel does NOT sell, rent, or trade your personal data to third-party advertisers. Access is strictly role-based: students access their own bookings, managers access their listings and applicants, and administrators access data necessary for system oversight.
               </p>
             </div>
           </div>
         </InfoSection>
-        <InfoSection title="Payments and security." icon={Lock}>
+
+        <InfoSection title="5. Data Retention & Security Safeguards." icon={Lock}>
           <InfoList
             items={[
-              "Financial data is displayed according to role",
-              "Managers see hostel earnings; Admin sees platform-wide financial data",
-              "We use encrypted storage, secure authentication, role-based access control, and audit logs for sensitive actions",
-              "No system is 100% secure; users share data at their own risk",
+              "Data Encryption: All sensitive communications use HTTPS/TLS and passwords are salted and hashed with bcrypt",
+              "Retention Periods: Account data is retained while active. Financial records are retained for statutory accounting periods (up to 6 years) as required by Ghanaian law",
+              "Soft Deletion & Anonymization: Deleted accounts are deactivated and personal identifiers removed where legal requirements allow",
+              "Security Notice: While we employ industry-standard defenses, no transmission over the internet is completely infallible; users share data at their own risk",
             ]}
           />
         </InfoSection>
-        <InfoSection title="Retention and your rights." icon={Eye}>
+
+        <InfoSection title="6. Your Rights Under Act 843." icon={Eye}>
           <div className="info-grid info-grid--two">
             <div>
-              <h3>Retention</h3>
-              <p className="mt-3">
-                Data is kept while account remains active, where legal or audit
-                needs require it, or to resolve disputes and enforce agreements.
+              <h3>Data Subject Rights</h3>
+              <p className="mt-3 text-sm leading-relaxed text-gray-600">
+                Under the Data Protection Act, 2012 (Act 843), you have the legal right to:
               </p>
-            </div>
-            <div>
-              <h3>Your choices</h3>
               <div className="mt-4">
                 <InfoList
                   items={[
-                    "Access personal data",
-                    "Correct inaccurate data",
-                    "Request account deletion where legal obligations permit",
-                    "Withdraw consent or object to certain processing",
+                    "Request access to personal data held about you",
+                    "Request correction of inaccurate or incomplete records",
+                    "Request deletion or restriction of your personal data",
+                    "Object to automated processing or withdraw consent",
                   ]}
                 />
               </div>
             </div>
+            <div className="info-panel info-panel--warm">
+              <h3>Exercising Your Rights</h3>
+              <p className="mt-3 text-sm leading-relaxed text-gray-700">
+                To request data deletion, access, or correction, contact our Data Protection Officer through our official support desk or email. We will process your request within statutory timeframes.
+              </p>
+            </div>
           </div>
         </InfoSection>
-        <InfoSection title="Cookies, changes, and contact." icon={CreditCard}>
-          <p>
-            Cookies may maintain login sessions, improve experience, and analyze
-            platform use. Browser settings can control cookie preferences. We
-            may update this policy and communicate changes through platform.
-          </p>
-          <div className="info-callout info-callout--dark mt-8">
+
+        <InfoSection title="7. Contact & Privacy Inquiries." icon={CreditCard}>
+          <div className="info-callout info-callout--dark mt-4">
             <Mail className="h-7 w-7 text-[#f6deb1]" />
-            <h3 className="mt-5">Questions about privacy?</h3>
-            <p className="mt-3">
-              Contact support at{" "}
-              <a
-                className="text-[#f6deb1] underline underline-offset-4"
-                href="mailto:support@example.com"
-              >
-                support@example.com
-              </a>
-              . Jurisdiction: Ghana.
+            <h3 className="mt-5 text-lg font-bold text-[#f6deb1]">Data Protection & Privacy Desk</h3>
+            <p className="mt-3 text-sm leading-relaxed text-white/80">
+              For any questions, concerns, or data rights requests under Act 843, please contact us:
             </p>
+            <div className="mt-4 space-y-1 text-sm text-white/90">
+              <p>Email: <a className="text-[#f6deb1] underline underline-offset-4" href="mailto:support@unihostel.com">support@unihostel.com</a></p>
+              <p>WhatsApp / Phone: <a className="text-[#f6deb1] underline underline-offset-4" href="tel:+233503847786">+233 50 3847 786</a></p>
+              <p>Location: Accra, Ghana · Data Protection Act, 2012 (Act 843)</p>
+            </div>
           </div>
         </InfoSection>
       </div>
