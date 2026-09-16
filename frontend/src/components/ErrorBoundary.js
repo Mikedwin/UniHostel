@@ -44,6 +44,16 @@ class ErrorBoundary extends React.Component {
                 Go to Homepage
               </a>
             </div>
+            {this.state.error && (
+              <details className="mt-4 text-left">
+                <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600">
+                  Technical Details
+                </summary>
+                <pre className="mt-2 p-3 bg-red-50 text-red-700 rounded-lg text-xs overflow-x-auto whitespace-pre-wrap font-mono">
+                  {this.state.error?.toString() || 'Unknown runtime error'}
+                </pre>
+              </details>
+            )}
           </div>
         </div>
       );

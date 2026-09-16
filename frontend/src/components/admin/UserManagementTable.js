@@ -326,9 +326,9 @@ const UserManagementTable = ({ token, onAction }) => {
                   </td>
                   <td className="px-4 py-3 text-sm">
                     <span
-                      className={`px-2 py-1 text-xs rounded-full ${getStatusBadge(user.accountStatus)}`}
+                      className={`px-2 py-1 text-xs rounded-full ${getStatusBadge(user.accountStatus || "active")}`}
                     >
-                      {user.accountStatus.replace("_", " ")}
+                      {(user.accountStatus || "active").replace("_", " ")}
                     </span>
                     {!user.isVerified && user.role === "manager" && (
                       <span className="ml-2 px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-700">
@@ -353,7 +353,7 @@ const UserManagementTable = ({ token, onAction }) => {
                       </button>
                       {user.role !== "admin" && (
                         <>
-                          {user.accountStatus === "active" ? (
+                          {(user.accountStatus || "active") === "active" ? (
                             <button
                               onClick={() => onAction("suspend", user)}
                               className="text-yellow-600 hover:text-yellow-800"

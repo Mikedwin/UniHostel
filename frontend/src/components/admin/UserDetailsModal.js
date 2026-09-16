@@ -123,7 +123,7 @@ const UserDetailsModal = ({ isOpen, onClose, user, token }) => {
                 <div>
                   <p className="text-sm text-gray-500">Status</p>
                   <p className="font-medium text-gray-900 capitalize">
-                    {user.accountStatus.replace("_", " ")}
+                    {(user.accountStatus || "active").replace("_", " ")}
                   </p>
                 </div>
               </div>
@@ -164,8 +164,8 @@ const UserDetailsModal = ({ isOpen, onClose, user, token }) => {
             )}
 
             {/* Suspension Info */}
-            {(user.accountStatus === "suspended" ||
-              user.accountStatus === "banned") && (
+            {((user.accountStatus === "suspended") ||
+              (user.accountStatus === "banned")) && (
               <div className="bg-red-50 border border-red-200 p-4 rounded-md">
                 <p className="text-sm font-medium text-red-900 mb-2">
                   {user.accountStatus === "suspended"
