@@ -26,4 +26,10 @@ export const TURNSTILE_ENABLED =
     ''
   ).trim() === 'true' && Boolean(TURNSTILE_SITE_KEY);
 
+export const GOOGLE_CLIENT_ID = (
+  (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_GOOGLE_CLIENT_ID) ||
+  (typeof process !== 'undefined' && process.env && process.env.REACT_APP_GOOGLE_CLIENT_ID) ||
+  ''
+).trim();
+
 export default API_URL;

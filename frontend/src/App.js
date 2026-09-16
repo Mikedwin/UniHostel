@@ -1,11 +1,13 @@
 import React, { Suspense, lazy, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { setupAxiosInterceptors } from './utils/axiosInterceptor';
 import { trackPageView } from './utils/visitorTracking';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoadingSpinner from './components/LoadingSpinner';
+import { GOOGLE_CLIENT_ID } from './config';
 
 const Landing = lazy(() => import('./pages/Landing'));
 const HostelList = lazy(() => import('./pages/HostelList'));
@@ -158,12 +160,22 @@ function AppContent() {
 }
 
 function App() {
-  return (
+  const content = (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AuthProvider>
         <AppContent />
       </AuthProvider>
     </Router>
+  );
+
+  if (!GOOGLE_CLIENT_ID) {
+    return content;
+  }
+
+  return (
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      {content}
+    </GoogleOAuthProvider>
   );
 }
 

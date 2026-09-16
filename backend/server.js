@@ -17,6 +17,7 @@ const fs = require('fs');
 const path = require('path');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swagger');
+const { OAuth2Client } = require('google-auth-library');
 
 // Load environment variables
 // For local development: use .env file in backend directory
@@ -1105,6 +1106,146 @@ app.post('/api/auth/login', validateInput, async (req, res) => {
   } catch (err) {
     logger.error('Login error:', err);
     res.status(500).json({ message: 'Unable to sign in right now. Please try again later.' });
+  }
+});
+
+// Google OAuth Client
+const googleOAuthClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || '');
+
+/**
+ * @swagger
+ * /api/auth/google:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Google OAuth Authentication (Sign in with Google)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [credential]
+ *             properties:
+ *               credential: { type: string }
+ *               role: { type: string, enum: [student, manager] }
+ *     responses:
+ *       200:
+ *         description: Google authentication successful
+ *       400:
+ *         description: Invalid or expired Google credential
+ */
+app.post('/api/auth/google', async (req, res) => {
+  try {
+    const { credential, role = 'student' } = req.body;
+    if (!credential) {
+      return res.status(400).json({ message: 'Google credential is required' });
+    }
+
+    let payload;
+    const configuredClientId = (process.env.GOOGLE_CLIENT_ID || '').trim();
+
+    try {
+      if (configuredClientId) {
+        const ticket = await googleOAuthClient.verifyIdToken({
+          idToken: credential,
+          audience: configuredClientId,
+        });
+        payload = ticket.getPayload();
+      } else {
+        // In local development before Google Client ID is configured, verify signature directly or decode payload
+        const ticket = await googleOAuthClient.verifyIdToken({
+          idToken: credential,
+        });
+        payload = ticket.getPayload();
+      }
+    } catch (verifyErr) {
+      logger.error('Google token verification failed:', verifyErr.message);
+      return res.status(400).json({ message: 'Invalid or expired Google credential. Please try again.' });
+    }
+
+    if (!payload || !payload.email) {
+      return res.status(400).json({ message: 'Unable to extract email from Google credential' });
+    }
+
+    const email = payload.email.toLowerCase().trim();
+    const name = payload.name || payload.given_name || email.split('@')[0];
+    const picture = payload.picture || '';
+    const googleId = payload.sub;
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Auto-register new user via Google
+      const assignedRole = role === 'manager' ? 'student' : (role || 'student');
+
+      user = new User({
+        name,
+        email,
+        googleId,
+        authProvider: 'google',
+        profilePicture: picture,
+        role: assignedRole,
+        isVerified: true,
+        accountStatus: 'active',
+        tosAccepted: true,
+        tosAcceptedAt: new Date(),
+        privacyPolicyAccepted: true,
+        privacyPolicyAcceptedAt: new Date()
+      });
+      await user.save();
+      logger.info(`New user registered via Google Auth: ${user._id} (${user.email})`);
+    } else {
+      // Existing user: link googleId and profile picture if missing
+      let needsSave = false;
+      if (!user.googleId) {
+        user.googleId = googleId;
+        needsSave = true;
+      }
+      if (picture && !user.profilePicture) {
+        user.profilePicture = picture;
+        needsSave = true;
+      }
+      if (!user.isVerified && user.role === 'student') {
+        user.isVerified = true;
+        needsSave = true;
+      }
+      if (user.accountStatus === 'pending_verification' && user.role === 'student') {
+        user.accountStatus = 'active';
+        needsSave = true;
+      }
+      if (needsSave) {
+        await user.save();
+      }
+    }
+
+    // Check if account is suspended or banned
+    if (user.accountStatus === 'suspended' || user.accountStatus === 'banned') {
+      logger.warn(`Blocked Google login attempt for ${user.accountStatus} account: ${user.email}`);
+      return res.status(403).json({ message: `Your account has been ${user.accountStatus}. Please contact support.` });
+    }
+
+    // Manager / Admin MFA check if applicable
+    if (requiresPrivilegedMfa(user)) {
+      try {
+        const challenge = await persistPrivilegedMfaChallenge(user);
+        logger.info(`Privileged MFA challenge created for Google user: ${user.email}`);
+        return res.json(createPrivilegedMfaResponse(user, challenge.challengeToken));
+      } catch (mfaError) {
+        logger.error('Privileged MFA delivery error:', mfaError);
+        return res.status(503).json({ message: PRIVILEGED_MFA_DELIVERY_FAILURE_MESSAGE });
+      }
+    }
+
+    const authenticatedResponse = await completeAuthenticatedLogin(user, req, res);
+    logger.info(`Successful Google Auth login for user: ${user.email}`);
+    res.json(authenticatedResponse);
+  } catch (err) {
+    logger.error('Google auth error:', err);
+    return sendServerError(res, err, {
+      field: 'message',
+      clientMessage: 'Google authentication failed',
+      logMessage: 'Google Auth error'
+    });
   }
 });
 

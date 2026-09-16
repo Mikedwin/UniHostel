@@ -7,6 +7,7 @@ import { API_ENDPOINTS } from "../config/api";
 import TurnstileWidget from "../components/security/TurnstileWidget";
 import PrivilegedMfaChallenge from "../components/security/PrivilegedMfaChallenge";
 import useTurnstileGate from "../utils/useTurnstileGate";
+import GoogleAuthButton from "../components/auth/GoogleAuthButton";
 
 const ManagerLogin = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -316,6 +317,24 @@ const ManagerLogin = () => {
                 />
               ) : (
                 <>
+                  <div className="mt-6">
+                    <GoogleAuthButton
+                      role="manager"
+                      redirectTo="/manager-dashboard"
+                      text="continue_with"
+                      onError={setError}
+                    />
+                  </div>
+
+                  <div className="relative my-6 flex items-center justify-center">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-200" />
+                    </div>
+                    <span className="relative bg-[#f8f6f0] px-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                      Or with email
+                    </span>
+                  </div>
+
                   <form className="space-y-6" onSubmit={handleSubmit}>
                     <div className="access-form-field">
                       <label className="mb-2 block text-sm font-medium text-slate-700">

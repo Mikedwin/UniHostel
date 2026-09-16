@@ -13,6 +13,7 @@ import {
 import { API_ENDPOINTS } from "../config/api";
 import TurnstileWidget from "../components/security/TurnstileWidget";
 import useTurnstileGate from "../utils/useTurnstileGate";
+import GoogleAuthButton from "../components/auth/GoogleAuthButton";
 
 const StudentRegister = () => {
   const [formData, setFormData] = useState({
@@ -195,7 +196,26 @@ const StudentRegister = () => {
           )}
 
           {!successMessage && (
-            <form className="space-y-6" onSubmit={handleSubmit}>
+            <>
+              <div className="mb-6">
+                <GoogleAuthButton
+                  role="student"
+                  redirectTo="/hostels"
+                  text="signup_with"
+                  onError={setError}
+                />
+              </div>
+
+              <div className="relative my-6 flex items-center justify-center">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200" />
+                </div>
+                <span className="relative bg-white px-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  Or register with email
+                </span>
+              </div>
+
+              <form className="space-y-6" onSubmit={handleSubmit}>
               <div className="access-form-field">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Full Name
@@ -370,6 +390,7 @@ const StudentRegister = () => {
                 )}
               </button>
             </form>
+            </>
           )}
 
           <div className="mt-6 text-center">

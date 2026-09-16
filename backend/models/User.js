@@ -3,7 +3,10 @@ const mongoose = require('mongoose');
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
+  password: { type: String, required: function() { return this.authProvider !== 'google'; } },
+  googleId: { type: String, sparse: true, index: true },
+  authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
+  profilePicture: { type: String },
   phone: { type: String, trim: true, maxlength: 20 },
   hostelName: { type: String, trim: true, maxlength: 200 },
   role: { type: String, enum: ['student', 'manager', 'admin'], default: 'student' },
@@ -62,6 +65,7 @@ const userSchema = new mongoose.Schema({
 });
 
 userSchema.index({ email: 1 });
+userSchema.index({ googleId: 1 }, { sparse: true });
 userSchema.index({ role: 1, accountStatus: 1 });
 userSchema.index({ lastLogin: -1 });
 userSchema.index({ createdAt: -1 });
