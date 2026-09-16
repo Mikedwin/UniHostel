@@ -88,24 +88,22 @@ const GoogleAuthButton = ({
   return (
     <div className="w-full flex flex-col items-center justify-center">
       {loading ? (
-        <div className="w-full flex items-center justify-center gap-3 px-4 py-3.5 rounded-xl border border-[#173b35]/20 bg-white text-gray-700 text-sm font-semibold shadow-sm">
+        <div className="w-full max-w-[360px] flex items-center justify-center gap-3 px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium shadow-sm min-h-[40px]">
           <div className="w-4 h-4 border-2 border-[#173b35] border-t-transparent rounded-full animate-spin" />
           <span>Signing in with Google...</span>
         </div>
       ) : (
-        <div className="w-full flex items-center justify-center p-1 rounded-xl border border-gray-200 bg-white shadow-sm hover:border-gray-300 transition-colors">
-          <div className="w-full flex justify-center items-center py-0.5 [&>div]:!flex [&>div]:!justify-center [&>div]:!items-center [&>div]:!w-full [&>div>iframe]:!mx-auto">
-            <GoogleLogin
-              onSuccess={handleSuccess}
-              onError={handleFailure}
-              text={text}
-              shape="rectangular"
-              theme="outline"
-              size="large"
-              width="360"
-              useOneTap={false}
-            />
-          </div>
+        <div className="w-full flex justify-center items-center [&>div]:!flex [&>div]:!justify-center [&>div]:!items-center [&>div]:!w-full [&>div>iframe]:!mx-auto">
+          <GoogleLogin
+            onSuccess={handleSuccess}
+            onError={handleFailure}
+            text={text}
+            shape="rectangular"
+            theme="outline"
+            size="large"
+            width="360"
+            useOneTap={false}
+          />
         </div>
       )}
     </div>
