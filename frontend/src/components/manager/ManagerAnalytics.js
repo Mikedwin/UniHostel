@@ -14,23 +14,56 @@ import {
 } from "recharts";
 import {
   Download,
-  Calendar,
   TrendingUp,
   Users,
   Home,
-  CheckCircle,
-  HelpCircle,
+  CheckCircle2,
+  PieChart as PieIcon,
+  BarChart3,
+  Building2,
+  Sparkles,
 } from "lucide-react";
 import Papa from "papaparse";
 import { saveAs } from "file-saver";
-import { FilterSelect, FilterButton } from '../DashboardFilters';
+import { FilterSelect, FilterButton } from "../DashboardFilters";
 
-const ManagerAnalytics = ({ applications, hostels }) => {
+const STATUS_COLORS = {
+  Pending: "#e2b667",
+  "Approved for Payment": "#23817a",
+  "Paid Awaiting": "#c96e32",
+  Approved: "#173b35",
+  Rejected: "#e11d48",
+};
+
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="rounded-2xl border border-white/10 bg-[#173b35] p-3.5 text-white shadow-2xl backdrop-blur-md">
+        {label && <p className="mb-2 text-xs font-extrabold uppercase tracking-wider text-[#f6deb1]">{label}</p>}
+        <div className="space-y-1 text-xs">
+          {payload.map((item, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <span
+                className="h-2.5 w-2.5 rounded-full"
+                style={{ backgroundColor: item.color || item.fill || item.payload?.fill }}
+              />
+              <span className="font-medium text-white/80">{item.name}:</span>
+              <span className="font-bold text-white">{item.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
+const ManagerAnalytics = ({ applications = [], hostels = [] }) => {
   const [dateRange, setDateRange] = useState("30");
   const [exportLoading, setExportLoading] = useState(false);
 
   const filteredData = useMemo(() => {
-    const days = parseInt(dateRange);
+    const days = parseInt(dateRange, 10);
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
 
@@ -63,15 +96,19 @@ const ManagerAnalytics = ({ applications, hostels }) => {
     ).length;
 
     return [
-      { name: "Pending", value: pending, color: "#F59E0B" },
+      { name: "Pending", value: pending, color: STATUS_COLORS.Pending },
       {
         name: "Approved for Payment",
         value: approvedForPayment,
-        color: "#3B82F6",
+        color: STATUS_COLORS["Approved for Payment"],
       },
-      { name: "Paid Awaiting", value: paidAwaiting, color: "#F97316" },
-      { name: "Approved", value: approved, color: "#10B981" },
-      { name: "Rejected", value: rejected, color: "#EF4444" },
+      {
+        name: "Paid Awaiting",
+        value: paidAwaiting,
+        color: STATUS_COLORS["Paid Awaiting"],
+      },
+      { name: "Approved", value: approved, color: STATUS_COLORS.Approved },
+      { name: "Rejected", value: rejected, color: STATUS_COLORS.Rejected },
     ].filter((item) => item.value > 0);
   }, [filteredData]);
 
@@ -95,8 +132,8 @@ const ManagerAnalytics = ({ applications, hostels }) => {
 
         return {
           name:
-            hostel.name.length > 15
-              ? hostel.name.substring(0, 15) + "..."
+            hostel.name.length > 16
+              ? hostel.name.substring(0, 16) + "..."
               : hostel.name,
           fullName: hostel.name,
           applications: hostelApps.length,
@@ -124,7 +161,7 @@ const ManagerAnalytics = ({ applications, hostels }) => {
       type,
       total: data.total,
       occupied: data.occupied,
-      available: data.total - data.occupied,
+      available: Math.max(0, data.total - data.occupied),
     }));
   }, [hostels]);
 
@@ -176,54 +213,54 @@ const ManagerAnalytics = ({ applications, hostels }) => {
       saveAs(blob, `Analytics_${new Date().toISOString().split("T")[0]}.csv`);
     } catch (error) {
       console.error("Export error:", error);
-      alert("Failed to export");
+      alert("Failed to export analytics data");
     } finally {
       setExportLoading(false);
     }
   };
 
-  return (
-    <div className="operations-surface manager-analytics space-y-6">
-      {/* Simple Explanation Banner */}
-      <div className="bg-blue-50 border-l border-blue-500 p-4 rounded-lg">
-        <div className="flex items-start gap-3">
-          <div className="bg-blue-100 p-2 rounded-full">
-            <HelpCircle className="w-5 h-5 text-blue-600" />
-          </div>
-          <div>
-            <h3 className="font-bold text-blue-900 mb-1">
-              How to Use This Page
-            </h3>
-            <p className="text-sm text-blue-800">
-              This page shows you how your hostels are performing. You can see
-              how many students applied, which hostels are full, and which rooms
-              are popular. Use the "Export Excel" button to save all data to
-              your computer.
-            </p>
-          </div>
-        </div>
-      </div>
+  const totalCapacitySum = hostels.reduce(
+    (sum, h) =>
+      sum + (h.roomTypes?.reduce((s, r) => s + r.totalCapacity, 0) || 0),
+    0,
+  );
+  const totalOccupiedSum = hostels.reduce(
+    (sum, h) =>
+      sum + (h.roomTypes?.reduce((s, r) => s + (r.occupiedCapacity || 0), 0) || 0),
+    0,
+  );
+  const averageOccupancy =
+    totalCapacitySum > 0
+      ? Math.round((totalOccupiedSum / totalCapacitySum) * 100)
+      : 0;
 
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50/50 p-4">
+  return (
+    <div className="space-y-8 animate-fade-in">
+      {/* Header & Filter Bar */}
+      <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between rounded-[2rem] border border-[#173b35]/10 bg-white p-6 sm:p-8 shadow-[0_1rem_2.5rem_rgba(23,59,53,0.06)]">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">
-            Your Business Summary
+          <span className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-[0.2em] text-[#c96e32]">
+            <Sparkles className="w-3.5 h-3.5" /> Performance & Analytics
+          </span>
+          <h2 className="mt-1 text-2xl sm:text-3xl font-black tracking-[-0.03em] text-[#173b35]">
+            Business Overview
           </h2>
-          <p className="text-sm text-gray-600">
-            See how your hostels are doing
+          <p className="mt-1 text-sm font-medium text-[#64746e]">
+            Real-time insights across student demand, occupancy rates, and room inventory.
           </p>
         </div>
-        <div className="flex gap-3 items-end">
+
+        <div className="flex flex-wrap items-center gap-3">
           <FilterSelect
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
             options={[
-              { value: '7', label: 'Last 7 days' },
-              { value: '30', label: 'Last 30 days' },
-              { value: '60', label: 'Last 60 days' },
-              { value: '90', label: 'Last 90 days' },
+              { value: "7", label: "Last 7 days" },
+              { value: "30", label: "Last 30 days" },
+              { value: "60", label: "Last 60 days" },
+              { value: "90", label: "Last 90 days" },
             ]}
-            className="w-auto min-w-[150px]"
+            className="min-w-[150px]"
           />
           <FilterButton
             variant="primary"
@@ -236,226 +273,305 @@ const ManagerAnalytics = ({ applications, hostels }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-lg shadow-sm border-l border-blue-500">
+      {/* KPI Cards Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {/* Metric 1 */}
+        <div className="group relative overflow-hidden rounded-[2rem] border border-[#173b35]/10 bg-white p-6 shadow-[0_1rem_2.5rem_rgba(23,59,53,0.05)] transition-all hover:shadow-[0_1.5rem_3rem_rgba(23,59,53,0.09)]">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-600 font-semibold">
-                TOTAL STUDENTS APPLIED
-              </p>
-              <p className="text-3xl font-bold text-blue-600">
-                {filteredData.allApplications.length}
-              </p>
-              <p className="text-xs text-gray-600 mt-1">
-                📅 Last {dateRange} days:{" "}
-                <span className="font-semibold">
-                  {filteredData.applications.length}
-                </span>
-              </p>
+            <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#c96e32]">
+              Applications
+            </span>
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#f6deb1]/40 text-[#173b35]">
+              <Users className="w-5 h-5" />
             </div>
-            <Users className="w-10 h-10 text-blue-500" />
           </div>
-          <p className="text-xs text-gray-500 mt-2 italic">
-            How many students want to stay in your hostels
-          </p>
+          <div className="mt-4">
+            <span className="text-3xl sm:text-4xl font-black tracking-tight text-[#173b35]">
+              {filteredData.allApplications.length}
+            </span>
+            <p className="mt-1 text-xs font-medium text-[#64746e]">
+              <span className="font-bold text-[#173b35]">{filteredData.applications.length}</span> in last {dateRange} days
+            </p>
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border-l border-green-500">
+
+        {/* Metric 2 */}
+        <div className="group relative overflow-hidden rounded-[2rem] border border-[#173b35]/10 bg-white p-6 shadow-[0_1rem_2.5rem_rgba(23,59,53,0.05)] transition-all hover:shadow-[0_1.5rem_3rem_rgba(23,59,53,0.09)]">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-600 font-semibold">
-                STUDENTS ACCEPTED
-              </p>
-              <p className="text-3xl font-bold text-green-600">
-                {
-                  filteredData.allApplications.filter(
-                    (a) => a.status === "approved",
-                  ).length
-                }
-              </p>
-              <p className="text-xs text-gray-600 mt-1">
-                Out of {filteredData.allApplications.length} applications
-              </p>
+            <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#23817a]">
+              Accepted
+            </span>
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#e7efe8] text-[#23817a]">
+              <CheckCircle2 className="w-5 h-5" />
             </div>
-            <CheckCircle className="w-10 h-10 text-green-500" />
           </div>
-          <p className="text-xs text-gray-500 mt-2 italic">
-            Students you said YES to
-          </p>
+          <div className="mt-4">
+            <span className="text-3xl sm:text-4xl font-black tracking-tight text-[#173b35]">
+              {filteredData.allApplications.filter((a) => a.status === "approved").length}
+            </span>
+            <p className="mt-1 text-xs font-medium text-[#64746e]">
+              Approved student bookings
+            </p>
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border-l border-primary-500">
+
+        {/* Metric 3 */}
+        <div className="group relative overflow-hidden rounded-[2rem] border border-[#173b35]/10 bg-white p-6 shadow-[0_1rem_2.5rem_rgba(23,59,53,0.05)] transition-all hover:shadow-[0_1.5rem_3rem_rgba(23,59,53,0.09)]">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-600 font-semibold">
-                YOUR HOSTELS
-              </p>
-              <p className="text-3xl font-bold text-primary-600">
-                {hostels.length}
-              </p>
-              <p className="text-xs text-gray-600 mt-1">
-                Properties you manage
-              </p>
+            <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#173b35]">
+              Properties
+            </span>
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#f3fbf9] text-[#173b35]">
+              <Building2 className="w-5 h-5" />
             </div>
-            <Home className="w-10 h-10 text-purple-500" />
           </div>
-          <p className="text-xs text-gray-500 mt-2 italic">
-            Total number of your hostels
-          </p>
+          <div className="mt-4">
+            <span className="text-3xl sm:text-4xl font-black tracking-tight text-[#173b35]">
+              {hostels.length}
+            </span>
+            <p className="mt-1 text-xs font-medium text-[#64746e]">
+              Active managed hostels
+            </p>
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border-l border-orange-500">
+
+        {/* Metric 4 */}
+        <div className="group relative overflow-hidden rounded-[2rem] border border-[#173b35]/10 bg-white p-6 shadow-[0_1rem_2.5rem_rgba(23,59,53,0.05)] transition-all hover:shadow-[0_1.5rem_3rem_rgba(23,59,53,0.09)]">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-600 font-semibold">
-                ROOMS FILLED
-              </p>
-              <p className="text-3xl font-bold text-orange-600">
-                {hostels.length > 0
-                  ? (
-                      hostels.reduce((sum, h) => {
-                        const cap =
-                          h.roomTypes?.reduce(
-                            (s, r) => s + r.totalCapacity,
-                            0,
-                          ) || 0;
-                        const occ =
-                          h.roomTypes?.reduce(
-                            (s, r) => s + (r.occupiedCapacity || 0),
-                            0,
-                          ) || 0;
-                        return sum + (cap > 0 ? (occ / cap) * 100 : 0);
-                      }, 0) / hostels.length
-                    ).toFixed(0)
-                  : 0}
-                %
-              </p>
-              <p className="text-xs text-gray-600 mt-1">
-                Average across all hostels
-              </p>
+            <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#c96e32]">
+              Occupancy
+            </span>
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#f8e9e5] text-[#c96e32]">
+              <TrendingUp className="w-5 h-5" />
             </div>
-            <TrendingUp className="w-10 h-10 text-orange-500" />
           </div>
-          <p className="text-xs text-gray-500 mt-2 italic">
-            How full your hostels are
-          </p>
+          <div className="mt-4">
+            <span className="text-3xl sm:text-4xl font-black tracking-tight text-[#173b35]">
+              {averageOccupancy}%
+            </span>
+            <p className="mt-1 text-xs font-medium text-[#64746e]">
+              {totalOccupiedSum} of {totalCapacitySum} beds filled
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm">
-          <div className="mb-4">
-            <h3 className="text-lg font-bold text-gray-900">
-              🎯 Application Status
-            </h3>
-            <p className="text-sm text-gray-600">
-              Where your applications stand
-            </p>
-          </div>
-          <div className="bg-blue-50 border-l border-blue-400 p-3 mb-4">
-            <p className="text-sm text-blue-800">
-              <span className="font-semibold">Simple:</span> Yellow = Waiting
-              for your decision, Green = You accepted them, Red = You rejected
-              them
-            </p>
-          </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={statusDistribution}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }) =>
-                  `${name}: ${(percent * 100).toFixed(0)}%`
-                }
-                outerRadius={80}
-                dataKey="value"
-              >
-                {statusDistribution.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="mt-4 flex justify-center gap-4">
-            {statusDistribution.map((item, idx) => (
-              <div key={idx} className="flex items-center gap-2">
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: item.color }}
-                ></div>
-                <span className="text-sm">
-                  {item.name}: {item.value}
+      {/* Main Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Status Distribution (Donut) */}
+        <div className="lg:col-span-5 rounded-[2rem] border border-[#173b35]/10 bg-white p-6 sm:p-8 shadow-[0_1rem_2.5rem_rgba(23,59,53,0.06)] flex flex-col justify-between">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f6deb1]/50 text-[#173b35]">
+                <PieIcon className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="block text-xs font-extrabold uppercase tracking-[0.15em] text-[#c96e32]">
+                  Breakdown
                 </span>
+                <h3 className="text-xl font-black tracking-tight text-[#173b35]">
+                  Application Status
+                </h3>
+              </div>
+            </div>
+            <p className="mt-2 text-xs font-medium text-[#64746e]">
+              Current status distribution of student accommodation requests
+            </p>
+          </div>
+
+          <div className="my-6 relative flex items-center justify-center min-h-[260px]">
+            {statusDistribution.length > 0 ? (
+              <ResponsiveContainer width="100%" height={260}>
+                <PieChart>
+                  <Pie
+                    data={statusDistribution}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={65}
+                    outerRadius={95}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {statusDistribution.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={entry.color}
+                        stroke="none"
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="text-center text-xs text-[#64746e] py-12">
+                No application data available
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-2.5 border-t border-[#edf0eb] pt-4">
+            {statusDistribution.map((item, idx) => (
+              <div
+                key={idx}
+                className="flex items-center justify-between rounded-xl bg-[#fbfaf6] px-3 py-2 text-xs"
+              >
+                <div className="flex items-center gap-2 truncate">
+                  <span
+                    className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span className="font-semibold text-[#173b35] truncate">{item.name}</span>
+                </div>
+                <span className="font-black text-[#173b35] ml-2">{item.value}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm">
-          <div className="mb-4">
-            <h3 className="text-lg font-bold text-gray-900">
-              🏠 Room Availability
-            </h3>
-            <p className="text-sm text-gray-600">
-              Which rooms are full or empty
+        {/* Room Availability */}
+        <div className="lg:col-span-7 rounded-[2rem] border border-[#173b35]/10 bg-white p-6 sm:p-8 shadow-[0_1rem_2.5rem_rgba(23,59,53,0.06)] flex flex-col justify-between">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#e7efe8] text-[#173b35]">
+                <BarChart3 className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="block text-xs font-extrabold uppercase tracking-[0.15em] text-[#23817a]">
+                  Inventory
+                </span>
+                <h3 className="text-xl font-black tracking-tight text-[#173b35]">
+                  Room Availability
+                </h3>
+              </div>
+            </div>
+            <p className="mt-2 text-xs font-medium text-[#64746e]">
+              Occupied capacity vs. available vacant spots across all room types
             </p>
           </div>
-          <div className="bg-green-50 border-l border-green-400 p-3 mb-4">
-            <p className="text-sm text-green-800">
-              <span className="font-semibold">Easy:</span> Green bars = Rooms
-              with students, Gray bars = Empty rooms. Taller bars = more rooms.
-            </p>
+
+          <div className="my-6 min-h-[260px]">
+            {roomTypeDistribution.length > 0 ? (
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={roomTypeDistribution} barGap={6}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#edf0eb" vertical={false} />
+                  <XAxis
+                    dataKey="type"
+                    tick={{ fill: "#64746e", fontSize: 12, fontWeight: 600 }}
+                    axisLine={{ stroke: "#d8e2da" }}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fill: "#64746e", fontSize: 12 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend
+                    wrapperStyle={{ paddingTop: "12px", fontSize: "12px", fontWeight: 600 }}
+                  />
+                  <Bar
+                    dataKey="occupied"
+                    fill="#173b35"
+                    name="Occupied"
+                    radius={[6, 6, 0, 0]}
+                  />
+                  <Bar
+                    dataKey="available"
+                    fill="#e2b667"
+                    name="Available"
+                    radius={[6, 6, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="text-center text-xs text-[#64746e] py-12">
+                No room inventory registered
+              </div>
+            )}
           </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={roomTypeDistribution}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="type" tick={{ fontSize: 11 }} />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="occupied" fill="#10B981" name="Occupied" />
-              <Bar dataKey="available" fill="#D1D5DB" name="Available" />
-            </BarChart>
-          </ResponsiveContainer>
+
+          <div className="flex items-center justify-between border-t border-[#edf0eb] pt-4 text-xs font-semibold text-[#64746e]">
+            <span>Total Capacity: {totalCapacitySum} beds</span>
+            <span>Total Occupied: {totalOccupiedSum} beds</span>
+          </div>
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-sm">
-        <div className="mb-4">
-          <h3 className="text-lg font-bold text-gray-900">
-            ⭐ Which Hostel is Doing Best?
-          </h3>
-          <p className="text-sm text-gray-600">Compare all your hostels</p>
+      {/* Hostel Performance Comparison */}
+      <div className="rounded-[2rem] border border-[#173b35]/10 bg-white p-6 sm:p-8 shadow-[0_1rem_2.5rem_rgba(23,59,53,0.06)]">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f6deb1]/50 text-[#173b35]">
+              <Home className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="block text-xs font-extrabold uppercase tracking-[0.15em] text-[#c96e32]">
+                Portfolio Comparison
+              </span>
+              <h3 className="text-xl sm:text-2xl font-black tracking-tight text-[#173b35]">
+                Hostel Performance
+              </h3>
+            </div>
+          </div>
+          <div className="text-xs font-semibold text-[#64746e]">
+            Comparing student application volume & occupancy rate per hostel
+          </div>
         </div>
-        <div className="bg-purple-50 border-l border-purple-400 p-3 mb-4">
-          <p className="text-sm text-purple-800">
-            <span className="font-semibold">What this means:</span> Blue bars =
-            How many students applied. Green bars = How full the hostel is.
-            Taller bars = better performance.
-          </p>
+
+        <div className="min-h-[300px]">
+          {hostelPerformance.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={hostelPerformance} barGap={8}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#edf0eb" vertical={false} />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fill: "#64746e", fontSize: 12, fontWeight: 600 }}
+                  axisLine={{ stroke: "#d8e2da" }}
+                  tickLine={false}
+                />
+                <YAxis
+                  yAxisId="left"
+                  orientation="left"
+                  tick={{ fill: "#173b35", fontSize: 12 }}
+                  axisLine={false}
+                  tickLine={false}
+                  allowDecimals={false}
+                />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  tick={{ fill: "#c96e32", fontSize: 12 }}
+                  unit="%"
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend
+                  wrapperStyle={{ paddingTop: "16px", fontSize: "12px", fontWeight: 600 }}
+                />
+                <Bar
+                  yAxisId="left"
+                  dataKey="applications"
+                  fill="#173b35"
+                  name="Applications"
+                  radius={[6, 6, 0, 0]}
+                />
+                <Bar
+                  yAxisId="right"
+                  dataKey="occupancy"
+                  fill="#c96e32"
+                  name="Occupancy %"
+                  radius={[6, 6, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="text-center text-xs text-[#64746e] py-16">
+              No hostel performance data available
+            </div>
+          )}
         </div>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={hostelPerformance}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-            <YAxis yAxisId="left" orientation="left" stroke="#3B82F6" />
-            <YAxis yAxisId="right" orientation="right" stroke="#10B981" />
-            <Tooltip />
-            <Legend />
-            <Bar
-              yAxisId="left"
-              dataKey="applications"
-              fill="#3B82F6"
-              name="Applications"
-            />
-            <Bar
-              yAxisId="right"
-              dataKey="occupancy"
-              fill="#10B981"
-              name="Occupancy %"
-            />
-          </BarChart>
-        </ResponsiveContainer>
       </div>
     </div>
   );
