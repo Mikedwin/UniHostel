@@ -4,7 +4,8 @@
   "outputDirectory": "build",
   "env": {
     "VITE_API_URL": "https://unihostel.onrender.com",
-    "VITE_PAYSTACK_PUBLIC_KEY": "pk_live_22c9fc410243940e1484e561a2ff84d1e9196675"
+    "VITE_PAYSTACK_PUBLIC_KEY": "pk_live_22c9fc410243940e1484e561a2ff84d1e9196675",
+    "VITE_GOOGLE_CLIENT_ID": "62619471551-jcs13a2b5mpls2npv5b8npej9kjt45ks.apps.googleusercontent.com"
   },
   "headers": [
     {
@@ -28,7 +29,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' https://js.paystack.co https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://unihostel.onrender.com https://api.paystack.co https://*.paystack.co https://challenges.cloudflare.com; frame-src 'self' https://js.paystack.co https://checkout.paystack.com https://*.paystack.co https://challenges.cloudflare.com; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests"
+          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://js.paystack.co https://challenges.cloudflare.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://accounts.google.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://unihostel.onrender.com https://api.paystack.co https://*.paystack.co https://challenges.cloudflare.com https://accounts.google.com; frame-src 'self' https://js.paystack.co https://checkout.paystack.com https://*.paystack.co https://challenges.cloudflare.com https://accounts.google.com; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests"
         },
         {
           "key": "Cross-Origin-Opener-Policy",
