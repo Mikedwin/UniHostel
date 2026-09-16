@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { X, AlertTriangle, CheckCircle, Info } from "lucide-react";
+import { showWarning } from "../../utils/alerts";
 
 const UserActionModal = ({
   isOpen,
@@ -96,7 +97,7 @@ const UserActionModal = ({
   const handleSubmit = (e) => {
     e.preventDefault();
     if (config.requireReason && !reason.trim()) {
-      alert("Please provide a reason");
+      showWarning("Reason Required", "Please provide a reason to continue.");
       return;
     }
     onConfirm({ reason: reason.trim(), note: note.trim() });

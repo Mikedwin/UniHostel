@@ -26,6 +26,7 @@ import {
 import Papa from "papaparse";
 import { saveAs } from "file-saver";
 import { FilterSelect, FilterButton } from "../DashboardFilters";
+import { showError } from "../../utils/alerts";
 
 const STATUS_COLORS = {
   Pending: "#e2b667",
@@ -213,7 +214,7 @@ const ManagerAnalytics = ({ applications = [], hostels = [] }) => {
       saveAs(blob, `Analytics_${new Date().toISOString().split("T")[0]}.csv`);
     } catch (error) {
       console.error("Export error:", error);
-      alert("Failed to export analytics data");
+      showError("Export Failed", "Failed to export analytics data.");
     } finally {
       setExportLoading(false);
     }

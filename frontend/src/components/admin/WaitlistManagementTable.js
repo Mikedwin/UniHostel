@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Users, Download, Search, Trash2, RefreshCw, MessageSquare, Mail, Calendar, Phone } from 'lucide-react';
 import API_ENDPOINTS from '../../config/api';
+import { showConfirm, showSuccess, showError } from '../../utils/alerts';
 
 const WaitlistManagementTable = ({ token }) => {
   const [entries, setEntries] = useState([]);
@@ -62,27 +63,35 @@ const WaitlistManagementTable = ({ token }) => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
+      showSuccess('Waitlist Exported', 'CSV file downloaded successfully.');
     } catch (err) {
       console.error('Error exporting waitlist CSV:', err);
-      alert('Failed to export waitlist CSV');
+      showError('Export Failed', 'Failed to export waitlist CSV.');
     } finally {
       setExportLoading(false);
     }
   };
 
   const handleDelete = async (id, name) => {
-    if (!window.confirm(`Are you sure you want to remove "${name}" from the waitlist?`)) {
-      return;
-    }
+    const confirmed = await showConfirm({
+      title: 'Remove from Waitlist?',
+      text: `Are you sure you want to remove "${name}" from the waitlist?`,
+      confirmText: 'Yes, Remove',
+      isDanger: true,
+      icon: 'warning',
+    });
+
+    if (!confirmed) return;
 
     try {
       await axios.delete(API_ENDPOINTS.WAITLIST_DELETE(id), {
         headers: { Authorization: `Bearer ${token}` }
       });
+      showSuccess('Entry Removed', `"${name}" has been removed from the waitlist.`);
       fetchWaitlist(page, search);
     } catch (err) {
       console.error('Error deleting waitlist entry:', err);
-      alert(err.response?.data?.message || 'Failed to delete waitlist entry');
+      showError('Delete Failed', err.response?.data?.message || 'Failed to delete waitlist entry.');
     }
   };
 

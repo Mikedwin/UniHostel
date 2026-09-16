@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import API_URL from '../../config';
 import { RotateCcw, Trash2 } from 'lucide-react';
+import { showConfirm, showSuccess, showError } from '../../utils/alerts';
 
 const TrashHostels = ({ token, onRestore }) => {
     const [hostels, setHostels] = useState([]);
@@ -25,15 +26,22 @@ const TrashHostels = ({ token, onRestore }) => {
     };
 
     const handleRestore = async (id) => {
-        if (!window.confirm('Restore this hostel?')) return;
+        const confirmed = await showConfirm({
+            title: 'Restore Hostel?',
+            text: 'Are you sure you want to restore this hostel listing?',
+            confirmText: 'Yes, Restore',
+        });
+        if (!confirmed) return;
+
         try {
             await axios.patch(`${API_URL}/api/admin/trash/hostels/${id}/restore`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+            showSuccess('Hostel Restored', 'The hostel listing has been restored.');
             fetchTrash();
             if (onRestore) onRestore();
         } catch (err) {
-            alert('Failed to restore hostel');
+            showError('Restore Failed', 'Failed to restore hostel.');
         }
     };
 

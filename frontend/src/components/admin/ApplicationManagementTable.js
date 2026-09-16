@@ -11,6 +11,7 @@ import {
   Filter,
 } from "lucide-react";
 import { FilterSearchInput, FilterSelect, FilterButton } from '../DashboardFilters';
+import { showWarning } from "../../utils/alerts";
 
 const ApplicationManagementTable = ({ token, onAction }) => {
   const [applications, setApplications] = useState([]);
@@ -68,7 +69,7 @@ const ApplicationManagementTable = ({ token, onAction }) => {
 
   const handleBulkAction = (action) => {
     if (selectedApps.length === 0) {
-      alert("Please select applications first");
+      showWarning("Selection Required", "Please select at least one application to perform this action.");
       return;
     }
     onAction(`bulk-${action}`, selectedApps, fetchApplications);

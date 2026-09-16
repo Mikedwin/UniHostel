@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { UserPlus, Eye, EyeOff } from "lucide-react";
 import API_URL from "../../config";
+import Swal from "sweetalert2";
 
 const ManagerRegistrationForm = ({ token, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -29,14 +30,21 @@ const ManagerRegistrationForm = ({ token, onSuccess }) => {
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
-      // Show success message with credentials
-      alert(
-        `Manager Account Created Successfully!\n\n` +
-          `Name: ${res.data.manager.name}\n` +
-          `Email: ${res.data.manager.email}\n` +
-          `Password: ${formData.password}\n\n` +
-          `Please share these credentials with the manager securely.`,
-      );
+      // Show branded success message with credentials
+      await Swal.fire({
+        title: "Manager Account Created!",
+        html: `
+          <div style="text-align: left; background: #fbfaf6; padding: 1.25rem; border-radius: 1rem; border: 1px solid #d5ddd5; margin-top: 0.5rem;">
+            <p style="margin: 0 0 0.4rem 0;"><strong>Name:</strong> ${res.data.manager.name}</p>
+            <p style="margin: 0 0 0.4rem 0;"><strong>Email:</strong> ${res.data.manager.email}</p>
+            <p style="margin: 0 0 0.4rem 0;"><strong>Password:</strong> <code style="background: #e7efe8; color: #173b35; padding: 2px 6px; border-radius: 4px; font-weight: bold;">${formData.password}</code></p>
+          </div>
+          <p style="font-size: 0.85rem; color: #64746e; margin-top: 0.75rem;">Please share these credentials securely with the manager.</p>
+        `,
+        icon: "success",
+        confirmButtonText: "Done",
+        confirmButtonColor: "#173b35",
+      });
 
       // Reset form
       setFormData({

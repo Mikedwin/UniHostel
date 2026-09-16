@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Save, X, Upload, Image as ImageIcon } from "lucide-react";
 import API_URL from "../config";
+import { showWarning } from "../utils/alerts";
 
 const EditHostelSimple = () => {
   const { token } = useAuth();
@@ -225,8 +226,9 @@ const EditHostelSimple = () => {
                       const file = e.target.files[0];
                       if (file) {
                         if (file.size > 500000) {
-                          alert(
-                            "Image too large! Please use images under 500KB",
+                          showWarning(
+                            "Image Too Large",
+                            "Please use images under 500KB."
                           );
                           return;
                         }

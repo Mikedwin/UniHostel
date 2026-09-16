@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Plus, X } from 'lucide-react';
 import API_URL from '../config';
+import { showWarning } from '../utils/alerts';
 
 const EditHostel = () => {
     const { token } = useAuth();
@@ -86,7 +87,7 @@ const EditHostel = () => {
 
     const addRoomType = () => {
         if (!isRoomValid()) {
-            alert('Please complete all required room fields');
+            showWarning('Required Fields Missing', 'Please complete all required room fields (Price, Total Capacity, and Room Image).');
             return;
         }
         setRoomTypes([...roomTypes, currentRoom]);
@@ -220,7 +221,7 @@ const EditHostel = () => {
                                     const file = e.target.files[0];
                                     if (file) {
                                         if (file.size > 500000) {
-                                            alert('Image too large! Please use images under 500KB');
+                                            showWarning('Image Too Large', 'Please upload images under 500KB.');
                                             return;
                                         }
                                         const reader = new FileReader();
@@ -306,7 +307,7 @@ const EditHostel = () => {
                                         const file = e.target.files[0];
                                         if (file) {
                                             if (file.size > 500000) {
-                                                alert('Image too large! Please use images under 500KB');
+                                                showWarning('Image Too Large', 'Please upload images under 500KB.');
                                                 return;
                                             }
                                             const reader = new FileReader();

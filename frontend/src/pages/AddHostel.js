@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { Plus, X, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { API_ENDPOINTS } from "../config/api";
 import imageCompression from "browser-image-compression";
+import { showWarning } from "../utils/alerts";
 
 const AddHostel = () => {
   const { token } = useAuth();
@@ -95,7 +96,10 @@ const AddHostel = () => {
 
   const addRoomType = () => {
     if (!isRoomValid()) {
-      alert("Please complete all required room fields (Price and Room Image)");
+      showWarning(
+        "Required Fields Missing",
+        "Please complete all required room fields (Price, Total Capacity, and Room Image) before adding.",
+      );
       return;
     }
     setRoomTypes([...roomTypes, currentRoom]);

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import API_URL from "../../config";
 import { FilterSelect, FilterDateInput, FilterButton, FilterBar } from '../DashboardFilters';
+import { showConfirm, showSuccess, showError } from "../../utils/alerts";
 
 const AdminTransactions = ({ token }) => {
   const [transactions, setTransactions] = useState([]);
@@ -101,12 +102,15 @@ const AdminTransactions = ({ token }) => {
   };
 
   const handleResetTransactions = async () => {
-    if (
-      !window.confirm(
-        "⚠️ WARNING: This will permanently delete ALL transactions from the system (including manager transactions).\n\nThis action cannot be undone. Are you absolutely sure?",
-      )
-    )
-      return;
+    const confirmed = await showConfirm({
+      title: "Reset ALL Transactions?",
+      text: "This will permanently delete all platform transactions across all hostels and managers. This action cannot be undone.",
+      confirmText: "Yes, Reset All",
+      isDanger: true,
+      icon: "warning",
+    });
+
+    if (!confirmed) return;
 
     try {
       const res = await axios.delete(
@@ -115,10 +119,10 @@ const AdminTransactions = ({ token }) => {
           headers: { Authorization: `Bearer ${token}` },
         },
       );
-      alert(res.data.message);
+      showSuccess("Transactions Reset", res.data.message || "All transactions have been cleared.");
       fetchData();
     } catch (err) {
-      alert(err.response?.data?.error || "Failed to reset transactions");
+      showError("Reset Failed", err.response?.data?.error || "Failed to reset transactions.");
     }
   };
 

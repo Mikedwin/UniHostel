@@ -12,6 +12,8 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import AdminStatsSection from "../components/admin/dashboard/AdminStatsSection";
 import AdminTabContent from "../components/admin/dashboard/AdminTabContent";
 import AdminTabNavigation from "../components/admin/dashboard/AdminTabNavigation";
+import Swal from "sweetalert2";
+import { showConfirm as appConfirm, showPrompt as appPrompt, showError as appError, showSuccess as appSuccess } from "../utils/alerts";
 
 const UserManagementTable = lazy(
   () => import("../components/admin/UserManagementTable"),
@@ -165,22 +167,32 @@ const AdminDashboard = () => {
   };
 
   const toggleHostelActive = async (hostelId) => {
-    if (!window.confirm("Are you sure you want to change this hostel status?"))
-      return;
+    const confirmed = await appConfirm({
+      title: "Change Hostel Status?",
+      text: "Are you sure you want to toggle the active status of this hostel?",
+      confirmText: "Yes, Change",
+    });
+    if (!confirmed) return;
     try {
       await axios.patch(
         `${API_URL}/api/admin/hostels/${hostelId}/toggle-active`,
         {},
         { headers: { Authorization: `Bearer ${token}` } },
       );
+      showSuccess("Hostel status updated successfully");
       fetchDashboardData();
     } catch (err) {
-      alert("Failed to update hostel status");
+      appError("Status Update Failed", err.response?.data?.error || "Failed to update hostel status.");
     }
   };
 
   const flagHostel = async (hostelId) => {
-    const reason = prompt("Enter reason for flagging this hostel:");
+    const reason = await appPrompt({
+      title: "Flag Hostel",
+      text: "Please enter the reason for flagging this hostel:",
+      inputPlaceholder: "Reason for flagging...",
+      confirmText: "Flag Hostel",
+    });
     if (!reason) return;
     try {
       await axios.patch(
@@ -188,26 +200,30 @@ const AdminDashboard = () => {
         { reason },
         { headers: { Authorization: `Bearer ${token}` } },
       );
+      showSuccess("Hostel flagged successfully");
       fetchDashboardData();
     } catch (err) {
-      alert("Failed to flag hostel");
+      appError("Flagging Failed", err.response?.data?.error || "Failed to flag hostel.");
     }
   };
 
   const deleteHostel = async (hostelId) => {
-    if (
-      !window.confirm(
-        "Are you sure you want to DELETE this hostel? This action cannot be undone and will remove it from the browse section.",
-      )
-    )
-      return;
+    const confirmed = await appConfirm({
+      title: "Delete Hostel?",
+      text: "Are you sure you want to delete this hostel? This action cannot be undone and will remove it from listings.",
+      confirmText: "Yes, Delete",
+      isDanger: true,
+      icon: "warning",
+    });
+    if (!confirmed) return;
     try {
       await axios.delete(`${API_URL}/api/admin/hostels/${hostelId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      showSuccess("Hostel deleted successfully");
       fetchDashboardData();
     } catch (err) {
-      alert("Failed to delete hostel");
+      appError("Delete Failed", err.response?.data?.error || "Failed to delete hostel.");
     }
   };
 
@@ -264,9 +280,17 @@ const AdminDashboard = () => {
       });
 
       if (modalAction === "reset-password" && res.data.temporaryPassword) {
-        alert(
-          `Password reset successful!\n\nTemporary Password: ${res.data.temporaryPassword}\n\nPlease save this password and share it with the user securely.`,
-        );
+        await Swal.fire({
+          title: "Password Reset Successful",
+          html: `
+            <div style="text-align: left; background: #fbfaf6; padding: 1.25rem; border-radius: 1rem; border: 1px solid #d5ddd5; margin-top: 0.5rem;">
+              <p style="margin: 0 0 0.4rem 0;"><strong>Temporary Password:</strong> <code style="background: #e7efe8; color: #173b35; padding: 2px 6px; border-radius: 4px; font-weight: bold;">${res.data.temporaryPassword}</code></p>
+            </div>
+            <p style="font-size: 0.85rem; color: #64746e; margin-top: 0.75rem;">Please save and share this password with the user securely.</p>
+          `,
+          icon: "success",
+          confirmButtonColor: "#173b35",
+        });
       }
 
       showSuccess(res.data.message || "Action completed successfully");
@@ -274,25 +298,31 @@ const AdminDashboard = () => {
       setSelectedUser(null);
       setModalAction("");
     } catch (err) {
-      alert(err.response?.data?.error || "Action failed");
+      showError(err.response?.data?.error || "Action failed");
     } finally {
       setActionLoading(false);
     }
   };
 
   const handleBulkAction = async (action, userIds) => {
-    const reason =
-      action === "suspend" || action === "ban"
-        ? prompt(`Enter reason for bulk ${action}:`)
-        : null;
-    if ((action === "suspend" || action === "ban") && !reason) return;
+    let reason = null;
+    if (action === "suspend" || action === "ban") {
+      reason = await appPrompt({
+        title: `Bulk ${action.toUpperCase()}`,
+        text: `Please enter reason for bulk ${action}:`,
+        inputPlaceholder: `Reason for bulk ${action}...`,
+      });
+      if (!reason) return;
+    }
 
-    if (
-      !window.confirm(
-        `Are you sure you want to ${action} ${userIds.length} user(s)?`,
-      )
-    )
-      return;
+    const confirmed = await appConfirm({
+      title: `Bulk ${action}?`,
+      text: `Are you sure you want to ${action} ${userIds.length} user(s)?`,
+      confirmText: `Yes, ${action}`,
+      isDanger: action === "delete" || action === "ban",
+      icon: action === "delete" || action === "ban" ? "warning" : "question",
+    });
+    if (!confirmed) return;
 
     try {
       const res = await axios.post(
@@ -312,7 +342,7 @@ const AdminDashboard = () => {
       if (failed.length > 0) message += `, ${failed.length} failed`;
       showSuccess(message);
     } catch (err) {
-      alert(err.response?.data?.error || "Bulk action failed");
+      showError(err.response?.data?.error || "Bulk action failed");
     }
   };
 
@@ -440,7 +470,7 @@ const AdminDashboard = () => {
       setAppModalAction("");
       fetchDashboardData();
     } catch (err) {
-      alert(err.response?.data?.error || "Action failed");
+      showError(err.response?.data?.error || "Action failed");
     } finally {
       setActionLoading(false);
     }
@@ -452,36 +482,50 @@ const AdminDashboard = () => {
     refreshCallback,
   ) => {
     if (action === "delete") {
-      showConfirm(
-        `Are you sure you want to delete ${appIds.length} application(s)?\n\nThis action cannot be undone.`,
-        async () => {
-          try {
-            const deletePromises = appIds.map((id) =>
-              axios.delete(`${API_URL}/api/admin/applications/${id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-              }),
-            );
-            await Promise.all(deletePromises);
-            showSuccess(`Successfully deleted ${appIds.length} application(s)`);
-            if (refreshCallback) refreshCallback();
-            fetchDashboardData();
-          } catch (err) {
-            showError(err.response?.data?.error || "Bulk delete failed");
-          }
-        },
-      );
+      const confirmed = await appConfirm({
+        title: "Delete Applications?",
+        text: `Are you sure you want to delete ${appIds.length} application(s)? This action cannot be undone.`,
+        confirmText: "Yes, Delete",
+        isDanger: true,
+        icon: "warning",
+      });
+
+      if (!confirmed) return;
+
+      try {
+        const deletePromises = appIds.map((id) =>
+          axios.delete(`${API_URL}/api/admin/applications/${id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        );
+        await Promise.all(deletePromises);
+        showSuccess(`Successfully deleted ${appIds.length} application(s)`);
+        if (refreshCallback) refreshCallback();
+        fetchDashboardData();
+      } catch (err) {
+        showError(err.response?.data?.error || "Bulk delete failed");
+      }
       return;
     }
 
-    const reason = prompt(`Enter reason for bulk ${action}:`);
-    if (!reason) return;
+    let reason = null;
+    if (action === "reject" || action === "flag") {
+      reason = await appPrompt({
+        title: `Bulk ${action.toUpperCase()}`,
+        text: `Please enter reason for bulk ${action}:`,
+        inputPlaceholder: `Reason for bulk ${action}...`,
+      });
+      if (!reason) return;
+    }
 
-    if (
-      !window.confirm(
-        `Are you sure you want to ${action} ${appIds.length} application(s)?`,
-      )
-    )
-      return;
+    const confirmed = await appConfirm({
+      title: `Bulk ${action}?`,
+      text: `Are you sure you want to ${action} ${appIds.length} application(s)?`,
+      confirmText: `Yes, ${action}`,
+      isDanger: action === "reject",
+    });
+
+    if (!confirmed) return;
 
     try {
       const res = await axios.post(

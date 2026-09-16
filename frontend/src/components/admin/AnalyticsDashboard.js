@@ -28,6 +28,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { FilterSelect, FilterDateInput, FilterButton } from "../DashboardFilters";
+import { showSuccess, showError } from "../../utils/alerts";
 
 const BRAND_COLORS = [
   "#173b35",
@@ -171,11 +172,12 @@ const AnalyticsDashboard = ({ token }) => {
         },
         { headers: { Authorization: `Bearer ${token}` } },
       );
-      alert(
-        `Export logged successfully. ${format.toUpperCase()} export will be generated.`,
+      showSuccess(
+        "Export Generated",
+        `Full analytics report for ${format.toUpperCase()} export has been logged and downloaded.`,
       );
     } catch (err) {
-      alert("Export failed");
+      showError("Export Failed", "Unable to generate analytics export.");
     }
   };
 

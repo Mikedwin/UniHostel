@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import API_URL from '../../config';
 import { RotateCcw } from 'lucide-react';
+import { showConfirm, showSuccess, showError } from '../../utils/alerts';
 
 const TrashUsers = ({ token, onRestore }) => {
     const [users, setUsers] = useState([]);
@@ -25,15 +26,22 @@ const TrashUsers = ({ token, onRestore }) => {
     };
 
     const handleRestore = async (id) => {
-        if (!window.confirm('Restore this user?')) return;
+        const confirmed = await showConfirm({
+            title: 'Restore User?',
+            text: 'Are you sure you want to restore this user account?',
+            confirmText: 'Yes, Restore',
+        });
+        if (!confirmed) return;
+
         try {
             await axios.patch(`${API_URL}/api/admin/trash/users/${id}/restore`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+            showSuccess('User Restored', 'The user account has been successfully restored.');
             fetchTrash();
             if (onRestore) onRestore();
         } catch (err) {
-            alert('Failed to restore user');
+            showError('Restore Failed', 'Failed to restore user.');
         }
     };
 
