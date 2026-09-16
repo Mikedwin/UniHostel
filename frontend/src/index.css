@@ -3374,12 +3374,13 @@
 .workspace-tabs button {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.5rem;
   border: 0;
   border-radius: 999px;
   background: transparent;
   color: #c1d0c7;
-  padding: 0.55rem 0.8rem;
+  padding: 0.65rem 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   white-space: nowrap;
   transition:
@@ -3388,7 +3389,8 @@
     transform 0.2s;
 }
 .workspace-tabs button svg {
-  width: 1rem;
+  width: 1.15rem;
+  height: 1.15rem;
 }
 .workspace-tabs button:hover,
 .workspace-tabs .is-active {
@@ -3410,51 +3412,52 @@
 }
 .workspace-stat {
   min-height: 10.5rem;
-  padding: 1rem;
+  padding: 1.25rem;
   background: #fbfaf6;
   position: relative;
 }
 .workspace-stat > span {
   color: #c96e32;
-  font-size: 0.65rem;
+  font-size: 0.8rem;
   letter-spacing: 0.14em;
   font-weight: 800;
 }
 .workspace-stat > svg {
   position: absolute;
-  right: 1rem;
-  top: 1rem;
-  width: 1.2rem;
+  right: 1.25rem;
+  top: 1.25rem;
+  width: 1.35rem;
+  height: 1.35rem;
   color: #6d8378;
 }
 .workspace-stat strong {
   display: block;
-  font-size: 2.1rem;
+  font-size: 2.35rem;
   line-height: 1;
   letter-spacing: -0.07em;
   margin-top: 2.4rem;
 }
 .workspace-stat p {
-  margin: 0.35rem 0 0;
+  margin: 0.4rem 0 0;
   color: #6a7873;
-  font-size: 0.8rem;
+  font-size: 0.95rem;
 }
 .workspace-panel-heading {
   display: flex;
   gap: 1rem;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
 .workspace-panel-heading span {
   color: #c96e32;
-  font-size: 0.65rem;
+  font-size: 0.8rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.15em;
 }
 .workspace-panel-heading h2 {
-  font-size: 1.4rem;
+  font-size: 1.65rem;
   letter-spacing: -0.045em;
   font-weight: 800;
 }
@@ -3465,14 +3468,18 @@
   justify-items: center;
   text-align: center;
   color: #63746e;
+  font-size: 0.95rem;
 }
 .workspace-empty svg {
   color: #c96e32;
   margin-bottom: 0.5rem;
+  width: 2rem;
+  height: 2rem;
 }
 .workspace-empty a {
   color: #c96e32;
   font-weight: 700;
+  font-size: 0.95rem;
 }
 .manager-requests-panel,
 .manager-listings-panel,
@@ -3480,7 +3487,7 @@
 .admin-listing-review {
   background: #fff;
   border-radius: 1.7rem 1.7rem 0.55rem 1.7rem;
-  padding: 1.4rem;
+  padding: 1.6rem;
   box-shadow: 0 1rem 2.5rem rgba(23, 59, 53, 0.06);
 }
 .manager-requests-panel {
@@ -3498,16 +3505,17 @@
 .manager-filter button {
   border: 0;
   background: #fff;
-  padding: 0.45rem 0.7rem;
+  padding: 0.5rem 0.9rem;
   color: #64736e;
-  font-size: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 .manager-filter .is-active {
   background: #173b35;
   color: white;
 }
 .manager-application-list article {
-  padding: 0.85rem 0;
+  padding: 1rem 0;
   border-top: 1px solid #edf0eb;
 }
 .manager-application-open {
@@ -3517,54 +3525,59 @@
   display: grid;
   grid-template-columns: auto 1fr auto auto;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.85rem;
   text-align: left;
 }
 .manager-app-avatar {
   display: grid;
   place-items: center;
-  width: 2rem;
-  height: 2rem;
+  width: 2.5rem;
+  height: 2.5rem;
   background: #e7efe8;
   color: #173b35;
   border-radius: 45% 55% 55% 45%;
   font-weight: 800;
+  font-size: 1.05rem;
 }
 .manager-application-open strong,
 .manager-listings-list strong {
   display: block;
   color: #173b35;
-  font-size: 0.9rem;
+  font-size: 1.05rem;
+  line-height: 1.3;
 }
 .manager-application-open small,
 .manager-listings-list p {
   display: block;
   color: #71807a;
-  font-size: 0.72rem;
-  margin-top: 0.15rem;
+  font-size: 0.875rem;
+  margin-top: 0.2rem;
 }
 .manager-application-open em {
   color: #c96e32;
-  font-size: 0.68rem;
+  font-size: 0.85rem;
+  font-weight: 600;
   font-style: normal;
   text-transform: capitalize;
 }
 .manager-application-open > svg {
-  width: 1rem;
+  width: 1.25rem;
+  height: 1.25rem;
   color: #9aa8a1;
 }
 .manager-quick-actions {
   display: flex;
-  gap: 0.5rem;
-  padding: 0.6rem 0 0 2.8rem;
+  gap: 0.6rem;
+  padding: 0.65rem 0 0 3.35rem;
 }
 .manager-quick-actions button,
 .manager-listing-actions button,
 .admin-listing-review button {
   border: 0;
   border-radius: 999px;
-  padding: 0.4rem 0.6rem;
-  font-size: 0.7rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.85rem;
+  font-weight: 600;
   background: #e7efe8;
   color: #173b35;
 }
@@ -3573,32 +3586,34 @@
   color: #fff;
 }
 .manager-quick-actions svg {
-  width: 0.8rem;
+  width: 0.95rem;
+  height: 0.95rem;
   display: inline;
 }
 .manager-listings-panel .workspace-panel-heading > a {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.35rem;
   color: #c96e32;
-  font-size: 0.75rem;
+  font-size: 0.95rem;
   font-weight: 800;
 }
 .manager-listings-panel .workspace-panel-heading > a svg {
-  width: 1rem;
+  width: 1.1rem;
+  height: 1.1rem;
 }
 .manager-listings-list article {
   display: grid;
-  grid-template-columns: 2.7rem 1fr auto;
+  grid-template-columns: 3.2rem 1fr auto;
   align-items: center;
-  gap: 0.65rem;
-  padding: 0.8rem 0;
+  gap: 0.85rem;
+  padding: 1rem 0;
   border-top: 1px solid #edf0eb;
 }
 .manager-listing-image {
-  height: 2.7rem;
+  height: 3.2rem;
   overflow: hidden;
-  border-radius: 0.8rem 0.8rem 0.25rem 0.8rem;
+  border-radius: 0.9rem 0.9rem 0.3rem 0.9rem;
   background: #f6deb1;
   display: grid;
   place-items: center;
@@ -3609,11 +3624,12 @@
   object-fit: cover;
 }
 .manager-listing-image svg {
-  width: 1rem;
+  width: 1.25rem;
+  height: 1.25rem;
 }
 .manager-listing-actions {
   display: flex;
-  gap: 0.35rem;
+  gap: 0.45rem;
   align-items: center;
 }
 .manager-listing-actions a {
@@ -3621,12 +3637,13 @@
   place-items: center;
   background: #173b35;
   color: #fff;
-  width: 1.65rem;
-  height: 1.65rem;
+  width: 2rem;
+  height: 2rem;
   border-radius: 50%;
 }
 .manager-listing-actions a svg {
-  width: 0.85rem;
+  width: 1rem;
+  height: 1rem;
 }
 .manager-listing-actions button {
   color: #a13c30;
