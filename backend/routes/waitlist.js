@@ -32,10 +32,6 @@ router.post('/join', async (req, res) => {
       return res.status(400).json({ message: 'Please provide a valid phone number' });
     }
 
-    if (!preferredHostel || !preferredHostel.trim()) {
-      return res.status(400).json({ message: 'Preferred hostel is required' });
-    }
-
     // Check if already on waitlist
     const existing = await Waitlist.findOne({ email: cleanEmail });
     if (existing) {
@@ -53,7 +49,7 @@ router.post('/join', async (req, res) => {
       name: name.trim(),
       email: cleanEmail,
       phone: cleanPhone,
-      preferredHostel: preferredHostel.trim(),
+      preferredHostel: preferredHostel ? preferredHostel.trim() : '',
       managerPhone: managerPhone ? managerPhone.trim() : '',
       source: source || 'website'
     });

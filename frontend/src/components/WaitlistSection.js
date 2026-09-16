@@ -37,10 +37,6 @@ const WaitlistSection = ({ standalone = false }) => {
       setErrorMsg('Please enter your phone/WhatsApp number.');
       return;
     }
-    if (!formData.preferredHostel.trim()) {
-      setErrorMsg('Please enter your preferred hostel.');
-      return;
-    }
 
     setLoading(true);
     try {
@@ -48,7 +44,7 @@ const WaitlistSection = ({ standalone = false }) => {
         name: formData.name.trim(),
         email: formData.email.trim(),
         phone: formData.phone.trim(),
-        preferredHostel: formData.preferredHostel.trim(),
+        preferredHostel: formData.preferredHostel ? formData.preferredHostel.trim() : '',
         managerPhone: formData.managerPhone ? formData.managerPhone.trim() : '',
         source: standalone ? 'waitlist_page' : 'landing_page'
       });
@@ -211,16 +207,20 @@ const WaitlistSection = ({ standalone = false }) => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#F6DEB1] mb-1.5">
-                    Preferred Hostel
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-[#F6DEB1]">
+                      Preferred Hostel
+                    </label>
+                    <span className="text-[11px] font-normal text-white/50 lowercase tracking-normal">
+                      (optional)
+                    </span>
+                  </div>
                   <input
                     type="text"
                     name="preferredHostel"
                     value={formData.preferredHostel}
                     onChange={handleChange}
-                    placeholder="e.g. Evandy Hostel, Pentagon, TF, Bani..."
-                    required
+                    placeholder="e.g. Evandy Hostel, Pentagon, TF (optional)"
                     className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3.5 text-white placeholder-white/40 focus:border-[#23817A] focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#23817A]/40 transition text-sm sm:text-base"
                   />
                 </div>
