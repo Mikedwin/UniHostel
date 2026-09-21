@@ -25,7 +25,7 @@ const ManagerListingsSection = ({ hostels = [], onDeleteHostel }) => (
             </div>
             <div>
               <strong>{hostel.name}</strong>
-              <p>{hostel.location || "Accra, Ghana"}</p>
+              <p>{hostel.location || "Ghana"}</p>
             </div>
             <div className="manager-listing-actions">
               <Link

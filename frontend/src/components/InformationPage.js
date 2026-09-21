@@ -74,7 +74,7 @@ const InformationPage = ({
       >
         <img
           src={heroImage}
-          alt="Student hostel in Accra, Ghana"
+          alt="Student hostel in Ghana"
           className="info-page-hero-image absolute inset-0 h-full w-full object-cover"
         />
         <div

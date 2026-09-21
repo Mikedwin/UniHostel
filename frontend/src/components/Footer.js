@@ -31,7 +31,7 @@ const Footer = () => {
               </div>
             </Link>
             <p className="mt-6 text-sm leading-6 text-white/70 sm:text-base sm:leading-7">
-              Verified student housing in Accra. Search, apply, and know what
+              Verified student housing across Ghana. Search, apply, and know what
               happens next.
             </p>
           </div>

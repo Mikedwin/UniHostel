@@ -238,7 +238,7 @@ const HostelList = () => {
       >
         <img
           src={GHANA_HOSTEL_IMAGE}
-          alt="Student hostel in Accra, Ghana"
+          alt="Student hostel in Ghana"
           className="catalog-hero-image absolute inset-0 h-full w-full object-cover"
         />
         <div
@@ -246,7 +246,7 @@ const HostelList = () => {
           className="catalog-hero-overlay absolute inset-0"
         />
         <div className="relative mx-auto max-w-7xl">
-          <p className="catalog-hero-kicker">Student housing in Accra</p>
+          <p className="catalog-hero-kicker">Student housing across Ghana</p>
           <h1 className="max-w-4xl">Find room. Keep your footing.</h1>
           <p className="catalog-hero-copy mt-6 max-w-xl text-base leading-7 text-white/80 sm:text-lg sm:leading-8">
             Search verified accommodation by hostel, room type, or what you can

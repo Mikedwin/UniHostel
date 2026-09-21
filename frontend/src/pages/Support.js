@@ -18,7 +18,7 @@ const Support = () => (
     icon={HelpCircle}
     title="Help, without the runaround."
     description="Get guidance for room search, applications, payments, listings, and platform access. We keep support connected to the way UniHostel actually works."
-    meta="Support centre · Accra, Ghana"
+    meta="Support centre · Ghana"
   >
     <InfoSection title="Start with your role." icon={HelpCircle}>
       <div className="info-grid info-grid--three">

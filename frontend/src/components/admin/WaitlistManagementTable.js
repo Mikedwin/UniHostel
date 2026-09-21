@@ -105,7 +105,7 @@ const WaitlistManagementTable = ({ token }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="waitlist-admin space-y-6">
       {/* Header card with summary & export */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-white p-6 shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
@@ -113,10 +113,10 @@ const WaitlistManagementTable = ({ token }) => {
             <Users className="h-7 w-7" />
           </div>
           <div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Early Access Leads</span>
-            <h2 className="text-2xl font-black text-[#173B35]">Student Waitlist</h2>
+            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Search requests</span>
+            <h2 className="text-2xl font-black text-[#173B35]">Student waitlist</h2>
             <p className="text-sm text-gray-500 mt-0.5">
-              Total Signups: <strong className="text-[#C96E32] font-bold">{totalAll} students</strong>
+              Total requests: <strong className="text-[#C96E32] font-bold">{totalAll} students</strong>
             </p>
           </div>
         </div>
@@ -128,7 +128,7 @@ const WaitlistManagementTable = ({ token }) => {
             disabled={loading}
             className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition"
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${loading ? 'waitlist-admin-spin' : ''}`} />
             Refresh
           </button>
 
@@ -188,7 +188,7 @@ const WaitlistManagementTable = ({ token }) => {
                 <tr>
                   <td colSpan="8" className="py-12 text-center text-gray-400">
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#173B35] border-t-transparent" />
+                      <div className="h-6 w-6 waitlist-admin-spinner rounded-full border-2 border-[#173B35] border-t-transparent" />
                       <span>Loading waitlist leads...</span>
                     </div>
                   </td>
@@ -279,7 +279,7 @@ const WaitlistManagementTable = ({ token }) => {
                           type="button"
                           onClick={() => handleDelete(entry._id, entry.name)}
                           title="Delete Lead"
-                          className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 transition"
+                          className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-[#6c8175] hover:bg-red-50 hover:text-red-700 transition"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>

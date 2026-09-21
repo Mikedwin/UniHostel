@@ -1,4 +1,5 @@
 import React from 'react';
+import { AlertTriangle, ArrowRight, RotateCcw } from 'lucide-react';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -21,35 +22,34 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-          <div className="max-w-md w-full bg-white rounded-2xl shadow-xl border border-gray-100 p-8 text-center">
-            <div className="w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-5 text-2xl font-bold">
-              !
-            </div>
-            <h1 className="text-xl font-bold text-gray-900 mb-2">Something went unexpectedly wrong</h1>
-            <p className="text-gray-500 text-sm mb-6 leading-relaxed">
-              We encountered an issue loading this section. Your data is safe. Please try refreshing or returning to the homepage.
+        <div className="unihostel-error-boundary">
+          <div className="unihostel-error-panel">
+            <div className="unihostel-error-mark"><AlertTriangle aria-hidden="true" /></div>
+            <p className="unihostel-error-label">A brief interruption</p>
+            <h1>We could not open this part of UniHostel.</h1>
+            <p>
+              Your account and saved details are safe. Try this page again, or return home and continue from there.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="unihostel-error-actions">
               <button
                 onClick={this.handleReset}
-                className="bg-[#0f4c3a] text-white px-5 py-2.5 rounded-xl font-medium text-sm hover:bg-[#0c3c2e] transition shadow-sm"
+                className="unihostel-error-retry"
               >
-                Try Again
+                <RotateCcw aria-hidden="true" /> Try again
               </button>
               <a
                 href="/"
-                className="bg-gray-100 text-gray-700 px-5 py-2.5 rounded-xl font-medium text-sm hover:bg-gray-200 transition"
+                className="unihostel-error-home"
               >
-                Go to Homepage
+                Return home <ArrowRight aria-hidden="true" />
               </a>
             </div>
             {this.state.error && (
-              <details className="mt-4 text-left">
-                <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600">
+              <details className="unihostel-error-details">
+                <summary>
                   Technical Details
                 </summary>
-                <pre className="mt-2 p-3 bg-red-50 text-red-700 rounded-lg text-xs overflow-x-auto whitespace-pre-wrap font-mono">
+                <pre>
                   {this.state.error?.toString() || 'Unknown runtime error'}
                 </pre>
               </details>

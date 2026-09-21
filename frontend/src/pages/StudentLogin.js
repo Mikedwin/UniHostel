@@ -145,7 +145,7 @@ const StudentLogin = () => {
             </ol>
           </div>
           <p className="text-sm text-white/60">
-            Student access for housing in Accra.
+            Student access for housing across Ghana.
           </p>
         </div>
       </aside>

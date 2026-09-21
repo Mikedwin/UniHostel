@@ -44,7 +44,7 @@ const AccountFlowShell = ({
               ))}
             </div>
           </div>
-          <small>Verified student housing in Accra.</small>
+          <small>Verified student housing across Ghana.</small>
         </div>
       </aside>
       <main className="account-flow-main">

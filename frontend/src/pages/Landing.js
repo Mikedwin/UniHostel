@@ -15,7 +15,7 @@ const steps = [
   {
     number: "01",
     title: "Find your fit",
-    text: "Browse verified hostel listings in Accra and compare room types, prices, and availability.",
+    text: "Browse verified hostel listings across Ghana and compare room types, prices, and availability.",
   },
   {
     number: "02",
@@ -134,7 +134,7 @@ const Landing = () => {
             <div className="max-w-xl text-white">
               <p className="unihostel-hero-reveal unihostel-hero-reveal-1 flex items-center gap-2 text-xs font-semibold tracking-[0.02em] text-[#f6deb1] sm:text-sm">
                 <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
-                Verified student housing in Accra
+                Verified student housing across Ghana
               </p>
               <h1 className="mt-5 max-w-[10ch] text-4xl font-black leading-[0.94] tracking-[-0.055em] text-white sm:text-6xl lg:text-7xl">
                 <span className="unihostel-hero-reveal unihostel-hero-reveal-2 block">
@@ -148,7 +148,7 @@ const Landing = () => {
                 Browse verified rooms, apply with confidence, and pay only after
                 approval.
               </p>
-              <div className="unihostel-hero-reveal unihostel-hero-reveal-5 mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+              <div className="unihostel-hero-reveal unihostel-hero-reveal-5 mt-8 flex flex-col items-start gap-5 sm:flex-row sm:items-center">
                 <Link
                   to="/waitlist"
                   className="inline-flex items-center justify-center gap-2 bg-[#c96e32] px-7 py-3.5 text-sm font-bold text-white transition-colors duration-200 hover:bg-[#ad5926] focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#173b35] shadow-lg shadow-[#c96e32]/30"
@@ -256,12 +256,12 @@ const Landing = () => {
                 {steps.map(({ number, title, text }) => (
                   <article
                     key={number}
-                    className="group relative border-b border-white/20 py-7 last:border-b-0 lg:border-b-0 lg:border-r lg:border-white/20 lg:px-7 lg:py-0 lg:first:pl-0 lg:last:border-r-0 lg:last:pr-0"
+                    className="group relative grid grid-cols-[1.5rem_minmax(0,1fr)] gap-3 border-b border-white/20 py-7 last:border-b-0 sm:block lg:border-b-0 lg:border-r lg:border-white/20 lg:px-7 lg:py-0 lg:first:pl-0 lg:last:border-r-0 lg:last:pr-0"
                   >
-                    <span className="absolute -left-3 top-6 flex h-6 w-6 items-center justify-center bg-[#c96e32] text-[10px] font-black text-white sm:-left-[3.15rem] lg:-left-0 lg:-top-3 lg:h-7 lg:w-7">
+                    <span className="flex h-6 w-6 items-center justify-center bg-[#c96e32] text-[10px] font-black text-white sm:absolute sm:-left-[3.15rem] sm:top-6 lg:-left-0 lg:-top-3 lg:h-7 lg:w-7">
                       {number}
                     </span>
-                    <div className="lg:pt-11">
+                    <div className="min-w-0 lg:pt-11">
                       <h3 className="text-xl font-bold tracking-[-0.025em] text-white sm:text-2xl">
                         {title}
                       </h3>
