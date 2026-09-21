@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
 const logger = require('../config/logger');
 const {
@@ -45,6 +46,11 @@ const TURNSTILE_ROUTE_MESSAGES = {
   login: 'Please complete the security check before signing in.',
   register: 'Please complete the security check before creating an account.'
 };
+
+// The browser returns a Google ID token.  Verify it server-side before using
+// any profile data from it. The allowed audience is supplied at verification
+// time from GOOGLE_CLIENT_ID so deployments can configure it through env vars.
+const googleOAuthClient = new OAuth2Client();
 
 const verifyTurnstileForRequest = async (req, res, expectedAction) => {
   if (!isTurnstileEnabled()) {
