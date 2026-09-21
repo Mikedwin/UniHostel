@@ -269,11 +269,29 @@ const updateApplicationStatus = async (req, res) => {
       const capacityUpdate = await Hostel.updateOne(
         {
           _id: app.hostelId,
-          roomTypes: {
-            $elemMatch: {
-              type: app.roomType,
-              $expr: { $lt: ['$occupiedCapacity', '$totalCapacity'] }
-            }
+          $expr: {
+            $gt: [
+              {
+                $size: {
+                  $filter: {
+                    input: '$roomTypes',
+                    as: 'room',
+                    cond: {
+                      $and: [
+                        { $eq: ['$$room.type', app.roomType] },
+                        {
+                          $lt: [
+                            { $ifNull: ['$$room.occupiedCapacity', 0] },
+                            '$$room.totalCapacity'
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              0
+            ]
           }
         },
         [{

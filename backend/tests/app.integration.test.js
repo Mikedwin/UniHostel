@@ -891,3 +891,53 @@ test('payment batch status returns the student statuses and blocks access to ano
 
   assert.match(unauthorizedResponse.body.message, /own payment records/i);
 });
+
+test('manager can final approve a paid application and reserve room capacity', async () => {
+  const manager = await createUser({
+    name: 'Final Approval Manager',
+    email: 'final.approval.manager@example.com',
+    role: 'manager'
+  });
+  const student = await createUser({
+    name: 'Final Approval Student',
+    email: 'final.approval.student@example.com'
+  });
+  const hostel = await createHostel(manager._id, {
+    roomTypes: [{
+      type: '2 in a Room',
+      price: 1200,
+      gender: 'Not Specified',
+      totalCapacity: 3,
+      occupiedCapacity: 2,
+      available: true
+    }]
+  });
+  const application = await Application.create({
+    hostelId: hostel._id,
+    studentId: student._id,
+    roomType: '2 in a Room',
+    semester: 'First Semester',
+    studentName: 'Final Approval Student',
+    contactNumber: '0240000000',
+    status: 'paid_awaiting_final',
+    paymentStatus: 'paid',
+    hostelFee: 1200,
+    adminCommission: 36,
+    totalAmount: 1236
+  });
+
+  const response = await request(app)
+    .patch(`/api/applications/${application._id}/status`)
+    .set('Authorization', `Bearer ${createJwt(manager)}`)
+    .send({ action: 'final_approve' })
+    .expect(200);
+
+  assert.equal(response.body.application.status, 'approved');
+  assert.match(response.body.accessCode, /^UNI-/);
+
+  const updatedApplication = await Application.findById(application._id).lean();
+  const updatedHostel = await Hostel.findById(hostel._id).lean();
+  assert.equal(updatedApplication.status, 'approved');
+  assert.equal(updatedHostel.roomTypes[0].occupiedCapacity, 3);
+  assert.equal(updatedHostel.roomTypes[0].available, false);
+});
