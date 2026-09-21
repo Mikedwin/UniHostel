@@ -22,7 +22,16 @@ const canAccessApplicationPayment = (user, application) => {
     ? application.studentId.toString()
     : String(application.studentId);
 
-  return user.role === 'student' && studentId === user.id;
+  if (user.role === 'student') {
+    return studentId === user.id;
+  }
+
+  const managerId = application.hostelId?.managerId;
+  const normalizedManagerId = managerId && managerId.toString
+    ? managerId.toString()
+    : String(managerId || '');
+
+  return user.role === 'manager' && normalizedManagerId === user.id;
 };
 
 const ensureApplicationPaymentAccess = (req, res, application) => {

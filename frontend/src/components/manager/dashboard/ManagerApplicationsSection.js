@@ -65,6 +65,13 @@ const ManagerApplicationsSection = ({
                 </button>
               </div>
             )}
+            {app.status === "paid_awaiting_final" && (
+              <div className="manager-quick-actions">
+                <button onClick={() => onStatusUpdate(app._id, "final_approve")}>
+                  <Check /> Confirm payment & approve
+                </button>
+              </div>
+            )}
           </article>
         ))}
       </div>

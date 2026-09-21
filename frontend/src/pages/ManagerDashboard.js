@@ -70,7 +70,42 @@ const ManagerDashboard = () => {
         }),
       ]);
 
-      setApplications(Array.isArray(appRes.data) ? appRes.data : []);
+      const managerApplications = Array.isArray(appRes.data) ? appRes.data : [];
+      const paymentCheckIds = managerApplications
+        .filter(
+          (app) =>
+            app.status === "approved_for_payment" &&
+            app.paymentStatus !== "paid" &&
+            app.paymentReference,
+        )
+        .map((app) => app._id);
+
+      let paymentStatuses = [];
+      if (paymentCheckIds.length > 0) {
+        try {
+          const statusRes = await axios.post(
+            API_ENDPOINTS.PAYMENT_STATUS_BATCH,
+            { applicationIds: paymentCheckIds },
+            { headers: { Authorization: `Bearer ${token}` } },
+          );
+          paymentStatuses = Array.isArray(statusRes.data?.statuses)
+            ? statusRes.data.statuses
+            : [];
+        } catch (paymentError) {
+          console.warn("Unable to refresh payment statuses", paymentError);
+        }
+      }
+
+      const paymentStatusMap = new Map(
+        paymentStatuses.map((status) => [status.applicationId, status]),
+      );
+      setApplications(
+        managerApplications.map((app) =>
+          paymentStatusMap.has(app._id)
+            ? { ...app, ...paymentStatusMap.get(app._id) }
+            : app,
+        ),
+      );
       setHostels(Array.isArray(hostRes.data) ? hostRes.data : []);
       setUserInfo(user);
     } catch (err) {

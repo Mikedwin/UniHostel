@@ -27,6 +27,14 @@ const ManagerApplicationDetailsModal = ({
             Approve for payment
           </button>
         )}
+        {application.status === "paid_awaiting_final" && (
+          <button
+            className="workspace-primary"
+            onClick={() => onStatusUpdate(application._id, "final_approve")}
+          >
+            Confirm payment & approve
+          </button>
+        )}
         <button className="workspace-secondary" onClick={onClose}>
           Close
         </button>

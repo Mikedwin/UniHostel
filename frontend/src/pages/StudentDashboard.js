@@ -553,6 +553,16 @@ const StudentDashboard = () => {
                         </div>
                       )}
 
+                    {app.status === "paid_awaiting_final" &&
+                      viewMode === "active" && (
+                        <div className="mt-6 rounded-2xl border border-[#c96e32]/20 bg-[#fff5e8] p-5 text-sm text-[#743d19]">
+                          <p className="font-bold">Payment received</p>
+                          <p className="mt-1">
+                            Your manager will complete the final approval next. Your access code will appear here once approved.
+                          </p>
+                        </div>
+                      )}
+
                     {/* Move to History — pending/rejected */}
                     {(app.status === "pending" || app.status === "rejected") &&
                       viewMode === "active" && (
