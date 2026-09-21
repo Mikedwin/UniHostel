@@ -73,7 +73,7 @@ router.post('/register', registerLimiter, validateInput, authController.register
 router.get('/verify-email/:token', authController.verifyEmail);
 router.post('/resend-verification', verificationEmailLimiter, authController.resendVerification);
 router.post('/login', authLimiter, validateInput, authController.login);
-router.post('/google', authController.googleAuth);
+router.post('/google', authLimiter, authController.googleAuth);
 router.get('/session', auth, authController.session);
 router.post('/logout', authController.logout);
 

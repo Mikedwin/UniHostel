@@ -264,48 +264,111 @@ const updateApplicationStatus = async (req, res) => {
         return res.status(400).json({ error: `Can only final approve paid applications. Current status: ${app.status}` });
       }
       
-      if (room.occupiedCapacity >= room.totalCapacity) {
-        return res.status(400).json({ 
-          error: 'Cannot approve: Room is at full capacity',
-          currentOccupancy: room.occupiedCapacity,
-          totalCapacity: room.totalCapacity
-        });
-      }
-      
       const accessCode = generateAccessCode();
       const now = new Date();
-      
-      await Promise.all([
-        Application.updateOne(
-          { _id: req.params.id },
-          { 
-            $set: { 
-              status: 'approved',
-              accessCode,
-              accessCodeIssuedAt: now,
-              finalApprovedAt: now
+      const capacityUpdate = await Hostel.updateOne(
+        {
+          _id: app.hostelId,
+          roomTypes: {
+            $elemMatch: {
+              type: app.roomType,
+              $expr: { $lt: ['$occupiedCapacity', '$totalCapacity'] }
             }
           }
-        ),
-        Hostel.updateOne(
+        },
+        [{
+          $set: {
+            roomTypes: {
+              $map: {
+                input: '$roomTypes',
+                as: 'room',
+                in: {
+                  $cond: [
+                    { $eq: ['$$room.type', app.roomType] },
+                    {
+                      $mergeObjects: [
+                        '$$room',
+                        {
+                          occupiedCapacity: { $add: [{ $ifNull: ['$$room.occupiedCapacity', 0] }, 1] },
+                          available: {
+                            $lt: [
+                              { $add: [{ $ifNull: ['$$room.occupiedCapacity', 0] }, 1] },
+                              '$$room.totalCapacity'
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    '$$room'
+                  ]
+                }
+              }
+            }
+          }
+        }]
+      );
+
+      if (capacityUpdate.modifiedCount !== 1) {
+        return res.status(409).json({ error: 'Cannot approve: Room is at full capacity' });
+      }
+
+      const applicationUpdate = await Application.updateOne(
+        { _id: req.params.id, status: 'paid_awaiting_final' },
+        {
+          $set: {
+            status: 'approved',
+            accessCode,
+            accessCodeIssuedAt: now,
+            finalApprovedAt: now
+          }
+        }
+      );
+
+      if (applicationUpdate.modifiedCount !== 1) {
+        await Hostel.updateOne(
           { _id: app.hostelId, 'roomTypes.type': app.roomType },
-          { 
-            $inc: { 'roomTypes.$.occupiedCapacity': 1 },
-            $set: { 
-              'roomTypes.$.available': (room.occupiedCapacity + 1) < room.totalCapacity
+          [{
+            $set: {
+              roomTypes: {
+                $map: {
+                  input: '$roomTypes',
+                  as: 'room',
+                  in: {
+                    $cond: [
+                      { $eq: ['$$room.type', app.roomType] },
+                      {
+                        $mergeObjects: [
+                          '$$room',
+                          {
+                            occupiedCapacity: {
+                              $max: [{ $subtract: [{ $ifNull: ['$$room.occupiedCapacity', 0] }, 1] }, 0]
+                            },
+                            available: true
+                          }
+                        ]
+                      },
+                      '$$room'
+                    ]
+                  }
+                }
+              }
             }
-          }
-        )
-      ]);
+          }]
+        );
+        return res.status(409).json({ error: 'Application status changed. Please refresh and try again.' });
+      }
+
+      const updatedHostel = await Hostel.findById(app.hostelId).select('roomTypes').lean();
+      const updatedRoom = updatedHostel?.roomTypes.find((currentRoom) => currentRoom.type === app.roomType);
       
       res.json({ 
         message: 'Application finally approved', 
         application: { ...app, status: 'approved', accessCode },
         accessCode,
         roomStatus: {
-          occupiedCapacity: room.occupiedCapacity + 1,
-          totalCapacity: room.totalCapacity,
-          available: (room.occupiedCapacity + 1) < room.totalCapacity
+          occupiedCapacity: updatedRoom?.occupiedCapacity,
+          totalCapacity: updatedRoom?.totalCapacity,
+          available: updatedRoom?.available
         }
       });
       
@@ -369,7 +432,15 @@ const recalculateApplication = async (req, res) => {
     if (!app) {
       return res.status(404).json({ error: 'Application not found' });
     }
-    
+
+    const isAdmin = req.user.role === 'admin';
+    const isHostelManager = req.user.role === 'manager'
+      && app.hostelId?.managerId?.toString() === req.user.id;
+
+    if (!isAdmin && !isHostelManager) {
+      return res.status(403).json({ error: 'Not authorized to recalculate this application' });
+    }
+
     if (!['pending', 'approved_for_payment'].includes(app.status)) {
       return res.status(400).json({ error: 'Cannot recalculate paid or completed applications' });
     }

@@ -17,6 +17,18 @@ const validateRuntimeEnv = ({ requireDatabase = true } = {}) => {
     requiredEnvVars.push('MONGO_URI');
   }
 
+  if (process.env.NODE_ENV === 'production') {
+    requiredEnvVars.push(
+      'FRONTEND_URL',
+      'PAYSTACK_SECRET_KEY',
+      'TOTP_ENCRYPTION_KEY'
+    );
+
+    if (process.env.TURNSTILE_ENABLED === 'true') {
+      requiredEnvVars.push('TURNSTILE_SECRET_KEY');
+    }
+  }
+
   const missingEnvVars = requiredEnvVars.filter((varName) => !process.env[varName]);
   if (missingEnvVars.length > 0) {
     throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);

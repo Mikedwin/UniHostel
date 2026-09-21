@@ -43,8 +43,12 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 // Body parsers
-app.use(express.json({ limit: '2mb' }));
-app.use(express.urlencoded({ limit: '2mb', extended: true }));
+const captureRawBody = (req, res, buffer) => {
+  req.rawBody = buffer;
+};
+
+app.use(express.json({ limit: '2mb', verify: captureRawBody }));
+app.use(express.urlencoded({ limit: '2mb', extended: true, verify: captureRawBody }));
 app.use(cookieParser());
 
 // CORS

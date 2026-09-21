@@ -135,8 +135,7 @@ const verifyTurnstileToken = async ({
   if (
     expectedHostnames.length > 0 &&
     verifiedHostname &&
-    !expectedHostnames.includes(verifiedHostname) &&
-    !verifiedHostname.endsWith('.vercel.app')
+    !expectedHostnames.includes(verifiedHostname)
   ) {
     return {
       success: false,
