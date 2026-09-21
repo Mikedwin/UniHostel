@@ -49,6 +49,9 @@ const ManagerApplicationsSection = ({
                   {app.hostelId?.name || "Hostel request"} ·{" "}
                   {app.semester || "Current term"}
                 </small>
+                {app.status === "approved" && app.accessCode && (
+                  <small>Access code: {app.accessCode}</small>
+                )}
               </span>
               <em>{String(app.status || "pending").replaceAll("_", " ")}</em>
               <ChevronRight />

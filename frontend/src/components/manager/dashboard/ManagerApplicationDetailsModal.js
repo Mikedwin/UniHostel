@@ -17,6 +17,12 @@ const ManagerApplicationDetailsModal = ({
         <p className="workspace-modal-status">
           {String(application.status || "pending").replaceAll("_", " ")}
         </p>
+        {application.status === "approved" && application.accessCode && (
+          <div className="workspace-modal-access-code">
+            <span>Student access code</span>
+            <strong>{application.accessCode}</strong>
+          </div>
+        )}
         {application.status === "pending" && (
           <button
             className="workspace-primary"

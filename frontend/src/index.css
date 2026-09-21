@@ -3687,6 +3687,24 @@
   margin: 1rem 0 !important;
   text-transform: capitalize;
 }
+.workspace-modal-access-code {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  background: #e7efe8;
+  border-radius: 0.85rem;
+}
+.workspace-modal-access-code span {
+  display: block;
+  color: #526960;
+  letter-spacing: 0.08em;
+}
+.workspace-modal-access-code strong {
+  display: block;
+  margin-top: 0.35rem;
+  color: #173b35;
+  font-size: 1.15rem;
+  letter-spacing: 0.08em;
+}
 .workspace-secondary {
   border: 0;
   background: transparent;
