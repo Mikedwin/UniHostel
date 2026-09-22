@@ -236,54 +236,31 @@ router.post('/initialize', auth, async (req, res) => {
       }
     };
 
-    // Add subaccount for automatic split if manager has one configured
-    if (manager.paystackSubaccountCode && manager.payoutEnabled) {
-      paymentData.subaccount = manager.paystackSubaccountCode;
-      paymentData.transaction_charge = Math.round(adminCommission * 100); // Admin commission in kobo
-      console.log('Split payment enabled with subaccount:', manager.paystackSubaccountCode);
-      console.log('Transaction charge (admin commission):', adminCommission);
-    } else {
-      console.log('No subaccount configured for manager. Payment will go to main account.');
+    if (!manager.paystackSubaccountCode || !manager.payoutEnabled) {
+      return res.status(409).json({
+        message: 'This hostel is not ready to accept payments. The manager must complete payout setup first.'
+      });
     }
+
+    paymentData.subaccount = manager.paystackSubaccountCode;
+    paymentData.transaction_charge = Math.round(adminCommission * 100);
+    console.log('Split payment enabled with subaccount:', manager.paystackSubaccountCode);
+    console.log('Transaction charge (admin commission):', adminCommission);
 
     console.log('Calling Paystack API...');
     console.log('Payment data:', JSON.stringify(paymentData, null, 2));
     
-    // Initialize Paystack payment with subaccount fallback
-    let paystackResponse;
-    try {
-      paystackResponse = await axios.post(
-        'https://api.paystack.co/transaction/initialize',
-        paymentData,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          timeout: 30000 // 30 second timeout
-        }
-      );
-    } catch (initErr) {
-      if (paymentData.subaccount && (initErr.response?.data?.message?.toLowerCase().includes('subaccount') || initErr.response?.status === 400 || initErr.response?.status === 404)) {
-        console.warn(`Subaccount ${paymentData.subaccount} failed with Paystack (${initErr.response?.data?.message || initErr.message}). Retrying payment initialization without subaccount...`);
-        const fallbackPaymentData = { ...paymentData };
-        delete fallbackPaymentData.subaccount;
-        delete fallbackPaymentData.transaction_charge;
-        paystackResponse = await axios.post(
-          'https://api.paystack.co/transaction/initialize',
-          fallbackPaymentData,
-          {
-            headers: {
-              Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-              'Content-Type': 'application/json'
-            },
-            timeout: 30000
-          }
-        );
-      } else {
-        throw initErr;
+    const paystackResponse = await axios.post(
+      'https://api.paystack.co/transaction/initialize',
+      paymentData,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 30000
       }
-    }
+    );
     
     console.log('Paystack response status:', paystackResponse.status);
     console.log('Paystack response data:', paystackResponse.data);
