@@ -2,6 +2,7 @@
 const User = require('../models/User');
 const Application = require('../models/Application');
 const logger = require('../config/logger');
+const { getAdminCommissionPercent } = require('../config/payment');
 const cache = require('../services/cache');
 const { sendServerError } = require('../utils/serverError');
 const {
@@ -221,7 +222,7 @@ const updateHostel = async (req, res) => {
     logger.info(`Hostel updated: ${req.params.id}, room availability recalculated`);
     
     if (updateData.roomTypes) {
-      const commissionPercent = parseFloat(process.env.ADMIN_COMMISSION_PERCENT) || 3;
+      const commissionPercent = getAdminCommissionPercent();
       
       for (const roomType of updateData.roomTypes) {
         const hostelFee = roomType.price;

@@ -3,6 +3,7 @@ require('dotenv').config();
 
 const Application = require('./models/Application');
 const Hostel = require('./models/Hostel');
+const { getAdminCommissionPercent } = require('./config/payment');
 
 const forceUpdateAll = async () => {
   try {
@@ -12,7 +13,7 @@ const forceUpdateAll = async () => {
     const applications = await Application.find({}).populate('hostelId');
     console.log(`Found ${applications.length} applications`);
 
-    const commissionPercent = 3;
+    const commissionPercent = getAdminCommissionPercent();
     let updated = 0;
 
     for (const app of applications) {
@@ -38,7 +39,7 @@ const forceUpdateAll = async () => {
       await app.save();
       updated++;
       
-      console.log(`Updated ${app._id}: Room=${hostelFee}, Commission=${adminCommission} (3%), Total=${totalAmount}`);
+      console.log(`Updated ${app._id}: Room=${hostelFee}, Commission=${adminCommission} (${commissionPercent}%), Total=${totalAmount}`);
     }
 
     console.log(`\nForce update complete: ${updated} applications updated`);

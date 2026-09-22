@@ -2,6 +2,7 @@
 const Hostel = require('../models/Hostel');
 const User = require('../models/User');
 const logger = require('../config/logger');
+const { getAdminCommissionPercent } = require('../config/payment');
 const { sendServerError } = require('../utils/serverError');
 const { isValidObjectId, generateAccessCode } = require('../utils/helpers');
 const {
@@ -31,7 +32,7 @@ const createApplication = async (req, res) => {
     }
     
     const hostelFee = room.price;
-    const commissionPercent = parseFloat(process.env.ADMIN_COMMISSION_PERCENT) || 3;
+    const commissionPercent = getAdminCommissionPercent();
     const adminCommission = Math.round(hostelFee * (commissionPercent / 100));
     const totalAmount = hostelFee + adminCommission;
     
@@ -160,7 +161,7 @@ const getHostelStats = async (req, res) => {
     const applications = await Application.find({ hostelId, status: { $in: ['pending', 'approved'] } }).lean();
     
     const stats = {
-      commissionPercent: parseFloat(process.env.ADMIN_COMMISSION_PERCENT) || 3
+      commissionPercent: getAdminCommissionPercent()
     };
     applications.forEach(app => {
       if (!stats[app.roomType]) {
@@ -471,7 +472,7 @@ const recalculateApplication = async (req, res) => {
     }
     
     const hostelFee = room.price;
-    const commissionPercent = parseFloat(process.env.ADMIN_COMMISSION_PERCENT) || 3;
+    const commissionPercent = getAdminCommissionPercent();
     const adminCommission = Math.round(hostelFee * (commissionPercent / 100));
     const totalAmount = hostelFee + adminCommission;
     

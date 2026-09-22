@@ -1,11 +1,12 @@
-// Script to update existing applications with 3% commission
-// Run this once to fix applications created before commission was set to 3%
+// Script to update existing applications with the configured commission
+// Run this only when existing unpaid applications need recalculation
 
 const mongoose = require('mongoose');
 require('dotenv').config();
 
 const Application = require('./models/Application');
 const Hostel = require('./models/Hostel');
+const { getAdminCommissionPercent } = require('./config/payment');
 
 const updateApplicationCommissions = async () => {
   try {
@@ -16,7 +17,7 @@ const updateApplicationCommissions = async () => {
     console.log(`Found ${applications.length} applications to check`);
 
     let updated = 0;
-    const commissionPercent = 3; // 3% commission
+    const commissionPercent = getAdminCommissionPercent();
 
     for (const app of applications) {
       if (!app.hostelId) {

@@ -4,6 +4,7 @@ const axios = require('axios');
 const { auth, checkRole } = require('../middleware/auth');
 const User = require('../models/User');
 const logger = require('../config/logger');
+const { getAdminCommissionPercent } = require('../config/payment');
 const { sendServerError } = require('../utils/serverError');
 
 // Create Paystack Subaccount
@@ -64,7 +65,7 @@ router.post('/setup-momo', auth, checkRole('manager'), async (req, res) => {
     // Create Paystack subaccount
     logger.info(`Creating Paystack subaccount for manager: ${manager.email}`);
     
-    const commissionPercent = parseFloat(process.env.ADMIN_COMMISSION_PERCENT) || 10;
+    const commissionPercent = getAdminCommissionPercent();
     const bankCode = getBankCode(momoProvider);
     
     try {

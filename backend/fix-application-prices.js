@@ -3,13 +3,14 @@ require('dotenv').config();
 
 const Hostel = require('./models/Hostel');
 const Application = require('./models/Application');
+const { getAdminCommissionPercent } = require('./config/payment');
 
 const fixApplicationPrices = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
     console.log('Connected to MongoDB');
 
-    const commissionPercent = parseFloat(process.env.ADMIN_COMMISSION_PERCENT) || 3;
+    const commissionPercent = getAdminCommissionPercent();
     console.log(`Using commission rate: ${commissionPercent}%\n`);
 
     // Get all applications (including those with prices to recalculate)
