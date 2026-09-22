@@ -892,6 +892,40 @@ test('payment batch status returns the student statuses and blocks access to ano
   assert.match(unauthorizedResponse.body.message, /own payment records/i);
 });
 
+test('payment initialization requires a manager Paystack subaccount', async () => {
+  const manager = await createUser({
+    name: 'Payout Setup Manager',
+    email: 'payout.setup.manager@example.com',
+    role: 'manager'
+  });
+  const student = await createUser({
+    name: 'Payout Setup Student',
+    email: 'payout.setup.student@example.com'
+  });
+  const hostel = await createHostel(manager._id, { name: 'Payout Setup Hostel' });
+  const application = await Application.create({
+    hostelId: hostel._id,
+    studentId: student._id,
+    roomType: '2 in a Room',
+    semester: 'First Semester',
+    studentName: 'Payout Setup Student',
+    contactNumber: '0240000000',
+    status: 'approved_for_payment',
+    paymentStatus: 'pending',
+    hostelFee: 1200,
+    adminCommission: 60,
+    totalAmount: 1260
+  });
+
+  const response = await request(app)
+    .post('/api/payment/initialize')
+    .set('Authorization', `Bearer ${createJwt(student)}`)
+    .send({ applicationId: application._id.toString() })
+    .expect(409);
+
+  assert.match(response.body.message, /payout setup first/i);
+});
+
 test('manager can final approve a paid application and reserve room capacity', async () => {
   const manager = await createUser({
     name: 'Final Approval Manager',
