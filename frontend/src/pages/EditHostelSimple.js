@@ -17,6 +17,7 @@ const EditHostelSimple = () => {
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
+  const [paystackSubaccountCode, setPaystackSubaccountCode] = useState("");
   const [hostelViewImage, setHostelViewImage] = useState("");
   const [hostelViewImageFile, setHostelViewImageFile] = useState(null);
   const [roomTypes, setRoomTypes] = useState([]);
@@ -35,9 +36,11 @@ const EditHostelSimple = () => {
         console.log("API URL:", `${API_URL}/api/hostels/${id}`);
         console.log("Token available:", !!token);
 
-        const response = await axios.get(`${API_URL}/api/hostels/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const headers = { Authorization: `Bearer ${token}` };
+        const [response, paymentSettingsResponse] = await Promise.all([
+          axios.get(`${API_URL}/api/hostels/${id}`, { headers }),
+          axios.get(`${API_URL}/api/hostels/${id}/payment-subaccount`, { headers }),
+        ]);
 
         console.log("Response received:", response.status);
         const hostel = response.data;
@@ -50,6 +53,7 @@ const EditHostelSimple = () => {
         setName(hostel.name);
         setLocation(hostel.location);
         setDescription(hostel.description);
+        setPaystackSubaccountCode(paymentSettingsResponse.data.paystackSubaccountCode || "");
         // Keep existing image reference (don't load to avoid size issues)
         setHostelViewImage(hostel.hostelViewImage || "");
         // Load room types with image references
@@ -96,6 +100,7 @@ const EditHostelSimple = () => {
         name: name.trim(),
         location: location.trim(),
         description: description.trim(),
+        paystackSubaccountCode: paystackSubaccountCode.trim(),
         roomTypes,
       };
 
@@ -201,6 +206,22 @@ const EditHostelSimple = () => {
                 className="w-full border border-gray-300 rounded-md p-3 h-32 focus:ring-2 focus:ring-blue-500"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Paystack Subaccount Code
+              </label>
+              <p className="text-xs text-gray-500 mb-2">
+                Link this hostel to its Paystack subaccount code, which begins with ACCT_.
+              </p>
+              <input
+                type="text"
+                className="w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-blue-500"
+                placeholder="ACCT_xxxxxxxxxxxxxxxx"
+                value={paystackSubaccountCode}
+                onChange={(e) => setPaystackSubaccountCode(e.target.value)}
               />
             </div>
 

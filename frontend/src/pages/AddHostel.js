@@ -18,6 +18,7 @@ const AddHostel = () => {
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
+  const [paystackSubaccountCode, setPaystackSubaccountCode] = useState("");
   const [hostelViewImage, setHostelViewImage] = useState("");
   const [hostelViewImageFile, setHostelViewImageFile] = useState(null);
   const [hostelImages, setHostelImages] = useState([]);
@@ -141,6 +142,7 @@ const AddHostel = () => {
         name: name.trim(),
         location: location.trim(),
         description: description.trim(),
+        paystackSubaccountCode: paystackSubaccountCode.trim(),
         virtualTourUrl: virtualTourUrl.trim(),
         roomTypes: roomTypes.map((room) => ({
           type: room.type,
@@ -284,6 +286,22 @@ const AddHostel = () => {
                   placeholder="Describe your hostel, nearby amenities, rules, etc."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Paystack Subaccount Code
+                </label>
+                <p className="text-xs text-gray-500 mb-2">
+                  Optional until this hostel is ready to accept payments. Use the code beginning with ACCT_.
+                </p>
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="ACCT_xxxxxxxxxxxxxxxx"
+                  value={paystackSubaccountCode}
+                  onChange={(e) => setPaystackSubaccountCode(e.target.value)}
                 />
               </div>
 

@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const nodemailer = require('nodemailer');
 const request = require('supertest');
+const axios = require('axios');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 
 const TEST_JWT_SECRET = 'integration-test-jwt-secret-with-at-least-thirty-two-characters';
@@ -892,7 +893,7 @@ test('payment batch status returns the student statuses and blocks access to ano
   assert.match(unauthorizedResponse.body.message, /own payment records/i);
 });
 
-test('payment initialization requires a manager Paystack subaccount', async () => {
+test('payment initialization requires a hostel Paystack subaccount', async () => {
   const manager = await createUser({
     name: 'Payout Setup Manager',
     email: 'payout.setup.manager@example.com',
@@ -923,7 +924,66 @@ test('payment initialization requires a manager Paystack subaccount', async () =
     .send({ applicationId: application._id.toString() })
     .expect(409);
 
-  assert.match(response.body.message, /payout setup first/i);
+  assert.match(response.body.message, /subaccount must be linked first/i);
+});
+
+test('payment initialization uses the application hostel Paystack subaccount', async () => {
+  const manager = await createUser({
+    name: 'Hostel Payment Manager',
+    email: 'hostel.payment.manager@example.com',
+    role: 'manager'
+  });
+  const student = await createUser({
+    name: 'Hostel Payment Student',
+    email: 'hostel.payment.student@example.com'
+  });
+  const hostel = await createHostel(manager._id, {
+    name: 'Mapped Payment Hostel',
+    paystackSubaccountCode: 'ACCT_hostelpayment123'
+  });
+  const application = await Application.create({
+    hostelId: hostel._id,
+    studentId: student._id,
+    roomType: '2 in a Room',
+    semester: 'First Semester',
+    studentName: 'Hostel Payment Student',
+    contactNumber: '0240000000',
+    status: 'approved_for_payment',
+    paymentStatus: 'pending',
+    hostelFee: 1200,
+    adminCommission: 60,
+    totalAmount: 1260
+  });
+
+  const originalPost = axios.post;
+  let initializedPayment;
+  axios.post = async (url, paymentData) => {
+    initializedPayment = { url, paymentData };
+    return {
+      status: 200,
+      data: {
+        data: {
+          authorization_url: 'https://checkout.paystack.test/authorization',
+          reference: 'UNI-payment-integration-test'
+        }
+      }
+    };
+  };
+
+  try {
+    const response = await request(app)
+      .post('/api/payment/initialize')
+      .set('Authorization', `Bearer ${createJwt(student)}`)
+      .send({ applicationId: application._id.toString() })
+      .expect(200);
+
+    assert.equal(initializedPayment.url, 'https://api.paystack.co/transaction/initialize');
+    assert.equal(initializedPayment.paymentData.subaccount, hostel.paystackSubaccountCode);
+    assert.equal(initializedPayment.paymentData.transaction_charge, 6000);
+    assert.equal(response.body.reference, 'UNI-payment-integration-test');
+  } finally {
+    axios.post = originalPost;
+  }
 });
 
 test('manager can final approve a paid application and reserve room capacity', async () => {

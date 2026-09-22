@@ -12,6 +12,19 @@ const {
   processHostelMediaPayload
 } = require('../utils/helpers');
 
+const normalizePaystackSubaccountCode = (value) => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const subaccountCode = value.trim();
+  if (!subaccountCode) {
+    return null;
+  }
+
+  return /^ACCT_[A-Za-z0-9]+$/.test(subaccountCode) ? subaccountCode : undefined;
+};
+
 const getAllHostels = async (req, res) => {
   try {
     const { location, maxPrice, search } = req.query;
@@ -119,6 +132,34 @@ const getMyTrash = async (req, res) => {
   }
 };
 
+const getPaymentSubaccount = async (req, res) => {
+  try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid hostel ID' });
+    }
+
+    const hostel = await Hostel.findOne({
+      _id: req.params.id,
+      managerId: req.user.id,
+      isDeleted: { $ne: true }
+    })
+      .select('paystackSubaccountCode')
+      .lean();
+
+    if (!hostel) {
+      return res.status(404).json({ message: 'Hostel not found' });
+    }
+
+    res.json({ paystackSubaccountCode: hostel.paystackSubaccountCode || '' });
+  } catch (err) {
+    return sendServerError(res, err, {
+      field: 'message',
+      clientMessage: 'Failed to fetch payment settings',
+      logMessage: 'Error fetching hostel payment settings'
+    });
+  }
+};
+
 const createHostel = async (req, res) => {
   try {
     logger.info('Hostel creation request from manager:', req.user.id);
@@ -140,11 +181,17 @@ const createHostel = async (req, res) => {
     if (typeof name !== 'string' || name.length > 200 || typeof location !== 'string' || location.length > 200 || typeof description !== 'string' || description.length > 2000) {
       return res.status(400).json({ message: 'Input exceeds maximum length' });
     }
+
+    const paystackSubaccountCode = normalizePaystackSubaccountCode(payload.paystackSubaccountCode);
+    if (typeof paystackSubaccountCode === 'undefined') {
+      return res.status(400).json({ message: 'Invalid Paystack subaccount code' });
+    }
     
     const processedPayload = await processHostelMediaPayload(payload, filesByField);
 
     const hostelData = {
       ...processedPayload,
+      paystackSubaccountCode,
       managerId: req.user.id
     };
     
@@ -189,6 +236,13 @@ const updateHostel = async (req, res) => {
     if (payload.facilities) updateData.facilities = payload.facilities;
     if (payload.isAvailable !== undefined) updateData.isAvailable = payload.isAvailable;
     if (payload.virtualTourUrl !== undefined) updateData.virtualTourUrl = payload.virtualTourUrl;
+    if (payload.paystackSubaccountCode !== undefined) {
+      const paystackSubaccountCode = normalizePaystackSubaccountCode(payload.paystackSubaccountCode);
+      if (typeof paystackSubaccountCode === 'undefined') {
+        return res.status(400).json({ message: 'Invalid Paystack subaccount code' });
+      }
+      updateData.paystackSubaccountCode = paystackSubaccountCode;
+    }
     
     const processedPayload = await processHostelMediaPayload(payload, filesByField);
 
@@ -316,6 +370,7 @@ module.exports = {
   getHostelById,
   getMyListings,
   getMyTrash,
+  getPaymentSubaccount,
   createHostel,
   updateHostel,
   deleteHostel,

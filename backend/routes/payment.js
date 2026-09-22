@@ -210,13 +210,6 @@ router.post('/initialize', auth, async (req, res) => {
       });
     }
 
-    // Get manager's subaccount for split payment
-    const manager = await User.findById(hostel.managerId);
-    if (!manager) {
-      console.error('Manager not found:', hostel.managerId);
-      return res.status(404).json({ message: 'Hostel manager not found' });
-    }
-    
     const paymentData = {
       email: user.email,
       amount: Math.round(totalAmount * 100), // Convert to kobo and ensure integer
@@ -236,15 +229,15 @@ router.post('/initialize', auth, async (req, res) => {
       }
     };
 
-    if (!manager.paystackSubaccountCode || !manager.payoutEnabled) {
+    if (!hostel.paystackSubaccountCode) {
       return res.status(409).json({
-        message: 'This hostel is not ready to accept payments. The manager must complete payout setup first.'
+        message: 'This hostel is not ready to accept payments. A Paystack subaccount must be linked first.'
       });
     }
 
-    paymentData.subaccount = manager.paystackSubaccountCode;
+    paymentData.subaccount = hostel.paystackSubaccountCode;
     paymentData.transaction_charge = Math.round(adminCommission * 100);
-    console.log('Split payment enabled with subaccount:', manager.paystackSubaccountCode);
+    console.log('Split payment enabled with subaccount:', hostel.paystackSubaccountCode);
     console.log('Transaction charge (admin commission):', adminCommission);
 
     console.log('Calling Paystack API...');

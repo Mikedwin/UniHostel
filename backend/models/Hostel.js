@@ -29,6 +29,7 @@ const hostelSchema = new mongoose.Schema({
   hostelImages: [{ type: String }],
   virtualTourUrl: { type: String },
   description: { type: String, required: true },
+  paystackSubaccountCode: { type: String, trim: true },
   roomTypes: [roomTypeSchema],
   isAvailable: { type: Boolean, default: true },
   isActive: { type: Boolean, default: true },

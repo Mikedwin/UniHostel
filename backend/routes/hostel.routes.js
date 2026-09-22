@@ -13,6 +13,7 @@ router.get('/', searchLimiter, cacheMiddleware(300), hostelController.getAllHost
 // Manager specific listing queries
 router.get('/my-listings', auth, checkRole('manager'), hostelController.getMyListings);
 router.get('/my-trash', auth, checkRole('manager'), hostelController.getMyTrash);
+router.get('/:id/payment-subaccount', auth, checkRole('manager'), hostelController.getPaymentSubaccount);
 router.patch('/:id/restore', auth, checkRole('manager'), hostelController.restoreHostel);
 
 // Single hostel detail
